@@ -2,9 +2,11 @@ import { strToU8, zipSync } from "fflate";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import { readLocalAsset } from "./localEditorStore";
+import { getPublicProfileCssText } from "./PublicProfileCssText";
 import { ProfilePage } from "./PublicProfile";
 import { getStaticProfileRuntimeScript } from "./profileShare";
 import type { LinkProfile } from "./profile";
+import appCss from "./styles.css?inline";
 
 function escapeHtml(value: string): string {
   return value
@@ -50,25 +52,15 @@ export async function renderStaticHtml(profile: LinkProfile, avatarHref: string 
   ].join("");
 }
 
-function collectLoadedCss(): string {
-  const rules: string[] = [];
-
-  for (const sheet of Array.from(document.styleSheets)) {
-    try {
-      rules.push(...Array.from(sheet.cssRules).map((rule) => rule.cssText));
-    } catch {
-      // Cross-origin stylesheets cannot be read; app styles are same-origin.
-    }
-  }
-
-  return rules.join("\n");
+function collectStaticCss(): string {
+  return [getPublicProfileCssText(), appCss].join("\n");
 }
 
 export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {
   const files: Record<string, Uint8Array> = {
     "profile.json": strToU8(JSON.stringify(profile, null, 2)),
     "profile.js": strToU8(getStaticProfileRuntimeScript()),
-    "styles.css": strToU8(collectLoadedCss())
+    "styles.css": strToU8(collectStaticCss())
   };
   let avatarHref: string | null = null;
 

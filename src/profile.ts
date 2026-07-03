@@ -46,7 +46,7 @@ export const fontOptions = [
 
 export const defaultTheme: ProfileTheme = {
   accentColor: brandTheme.accent,
-  backgroundColor: brandTheme.pageBackground,
+  backgroundColor: "#ffffff",
   buttonBackgroundColor: brandTheme.raisedBackground,
   buttonTextColor: brandTheme.text,
   fontFamily: fontOptions[0].value,

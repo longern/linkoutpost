@@ -19,10 +19,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  ArrowLeft,
   Bell,
   Camera,
   ChevronDown,
   Download,
+  Eye,
   ExternalLink,
   GripVertical,
   LogOut,
@@ -30,7 +32,6 @@ import {
   Plus,
   Save,
   Settings,
-  Sparkles,
   Trash2,
   UserCircle
 } from "lucide-react";
@@ -127,9 +128,55 @@ function ProfilePreview({ profile }: { profile: LinkProfile }) {
   return (
     <section className="preview" aria-label="Profile preview">
       <div className="preview-frame" ref={previewRef}>
-        <ProfilePage avatarUrl={avatarUrl} profile={profile} />
+        <ProfilePage avatarUrl={avatarUrl} profile={profile} shareEnabled={false} />
       </div>
     </section>
+  );
+}
+
+function FullscreenProfilePreview({
+  onBack,
+  profile
+}: {
+  onBack(): void;
+  profile: LinkProfile;
+}) {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!profile.avatarAssetId) {
+      setAvatarUrl(null);
+      return;
+    }
+
+    readLocalAssetAsDataUrl(profile.avatarAssetId)
+      .then((url) => {
+        if (!cancelled) setAvatarUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setAvatarUrl(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile.avatarAssetId]);
+
+  return (
+    <div className="editor-full-preview">
+      <button
+        aria-label="Back to editor"
+        className="circle-icon-button full-preview-back"
+        onClick={onBack}
+        title="Back to editor"
+        type="button"
+      >
+        <ArrowLeft aria-hidden="true" size={20} />
+      </button>
+      <ProfilePage avatarUrl={avatarUrl} profile={profile} />
+    </div>
   );
 }
 
@@ -212,6 +259,9 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
   const [handleDraft, setHandleDraft] = useState("");
   const [handleSetupError, setHandleSetupError] = useState<string | null>(null);
   const [handleSetupSaving, setHandleSetupSaving] = useState(false);
+  const [fullPreviewOpen, setFullPreviewOpen] = useState(() => (
+    typeof window !== "undefined" && window.location.pathname === "/admin/preview"
+  ));
   const dragLinksRef = useRef<LinkItem[] | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -263,6 +313,17 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
 
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    function onPopState(): void {
+      setFullPreviewOpen(window.location.pathname === "/admin/preview");
+    }
+
+    window.addEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
     };
   }, []);
 
@@ -430,6 +491,21 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
     setStatus("Static ZIP exported");
   }
 
+  function openFullPreview(): void {
+    if (typeof window !== "undefined" && window.location.pathname !== "/admin/preview") {
+      window.history.pushState({ linkoutpostPreview: true }, "", "/admin/preview");
+    }
+    setFullPreviewOpen(true);
+  }
+
+  function closeFullPreview(): void {
+    if (typeof window !== "undefined" && window.location.pathname === "/admin/preview") {
+      window.history.replaceState(null, "", "/admin");
+    }
+
+    setFullPreviewOpen(false);
+  }
+
   async function onHandleSetupSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     const handle = normalizeHandle(handleDraft);
@@ -461,6 +537,10 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
     } finally {
       setHandleSetupSaving(false);
     }
+  }
+
+  if (fullPreviewOpen) {
+    return <FullscreenProfilePreview onBack={closeFullPreview} profile={previewProfile} />;
   }
 
   return (
@@ -520,13 +600,20 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
                 : "Links"}
           </h1>
           <div className="toolbar-actions">
-            <button className="action-button" type="button">
-              <Sparkles aria-hidden="true" size={16} />
-              Enhance
-            </button>
             <button aria-label="Settings" className="circle-icon-button" title="Settings" type="button">
               <Settings aria-hidden="true" size={18} />
             </button>
+            {mode === "offline" && (
+              <button
+                aria-label="Preview page"
+                className="circle-icon-button local-preview-button"
+                onClick={openFullPreview}
+                title="Preview page"
+                type="button"
+              >
+                <Eye aria-hidden="true" size={18} />
+              </button>
+            )}
             <button className="action-button" onClick={onExport} type="button">
               <Download aria-hidden="true" size={16} />
               Export ZIP
