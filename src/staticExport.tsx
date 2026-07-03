@@ -1,107 +1,74 @@
 import { strToU8, zipSync } from "fflate";
-import type { LinkProfile } from "./profile";
-import { ProfilePage } from "./PublicProfile";
+import { flushSync } from "react-dom";
+import { createRoot, type Root } from "react-dom/client";
 import { readLocalAsset } from "./localEditorStore";
+import { ProfilePage } from "./PublicProfile";
+import { getStaticProfileRuntimeScript } from "./profileShare";
+import type { LinkProfile } from "./profile";
 
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
-async function renderStaticHtml(profile: LinkProfile, avatarHref: string | null): Promise<string> {
-  const { renderToStaticMarkup } = await import("react-dom/server.browser");
-  const appHtml = renderToStaticMarkup(
-    <ProfilePage avatarUrl={avatarHref} profile={profile} />
-  );
+async function renderProfileMarkup(profile: LinkProfile, avatarHref: string | null): Promise<string> {
+  const container = document.createElement("div");
+  let root: Root | null = null;
 
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${escapeHtml(profile.title)}</title>
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    ${appHtml}
-  </body>
-</html>`;
+  try {
+    document.body.appendChild(container);
+    root = createRoot(container);
+    const mountedRoot = root;
+    flushSync(() => {
+      mountedRoot.render(<ProfilePage avatarUrl={avatarHref} profile={profile} />);
+    });
+    return container.innerHTML;
+  } finally {
+    root?.unmount();
+    container.remove();
+  }
 }
 
-const staticCss = `:root {
-  color: #1c2433;
-  background: #f4f6ef;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+export async function renderStaticHtml(profile: LinkProfile, avatarHref: string | null): Promise<string> {
+  const profileMarkup = await renderProfileMarkup(profile, avatarHref);
+
+  return [
+    "<!doctype html>",
+    '<html lang="en">',
+    "<head>",
+    '<meta charset="UTF-8">',
+    '<meta content="width=device-width, initial-scale=1.0" name="viewport">',
+    `<title>${escapeHtml(profile.title)}</title>`,
+    '<link href="./styles.css" rel="stylesheet">',
+    "</head>",
+    `<body>${profileMarkup}<script src="./profile.js" defer></script></body>`,
+    "</html>"
+  ].join("");
 }
-* { box-sizing: border-box; }
-body { min-width: 320px; min-height: 100vh; margin: 0; }
-.public-page {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 32px 16px;
+
+function collectLoadedCss(): string {
+  const rules: string[] = [];
+
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      rules.push(...Array.from(sheet.cssRules).map((rule) => rule.cssText));
+    } catch {
+      // Cross-origin stylesheets cannot be read; app styles are same-origin.
+    }
+  }
+
+  return rules.join("\n");
 }
-.public-profile {
-  width: min(100%, 520px);
-  border: 1px solid #d9dfd2;
-  border-radius: 8px;
-  background: #fff;
-  padding: 32px;
-  box-shadow: 0 24px 70px rgb(35 43 31 / 10%);
-}
-.profile-avatar {
-  width: 96px;
-  height: 96px;
-  display: block;
-  border-radius: 999px;
-  object-fit: cover;
-  margin: 0 auto 18px;
-}
-.eyebrow,
-.handle {
-  margin: 0 0 10px;
-  color: #286552;
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-h1 {
-  margin: 0;
-  font-size: 2.5rem;
-  line-height: 1.05;
-  letter-spacing: 0;
-}
-.bio,
-.public-profile > p:not(.eyebrow, .handle) {
-  margin: 16px 0 28px;
-  color: #526070;
-  line-height: 1.6;
-}
-.public-links {
-  display: grid;
-  gap: 10px;
-}
-.public-links a {
-  display: block;
-  border: 1px solid #cfd8c8;
-  border-radius: 8px;
-  color: #1d352f;
-  padding: 14px 16px;
-  text-align: center;
-  text-decoration: none;
-}
-.public-links a:hover {
-  border-color: #286552;
-}`;
 
 export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {
   const files: Record<string, Uint8Array> = {
     "profile.json": strToU8(JSON.stringify(profile, null, 2)),
-    "styles.css": strToU8(staticCss)
+    "profile.js": strToU8(getStaticProfileRuntimeScript()),
+    "styles.css": strToU8(collectLoadedCss())
   };
   let avatarHref: string | null = null;
 

@@ -210,13 +210,14 @@ async function readProfileByHandle(env: Env, handle: string): Promise<LinkProfil
   if (!env.DB || isReservedPath(handle)) return null;
 
   const row = await env.DB.prepare(
-    "SELECT handle, title, bio, avatar_asset_id, links_json, updated_at FROM profiles WHERE handle = ?"
+    "SELECT handle, title, bio, avatar_asset_id, links_json, theme_json, updated_at FROM profiles WHERE handle = ?"
   ).bind(handle).first<{
     avatar_asset_id: string | null;
     handle: string;
     title: string;
     bio: string;
     links_json: string;
+    theme_json: string;
     updated_at: string;
   }>();
 
@@ -227,6 +228,7 @@ async function readProfileByHandle(env: Env, handle: string): Promise<LinkProfil
     bio: row.bio,
     handle: row.handle,
     links: JSON.parse(row.links_json) as LinkProfile["links"],
+    theme: JSON.parse(row.theme_json) as LinkProfile["theme"],
     title: row.title,
     updatedAt: row.updated_at
   });
@@ -243,14 +245,15 @@ async function writeProfile(env: Env, userId: string, profile: LinkProfile): Pro
   }
 
   await env.DB.prepare(
-    `INSERT INTO profiles (handle, owner_user_id, title, bio, avatar_asset_id, links_json, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO profiles (handle, owner_user_id, title, bio, avatar_asset_id, links_json, theme_json, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(handle) DO UPDATE SET
        owner_user_id = excluded.owner_user_id,
        title = excluded.title,
        bio = excluded.bio,
        avatar_asset_id = excluded.avatar_asset_id,
        links_json = excluded.links_json,
+       theme_json = excluded.theme_json,
        updated_at = excluded.updated_at`
   ).bind(
     handle,
@@ -259,6 +262,7 @@ async function writeProfile(env: Env, userId: string, profile: LinkProfile): Pro
     profile.bio,
     profile.avatarAssetId,
     JSON.stringify(profile.links),
+    JSON.stringify(profile.theme),
     new Date().toISOString()
   ).run();
 }
@@ -451,6 +455,7 @@ async function ensureUniqueHandle(env: Env, preferred: string): Promise<string> 
 }
 
 async function upsertOAuthUser(env: Env, identity: OAuthIdentity): Promise<{
+  created: boolean;
   handle: string;
   userId: string;
 }> {
@@ -488,6 +493,7 @@ async function upsertOAuthUser(env: Env, identity: OAuthIdentity): Promise<{
     ).run();
 
     return {
+      created: false,
       handle: existingAccount.handle,
       userId: existingAccount.id
     };
@@ -518,7 +524,7 @@ async function upsertOAuthUser(env: Env, identity: OAuthIdentity): Promise<{
     now
   ).run();
 
-  return { handle, userId };
+  return { created: true, handle, userId };
 }
 
 async function completeOAuth(request: Request, env: Env, provider: Provider): Promise<Response> {
@@ -557,10 +563,10 @@ async function completeOAuth(request: Request, env: Env, provider: Provider): Pr
     provider,
     userId: user.userId
   };
-  const signedSession = await signCookieValue(env.AUTH_SECRET ?? "", session);
+  const signedSession = await signCookieValue(getAuthSecret(env, request), session);
 
   const headers = new Headers({
-    "Location": "/admin"
+    "Location": user.created ? "/admin?setup=handle" : "/admin"
   });
   headers.append("Set-Cookie", cookie(
     request,
@@ -573,6 +579,64 @@ async function completeOAuth(request: Request, env: Env, provider: Provider): Pr
   return new Response(null, {
     headers,
     status: 302
+  });
+}
+
+async function updateSessionHandle(request: Request, env: Env): Promise<Response> {
+  const sessionPayload = await getSessionPayload(request, env);
+  if (!sessionPayload || !env.DB) {
+    return jsonError(env.DB ? "Unauthorized" : "Backend storage is not configured", env.DB ? 401 : 503);
+  }
+
+  const body = await request.json() as { handle?: string };
+  const handle = normalizeHandle(body.handle ?? "");
+  if (!handle || isReservedPath(handle)) {
+    return jsonError("Invalid handle", 400);
+  }
+
+  const existing = await env.DB.prepare(
+    "SELECT id FROM users WHERE handle = ? AND id != ?"
+  ).bind(handle, sessionPayload.userId).first<{ id: string }>();
+  if (existing) {
+    return jsonError("Handle is already taken", 409);
+  }
+
+  const profileConflict = await env.DB.prepare(
+    "SELECT owner_user_id FROM profiles WHERE handle = ? AND owner_user_id != ?"
+  ).bind(handle, sessionPayload.userId).first<{ owner_user_id: string | null }>();
+  if (profileConflict) {
+    return jsonError("Handle is already taken", 409);
+  }
+
+  const now = new Date().toISOString();
+  await env.DB.batch([
+    env.DB.prepare(
+      "UPDATE users SET handle = ?, updated_at = ? WHERE id = ?"
+    ).bind(handle, now, sessionPayload.userId),
+    env.DB.prepare(
+      "UPDATE profiles SET handle = ?, updated_at = ? WHERE owner_user_id = ? AND handle = ?"
+    ).bind(handle, now, sessionPayload.userId, sessionPayload.handle)
+  ]);
+
+  const nextSession: SessionPayload = {
+    ...sessionPayload,
+    handle
+  };
+  const signedSession = await signCookieValue(getAuthSecret(env, request), nextSession);
+
+  const session: SessionState = {
+    authenticated: true,
+    handle,
+    name: sessionPayload.name,
+    provider: sessionPayload.provider,
+    storage: "backend"
+  };
+
+  return Response.json(session, {
+    headers: {
+      ...apiHeaders,
+      "Set-Cookie": cookie(request, "linkoutpost_session", signedSession, 60 * 60 * 24 * 30)
+    }
   });
 }
 
@@ -666,6 +730,11 @@ export default {
       return Response.json(await getSession(request, env), {
         headers: apiHeaders
       });
+    }
+
+    if (url.pathname === "/api/session/handle") {
+      if (request.method !== "PUT") return jsonError("Method not allowed", 405);
+      return updateSessionHandle(request, env);
     }
 
     if (url.pathname === "/api/profile") {

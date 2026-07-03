@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   bio TEXT NOT NULL DEFAULT '',
   avatar_asset_id TEXT,
   links_json TEXT NOT NULL DEFAULT '[]',
+  theme_json TEXT NOT NULL DEFAULT '{}',
   updated_at TEXT NOT NULL,
   FOREIGN KEY (owner_user_id) REFERENCES users (id)
 );
