@@ -27,6 +27,7 @@ import {
   ExternalLink,
   GripVertical,
   LogOut,
+  Menu,
   Palette,
   Plus,
   Save,
@@ -259,6 +260,7 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
   const [handleDraft, setHandleDraft] = useState("");
   const [handleSetupError, setHandleSetupError] = useState<string | null>(null);
   const [handleSetupSaving, setHandleSetupSaving] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [fullPreviewOpen, setFullPreviewOpen] = useState(() => (
     typeof window !== "undefined" && window.location.pathname === "/admin/preview"
   ));
@@ -599,7 +601,40 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
 
   return (
     <main className="editor-shell">
-      <aside className="editor-sidebar" aria-label="Editor navigation">
+      <header className="editor-mobile-topbar">
+        <button
+          aria-controls="editor-sidebar"
+          aria-expanded={mobileSidebarOpen}
+          aria-label={mobileSidebarOpen ? "Close editor sidebar" : "Open editor sidebar"}
+          className="editor-mobile-menu-button"
+          onClick={() => setMobileSidebarOpen((open) => !open)}
+          type="button"
+        >
+          <Menu aria-hidden="true" size={24} />
+        </button>
+        <a className="editor-mobile-brand" href="/">LinkOutpost</a>
+        <div className="editor-mobile-avatar" aria-label="Current user">
+          {editorAvatarUrl ? (
+            <img alt="" src={editorAvatarUrl} />
+          ) : (
+            <UserCircle aria-hidden="true" size={30} />
+          )}
+        </div>
+      </header>
+
+      <button
+        aria-hidden="true"
+        className={`editor-sidebar-backdrop${mobileSidebarOpen ? " is-visible" : ""}`}
+        onClick={() => setMobileSidebarOpen(false)}
+        tabIndex={-1}
+        type="button"
+      />
+
+      <aside
+        className={`editor-sidebar${mobileSidebarOpen ? " is-open" : ""}`}
+        id="editor-sidebar"
+        aria-label="Editor navigation"
+      >
         <div className="sidebar-account">
           <UserCircle aria-hidden="true" size={22} />
           {mode === "backend" ? (
@@ -641,7 +676,10 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
         <nav className="sidebar-nav" aria-label="Editor sections">
           <button
             className={activeEditorPanel === "profile" ? "active" : undefined}
-            onClick={() => setActiveEditorPanel("profile")}
+            onClick={() => {
+              setActiveEditorPanel("profile");
+              setMobileSidebarOpen(false);
+            }}
             type="button"
           >
             <UserCircle aria-hidden="true" size={16} />
@@ -649,7 +687,10 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
           </button>
           <button
             className={activeEditorPanel === "links" ? "active" : undefined}
-            onClick={() => setActiveEditorPanel("links")}
+            onClick={() => {
+              setActiveEditorPanel("links");
+              setMobileSidebarOpen(false);
+            }}
             type="button"
           >
             <Plus aria-hidden="true" size={16} />
@@ -657,7 +698,10 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
           </button>
           <button
             className={activeEditorPanel === "design" ? "active" : undefined}
-            onClick={() => setActiveEditorPanel("design")}
+            onClick={() => {
+              setActiveEditorPanel("design");
+              setMobileSidebarOpen(false);
+            }}
             type="button"
           >
             <Palette aria-hidden="true" size={16} />
