@@ -22,7 +22,6 @@ import {
   ArrowLeft,
   Bell,
   Camera,
-  ChevronDown,
   Download,
   Eye,
   ExternalLink,
@@ -35,7 +34,7 @@ import {
   Trash2,
   UserCircle
 } from "lucide-react";
-import { loadMyProfile, loadSession, saveProfile, updateSessionHandle } from "../apiClient";
+import { loadMyProfile, loadMyProfiles, loadSession, saveProfile } from "../apiClient";
 import {
   readLocalAssetAsDataUrl,
   readLocalProfile,
@@ -52,7 +51,7 @@ import {
   type ProfileTheme
 } from "../profile";
 import { ProfilePage } from "../PublicProfile";
-import type { SessionState } from "../types";
+import type { ProfileSummary, SessionState } from "../types";
 
 function moveLinksById(links: LinkItem[], activeId: string, overId: string): LinkItem[] {
   const activeIndex = links.findIndex((link) => link.id === activeId);
@@ -249,6 +248,7 @@ function SortableLinkRow({
 export function EditorPage({ initialSession }: { initialSession: SessionState }) {
   const [session, setSession] = useState(initialSession);
   const [profile, setProfile] = useState<LinkProfile>(() => createProfile());
+  const [profileSummaries, setProfileSummaries] = useState<ProfileSummary[]>([]);
   const [mode, setMode] = useState<"loading" | "offline" | "backend">("loading");
   const [status, setStatus] = useState("Loading editor");
   const [activeEditorPanel, setActiveEditorPanel] = useState<"links" | "design" | "profile">("profile");
@@ -291,13 +291,32 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
           return;
         }
 
-        const savedProfile = await loadMyProfile();
+        const summaries = await loadMyProfiles();
         if (cancelled) return;
 
-        setProfile(savedProfile ?? createProfile({ handle: nextSession.handle ?? "your_handle" }));
-        setHandleDraft(nextSession.handle ?? "");
+        setProfileSummaries(summaries);
+
+        if (summaries.length > 0) {
+          const firstHandle = summaries[0].handle;
+          const savedProfile = await loadMyProfile(firstHandle);
+          if (cancelled) return;
+
+          setProfile(savedProfile ?? createProfile({ handle: firstHandle }));
+          setHandleDraft(firstHandle);
+        } else {
+          const initialHandle = normalizeHandle(nextSession.name ?? "") || "your_handle";
+          setProfile(createProfile({
+            handle: initialHandle,
+            title: nextSession.name ?? "Your Name"
+          }));
+          setHandleDraft(initialHandle);
+          setHandleSetupOpen(true);
+        }
+
         if (typeof window !== "undefined") {
-          setHandleSetupOpen(new URLSearchParams(window.location.search).get("setup") === "handle");
+          setHandleSetupOpen((open) => (
+            open || new URLSearchParams(window.location.search).get("setup") === "handle"
+          ));
         }
         setMode("backend");
         setStatus("Backend editor");
@@ -358,6 +377,14 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
   const previewProfile = useMemo(() => {
     return dragLinks ? { ...profile, links: dragLinks } : profile;
   }, [dragLinks, profile]);
+
+  async function refreshProfileSummaries(): Promise<ProfileSummary[]> {
+    if (mode !== "backend") return [];
+
+    const summaries = await loadMyProfiles();
+    setProfileSummaries(summaries);
+    return summaries;
+  }
 
   function updateProfile(patch: Partial<LinkProfile>): void {
     setProfile((current) => ({
@@ -455,12 +482,39 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
 
     try {
       await saveProfile(profile);
+      await refreshProfileSummaries();
       setStatus("Saved to backend");
     } catch {
       await writeLocalProfile(profile);
       setMode("offline");
       setStatus("Backend save failed, kept locally");
     }
+  }
+
+  async function onSelectProfile(handle: string): Promise<void> {
+    if (mode !== "backend" || !handle || handle === profile.handle) return;
+
+    try {
+      setStatus("Loading profile");
+      const nextProfile = await loadMyProfile(handle);
+      if (!nextProfile) {
+        setStatus("Profile not found");
+        return;
+      }
+
+      setProfile(nextProfile);
+      setHandleDraft(nextProfile.handle);
+      setActiveEditorPanel("profile");
+      setStatus("Backend editor");
+    } catch {
+      setStatus("Profile load failed");
+    }
+  }
+
+  function openNewHandleDialog(): void {
+    setHandleDraft("");
+    setHandleSetupError(null);
+    setHandleSetupOpen(true);
   }
 
   async function onAvatarChange(file: File | null): Promise<void> {
@@ -519,21 +573,21 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
     setHandleSetupError(null);
 
     try {
-      const nextSession = await updateSessionHandle(handle);
-      setSession(nextSession);
-      setProfile((current) => ({
-        ...current,
+      const nextProfile = createProfile({
         handle,
-        updatedAt: new Date().toISOString()
-      }));
+        title: session.name ?? profile.title
+      });
+      await saveProfile(nextProfile);
+      setProfile(nextProfile);
+      await refreshProfileSummaries();
       setHandleSetupOpen(false);
-      setStatus("Handle saved");
+      setStatus("Handle created");
 
       if (typeof window !== "undefined") {
         window.history.replaceState(null, "", "/admin");
       }
     } catch (error) {
-      setHandleSetupError(error instanceof Error ? error.message : "Handle update failed");
+      setHandleSetupError(error instanceof Error ? error.message : "Handle create failed");
     } finally {
       setHandleSetupSaving(false);
     }
@@ -548,8 +602,39 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
       <aside className="editor-sidebar" aria-label="Editor navigation">
         <div className="sidebar-account">
           <UserCircle aria-hidden="true" size={22} />
-          <span>{profile.handle || "your_handle"}</span>
-          <ChevronDown aria-hidden="true" size={16} />
+          {mode === "backend" ? (
+            <select
+              aria-label="Current handle"
+              className="handle-switcher"
+              onChange={(event) => {
+                void onSelectProfile(event.target.value);
+              }}
+              value={profile.handle}
+            >
+              {profileSummaries.length === 0 ? (
+                <option value={profile.handle}>{profile.handle || "your_handle"}</option>
+              ) : (
+                profileSummaries.map((summary) => (
+                  <option key={summary.handle} value={summary.handle}>
+                    {summary.handle}
+                  </option>
+                ))
+              )}
+            </select>
+          ) : (
+            <span>{profile.handle || "your_handle"}</span>
+          )}
+          {mode === "backend" && (
+            <button
+              aria-label="Create handle"
+              className="circle-icon-button sidebar-create-handle"
+              onClick={openNewHandleDialog}
+              title="Create handle"
+              type="button"
+            >
+              <Plus aria-hidden="true" size={16} />
+            </button>
+          )}
           <Bell aria-hidden="true" className="sidebar-bell" size={18} />
         </div>
 
@@ -802,8 +887,8 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
         <div className="modal-backdrop" role="presentation">
           <section aria-labelledby="handle-setup-title" className="modal-card" role="dialog" aria-modal="true">
             <form onSubmit={onHandleSetupSubmit}>
-              <h2 id="handle-setup-title">Choose your handle</h2>
-              <p>Your handle becomes your public LinkOutpost URL.</p>
+              <h2 id="handle-setup-title">Create a handle</h2>
+              <p>Each handle has its own public LinkOutpost page.</p>
               <label>
                 Handle
                 <input
@@ -817,7 +902,7 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
               </label>
               {handleSetupError && <p className="field-error">{handleSetupError}</p>}
               <button className="primary-link" disabled={handleSetupSaving} type="submit">
-                {handleSetupSaving ? "Saving" : "Continue"}
+                {handleSetupSaving ? "Creating" : "Create handle"}
               </button>
             </form>
           </section>

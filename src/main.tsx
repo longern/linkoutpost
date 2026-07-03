@@ -22,7 +22,6 @@ const initialState =
     profile: null,
     session: {
       authenticated: false,
-      handle: null,
       name: null,
       provider: null,
       storage: "offline",

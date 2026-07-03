@@ -1,4 +1,10 @@
-export function SiteTopbar({ signedIn }: { signedIn: boolean }) {
+export function SiteTopbar({
+  currentPath,
+  signedIn
+}: {
+  currentPath?: string;
+  signedIn: boolean;
+}) {
   return (
     <header className="site-topbar">
       <a className="site-brand" href="/">LinkOutpost</a>
@@ -11,7 +17,7 @@ export function SiteTopbar({ signedIn }: { signedIn: boolean }) {
         ) : (
           <>
             <a href="/admin">Local editor</a>
-            <a href="/signin">Sign in</a>
+            {currentPath !== "/signin" && <a href="/signin">Sign in</a>}
             <a href="/signin">Sign up</a>
           </>
         )}

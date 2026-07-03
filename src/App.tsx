@@ -32,4 +32,4 @@ export function App({ initialState }: AppProps) {
   return <ProfilePage profile={initialState.profile} />;
 }
 
-export type { InitialState, SessionState } from "./types";
+export type { InitialState, ProfileSummary, SessionState } from "./types";

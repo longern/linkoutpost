@@ -25,18 +25,18 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
 
   return (
     <>
-      <SiteTopbar signedIn={session.authenticated} />
+      <SiteTopbar currentPath="/signin" signedIn={session.authenticated} />
       <main className="auth-page">
         <section className="auth-card">
-          <p className="eyebrow">LinkOutpost</p>
+          <p className="auth-kicker">LinkOutpost account</p>
           <h1>Sign in</h1>
-          <p>Use an account to save your editor data to the backend and publish your handle page.</p>
+          <p>Manage multiple handles, keep your pages synced, and publish them from one account.</p>
           <div className="auth-actions">
-            <a className="action-button" href="/api/auth/google/start">
+            <a className="action-button auth-provider-link" href="/api/auth/google/start">
               <LogIn aria-hidden="true" size={16} />
               Continue with Google
             </a>
-            <a className="action-button" href="/api/auth/twitter/start">
+            <a className="action-button auth-provider-link" href="/api/auth/twitter/start">
               <LogIn aria-hidden="true" size={16} />
               Continue with Twitter
             </a>

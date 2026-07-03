@@ -1,5 +1,5 @@
 import type { LinkProfile } from "./profile";
-import type { SessionState } from "./types";
+import type { ProfileSummary, SessionState } from "./types";
 
 export async function loadSession(): Promise<SessionState> {
   const response = await fetch("/api/session");
@@ -10,8 +10,15 @@ export async function loadSession(): Promise<SessionState> {
   return response.json() as Promise<SessionState>;
 }
 
-export async function loadMyProfile(): Promise<LinkProfile | null> {
-  const response = await fetch("/api/profile");
+export async function loadMyProfiles(): Promise<ProfileSummary[]> {
+  const response = await fetch("/api/profiles");
+  if (!response.ok) throw new Error("Profiles API unavailable");
+  return response.json() as Promise<ProfileSummary[]>;
+}
+
+export async function loadMyProfile(handle?: string): Promise<LinkProfile | null> {
+  const url = handle ? `/api/profile?handle=${encodeURIComponent(handle)}` : "/api/profile";
+  const response = await fetch(url);
   if (response.status === 404) return null;
   if (!response.ok) throw new Error("Profile API unavailable");
   return response.json() as Promise<LinkProfile>;
@@ -27,25 +34,9 @@ export async function saveProfile(profile: LinkProfile): Promise<void> {
   });
 
   if (!response.ok) {
-    throw new Error("Backend save failed");
-  }
-}
-
-export async function updateSessionHandle(handle: string): Promise<SessionState> {
-  const response = await fetch("/api/session/handle", {
-    body: JSON.stringify({ handle }),
-    headers: {
-      "Content-Type": "application/json"
-    },
-    method: "PUT"
-  });
-
-  if (!response.ok) {
-    const payload = await response.json().catch(() => ({ error: "Handle update failed" })) as {
+    const payload = await response.json().catch(() => ({ error: "Backend save failed" })) as {
       error?: string;
     };
-    throw new Error(payload.error ?? "Handle update failed");
+    throw new Error(payload.error ?? "Backend save failed");
   }
-
-  return response.json() as Promise<SessionState>;
 }
