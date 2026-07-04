@@ -17,7 +17,11 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-async function renderProfileMarkup(profile: LinkProfile, avatarHref: string | null): Promise<string> {
+async function renderProfileMarkup(
+  profile: LinkProfile,
+  avatarHref: string | null,
+  backgroundHref: string | null,
+): Promise<string> {
   const container = document.createElement("div");
   let root: Root | null = null;
 
@@ -26,7 +30,13 @@ async function renderProfileMarkup(profile: LinkProfile, avatarHref: string | nu
     root = createRoot(container);
     const mountedRoot = root;
     flushSync(() => {
-      mountedRoot.render(<ProfilePage avatarUrl={avatarHref} profile={profile} />);
+      mountedRoot.render(
+        <ProfilePage
+          avatarUrl={avatarHref}
+          backgroundUrl={backgroundHref}
+          profile={profile}
+        />,
+      );
     });
     return container.innerHTML;
   } finally {
@@ -35,8 +45,16 @@ async function renderProfileMarkup(profile: LinkProfile, avatarHref: string | nu
   }
 }
 
-export async function renderStaticHtml(profile: LinkProfile, avatarHref: string | null): Promise<string> {
-  const profileMarkup = await renderProfileMarkup(profile, avatarHref);
+export async function renderStaticHtml(
+  profile: LinkProfile,
+  avatarHref: string | null,
+  backgroundHref: string | null,
+): Promise<string> {
+  const profileMarkup = await renderProfileMarkup(
+    profile,
+    avatarHref,
+    backgroundHref,
+  );
 
   return [
     "<!doctype html>",
@@ -52,6 +70,13 @@ export async function renderStaticHtml(profile: LinkProfile, avatarHref: string 
   ].join("");
 }
 
+function imageExtension(type: string): string {
+  if (type === "image/png") return "png";
+  if (type === "image/webp") return "webp";
+  if (type === "image/gif") return "gif";
+  return "jpg";
+}
+
 function collectStaticCss(): string {
   return [getPublicProfileCssText(), appCss].join("\n");
 }
@@ -63,18 +88,31 @@ export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {
     "styles.css": strToU8(collectStaticCss())
   };
   let avatarHref: string | null = null;
+  let backgroundHref: string | null = null;
 
   if (profile.avatarAssetId) {
     const asset = await readLocalAsset(profile.avatarAssetId);
     if (asset) {
-      const extension = asset.type === "image/png" ? "png" : "jpg";
+      const extension = imageExtension(asset.type);
       const filename = `assets/avatar.${extension}`;
       files[filename] = new Uint8Array(await asset.blob.arrayBuffer());
       avatarHref = `./${filename}`;
     }
   }
 
-  files["index.html"] = strToU8(await renderStaticHtml(profile, avatarHref));
+  if (profile.theme.backgroundAssetId) {
+    const asset = await readLocalAsset(profile.theme.backgroundAssetId);
+    if (asset) {
+      const extension = imageExtension(asset.type);
+      const filename = `assets/background.${extension}`;
+      files[filename] = new Uint8Array(await asset.blob.arrayBuffer());
+      backgroundHref = `./${filename}`;
+    }
+  }
+
+  files["index.html"] = strToU8(
+    await renderStaticHtml(profile, avatarHref, backgroundHref),
+  );
 
   const bytes = zipSync({
     ...files

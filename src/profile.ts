@@ -1,17 +1,26 @@
-import { brandTheme } from "./theme";
-
 export type LinkItem = {
   id: string;
   label: string;
   url: string;
 };
 
+export type ProfileLayout = "classic" | "card";
+
+export type ProfileCardField = {
+  id: string;
+  label: string;
+  value: string;
+};
+
 export type ProfileTheme = {
   accentColor: string;
+  backgroundAssetId: string | null;
   backgroundColor: string;
   buttonBackgroundColor: string;
   buttonTextColor: string;
+  cardFields: ProfileCardField[];
   fontFamily: string;
+  layout: ProfileLayout;
   textColor: string;
 };
 
@@ -35,11 +44,13 @@ export function getProfileDocumentTitle(profile: LinkProfile | null): string {
 export function getProfileAvatarUrl(
   profile: LinkProfile | null,
 ): string | null {
-  const avatarAssetId = profile?.avatarAssetId;
-  if (!avatarAssetId) return null;
-  if (avatarAssetId.startsWith("data:image/")) return avatarAssetId;
-  if (avatarAssetId.startsWith("avatars/"))
-    return `/api/files/${encodeURIComponent(avatarAssetId)}`;
+  return getProfileAssetUrl(profile?.avatarAssetId ?? null);
+}
+
+export function getProfileAssetUrl(assetId: string | null): string | null {
+  if (!assetId) return null;
+  if (assetId.startsWith("data:image/")) return assetId;
+  if (assetId.includes("/")) return `/api/files/${encodeURIComponent(assetId)}`;
   return null;
 }
 
@@ -64,12 +75,18 @@ export const fontOptions = [
 ] as const;
 
 export const defaultTheme: ProfileTheme = {
-  accentColor: brandTheme.accent,
+  accentColor: "#2563eb",
+  backgroundAssetId: null,
   backgroundColor: "#ffffff",
-  buttonBackgroundColor: brandTheme.raisedBackground,
-  buttonTextColor: brandTheme.text,
+  buttonBackgroundColor: "#ffffff",
+  buttonTextColor: "#172033",
+  cardFields: [
+    { id: "location", label: "Location", value: "" },
+    { id: "role", label: "Role", value: "" },
+  ],
   fontFamily: fontOptions[0].value,
-  textColor: brandTheme.text,
+  layout: "classic",
+  textColor: "#172033",
 };
 
 export const defaultProfile: LinkProfile = {

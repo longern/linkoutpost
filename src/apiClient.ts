@@ -42,23 +42,28 @@ export async function saveProfile(profile: LinkProfile): Promise<void> {
 }
 
 export async function uploadAvatar(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.set("avatar", file);
+  return uploadProfileImage(file, "avatar");
+}
 
-  const response = await fetch("/api/profile/avatar", {
+export async function uploadProfileImage(file: File, kind: "avatar" | "background"): Promise<string> {
+  const formData = new FormData();
+  formData.set("image", file);
+  formData.set("kind", kind);
+
+  const response = await fetch("/api/profile/image", {
     body: formData,
     method: "POST"
   });
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => ({ error: "Avatar upload failed" })) as {
+    const payload = await response.json().catch(() => ({ error: "Image upload failed" })) as {
       error?: string;
     };
-    throw new Error(payload.error ?? "Avatar upload failed");
+    throw new Error(payload.error ?? "Image upload failed");
   }
 
   const payload = await response.json() as {
-    avatarAssetId: string;
+    assetId: string;
   };
-  return payload.avatarAssetId;
+  return payload.assetId;
 }

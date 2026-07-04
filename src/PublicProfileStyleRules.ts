@@ -23,11 +23,10 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".public-profile",
     rule: {
-      background:
-        "var(--profile-background-color, var(--brand-page-background, #FFF8F3))",
+      background: "var(--profile-background-color, #ffffff)",
       border: 0,
       borderRadius: 0,
-      color: "var(--profile-text-color, var(--brand-text, #172033))",
+      color: "var(--profile-text-color, #172033)",
       fontFamily: "var(--profile-font-family)",
       minHeight: "auto",
       padding: "32px 20px",
@@ -36,7 +35,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".circle-icon-button",
+    selector: ".public-profile .circle-icon-button",
     rule: {
       background: "transparent",
       border: 0,
@@ -54,7 +53,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".profile-share-button",
     rule: {
-      color: "var(--profile-accent-color, var(--brand-accent, #B64222))",
+      color: "var(--profile-accent-color, #2563eb)",
       position: "absolute",
       right: 16,
       top: 16,
@@ -63,7 +62,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".profile-avatar, .profile-avatar-placeholder",
     rule: {
-      border: "1px solid var(--brand-border, #E7D2C7)",
+      border: "1px solid #e5e7eb",
       borderRadius: 999,
       height: 96,
       margin: "18px auto",
@@ -82,8 +81,8 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     rule: {
       alignItems: "center",
       background:
-        "color-mix(in srgb, var(--profile-accent-color, var(--brand-accent, #B64222)), transparent 90%)",
-      color: "var(--profile-accent-color, var(--brand-accent, #B64222))",
+        "color-mix(in srgb, var(--profile-accent-color, #2563eb), transparent 90%)",
+      color: "var(--profile-accent-color, #2563eb)",
       display: "flex",
       justifyContent: "center",
     },
@@ -91,7 +90,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".eyebrow",
     rule: {
-      color: "var(--profile-accent-color, var(--brand-accent, #B64222))",
+      color: "var(--profile-accent-color, #2563eb)",
       fontSize: "0.8rem",
       fontWeight: 700,
       letterSpacing: 0,
@@ -115,7 +114,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".handle",
     rule: {
-      color: "var(--profile-accent-color, var(--brand-accent, #B64222))",
+      color: "var(--profile-accent-color, #2563eb)",
       fontSize: "0.95rem",
       fontWeight: 700,
       letterSpacing: 0,
@@ -146,13 +145,12 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".public-link",
     rule: {
-      background:
-        "var(--profile-button-background-color, var(--brand-raised-background, #FFFFFF))",
+      background: "var(--profile-button-background-color, #ffffff)",
       border: 0,
       borderRadius: 8,
       boxShadow:
         "0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -4px rgb(0 0 0 / 10%)",
-      color: "var(--profile-button-text-color, var(--brand-text, #172033))",
+      color: "var(--profile-button-text-color, #172033)",
       display: "block",
       overflowWrap: "anywhere",
       padding: "14px 16px",
@@ -174,44 +172,44 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".circle-icon-button:hover",
-    rule: {
-      "@media": {
-        "(hover: hover) and (pointer: fine)": {
-          background: "rgb(var(--brand-accent-rgb, 182 66 34) / 10%)",
-        },
-      },
-    },
-  },
-  {
-    selector: ".circle-icon-button:active",
-    rule: {
-      "@media": {
-        "(hover: hover) and (pointer: fine)": {
-          background: "rgb(var(--brand-accent-rgb, 182 66 34) / 18%)",
-        },
-      },
-    },
-  },
-  {
-    selector: ".profile-share-button:hover",
+    selector: ".public-profile .circle-icon-button:hover",
     rule: {
       "@media": {
         "(hover: hover) and (pointer: fine)": {
           background:
-            "color-mix(in srgb, var(--profile-accent-color, var(--brand-accent, #B64222)), transparent 88%)",
-          color: "var(--profile-accent-color, var(--brand-accent, #B64222))",
+            "color-mix(in srgb, var(--profile-accent-color, #2563eb), transparent 90%)",
+          color: "currentColor",
         },
       },
     },
   },
   {
-    selector: ".profile-share-button:active",
+    selector: ".public-profile .circle-icon-button:active",
     rule: {
       "@media": {
         "(hover: hover) and (pointer: fine)": {
           background:
-            "color-mix(in srgb, var(--profile-accent-color, var(--brand-accent, #B64222)), transparent 80%)",
+            "color-mix(in srgb, var(--profile-accent-color, #2563eb), transparent 82%)",
+        },
+      },
+    },
+  },
+  {
+    selector: ".public-profile .profile-share-button:hover",
+    rule: {
+      "@media": {
+        "(hover: hover) and (pointer: fine)": {
+          background: "rgb(16 24 39 / 8%)",
+        },
+      },
+    },
+  },
+  {
+    selector: ".public-profile .profile-share-button:active",
+    rule: {
+      "@media": {
+        "(hover: hover) and (pointer: fine)": {
+          background: "rgb(16 24 39 / 12%)",
         },
       },
     },
@@ -243,10 +241,10 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".profile-share-panel",
     rule: {
-      background: "var(--brand-raised-background, #ffffff)",
+      background: "#ffffff",
       borderRadius: 18,
       boxShadow: "0 24px 70px rgb(16 24 39 / 24%)",
-      color: "var(--brand-text, #172033)",
+      color: "#172033",
       opacity: 0,
       padding: 18,
       position: "relative",
@@ -331,13 +329,13 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     selector: ".profile-share-copy-button",
     rule: {
       background: "rgb(16 24 39 / 6%)",
-      color: "var(--brand-text, #172033)",
+      color: "#172033",
     },
   },
   {
     selector: ".profile-share-system-button",
     rule: {
-      background: "var(--profile-accent-color, var(--brand-accent, #B64222))",
+      background: "var(--profile-accent-color, #2563eb)",
       color: "#ffffff",
     },
   },
@@ -347,7 +345,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       "@media": {
         "(hover: hover) and (pointer: fine)": {
           background: "rgb(16 24 39 / 10%)",
-          color: "var(--brand-text, #172033)",
+          color: "#172033",
         },
       },
     },
@@ -358,7 +356,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       "@media": {
         "(hover: hover) and (pointer: fine)": {
           background:
-            "color-mix(in srgb, var(--profile-accent-color, var(--brand-accent, #B64222)), black 8%)",
+            "color-mix(in srgb, var(--profile-accent-color, #2563eb), black 8%)",
         },
       },
     },
@@ -385,7 +383,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".public-page",
+    selector: ".public-page-classic",
     rule: {
       "@media": {
         "(min-width: 520px)": {
@@ -397,16 +395,215 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".public-profile",
+    selector: ".public-profile-classic",
     rule: {
       "@media": {
         "(min-width: 520px)": {
           border: 0,
           borderRadius: "22px 22px 0 0",
-          boxShadow: "0 24px 70px rgb(var(--brand-shadow-rgb, 79 45 32) / 14%)",
+          boxShadow: "0 24px 70px rgb(16 24 39 / 14%)",
           minHeight: "calc(100vh - 40px)",
           padding: "36px 28px 0",
           width: "min(100%, 430px)",
+        },
+      },
+    },
+  },
+  {
+    selector: ".profile-card-page",
+    rule: {
+      backgroundColor: "var(--profile-background-color, #ffffff)",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      minHeight: "100vh",
+      overflow: "auto",
+      padding: "28px 20px",
+      "@supports": {
+        "(min-height: 100dvh)": {
+          minHeight: "100dvh",
+        },
+      },
+      "@media": {
+        "(min-width: 520px)": {
+          borderRadius: 0,
+          boxShadow: "none",
+          minHeight: "100vh",
+          padding: "40px 24px",
+          width: "100%",
+        },
+      },
+    },
+  },
+  {
+    selector: ".profile-card-layout",
+    rule: {
+      alignItems: "center",
+      display: "flex",
+      flex: "1 1 auto",
+      flexDirection: "column",
+      gap: 22,
+      justifyContent: "center",
+      minHeight: 0,
+      width: "100%",
+    },
+  },
+  {
+    selector: ".profile-structured-card",
+    rule: {
+      aspectRatio: "54 / 86",
+      background: "rgb(255 255 255 / 88%)",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+      backgroundSize: "cover",
+      border: "1px solid rgb(255 255 255 / 58%)",
+      borderRadius: 24,
+      boxShadow: "0 24px 70px rgb(16 24 39 / 22%)",
+      color: "var(--profile-text-color, #172033)",
+      display: "flex",
+      flex: "0 0 auto",
+      flexDirection: "column",
+      overflow: "hidden",
+      padding: "24px 22px",
+      position: "relative",
+      width: "100%",
+      "@media": {
+        "(min-width: 520px)": {
+          width: "min(100%, 340px)",
+        },
+      },
+    },
+  },
+  {
+    selector:
+      ".profile-structured-card .profile-avatar, .profile-structured-card .profile-avatar-placeholder",
+    rule: {
+      border: 0,
+      borderRadius: 0,
+      height: "48%",
+      left: "32%",
+      margin: 0,
+      position: "absolute",
+      top: "7.5%",
+      transform: "none",
+      width: "60%",
+      zIndex: 1,
+    },
+  },
+  {
+    selector: ".profile-structured-card .profile-avatar",
+    rule: {
+      objectFit: "cover",
+    },
+  },
+  {
+    selector: ".profile-structured-card .profile-avatar-placeholder",
+    rule: {
+      background: "rgb(16 24 39 / 12%)",
+      color: "var(--profile-accent-color, #2563eb)",
+    },
+  },
+  {
+    selector: ".profile-card-name",
+    rule: {
+      color: "inherit",
+      fontSize: "1.45rem",
+      fontWeight: 800,
+      left: "45%",
+      letterSpacing: 0,
+      lineHeight: 1.05,
+      margin: 0,
+      overflow: "hidden",
+      overflowWrap: "anywhere",
+      position: "absolute",
+      right: "10%",
+      textAlign: "left",
+      top: "61%",
+      zIndex: 1,
+    },
+  },
+  {
+    selector: ".profile-card-fields",
+    rule: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 18,
+      left: 100,
+      margin: 0,
+      position: "absolute",
+      right: 36,
+      top: "60%",
+      zIndex: 1,
+    },
+  },
+  {
+    selector: ".profile-card-field",
+    rule: {
+      minHeight: 40,
+      alignItems: "end",
+      borderBottom: "2px solid var(--profile-text-color, #172033)",
+      display: "flex",
+      gap: 8,
+      justifyContent: "space-between",
+    },
+  },
+  {
+    selector: ".profile-card-field dt",
+    rule: {
+      minWidth: "25%",
+      color: "var(--profile-text-color, #172033)",
+      flex: "0 0 auto",
+      fontSize: "0.75rem",
+      fontWeight: 700,
+      letterSpacing: 0,
+      textTransform: "uppercase",
+    },
+  },
+  {
+    selector: ".profile-card-field dd",
+    rule: {
+      flex: "1 1 auto",
+      fontSize: "1.5rem",
+      fontWeight: 650,
+      margin: 0,
+      overflowWrap: "anywhere",
+    },
+  },
+  {
+    selector: ".profile-social-links",
+    rule: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 12,
+      justifyContent: "center",
+      width: "min(100%, 360px)",
+    },
+  },
+  {
+    selector: ".profile-social-link",
+    rule: {
+      alignItems: "center",
+      background: "rgb(255 255 255 / 86%)",
+      border: "1px solid rgb(255 255 255 / 58%)",
+      borderRadius: 999,
+      boxShadow: "0 12px 28px rgb(16 24 39 / 16%)",
+      color: "var(--profile-accent-color, #2563eb)",
+      display: "inline-flex",
+      height: 44,
+      justifyContent: "center",
+      textDecoration: "none",
+      transition:
+        "background-color 160ms ease, color 160ms ease, transform 160ms ease",
+      width: 44,
+    },
+  },
+  {
+    selector: ".profile-social-link:hover",
+    rule: {
+      "@media": {
+        "(hover: hover) and (pointer: fine)": {
+          background: "#ffffff",
+          transform: "translateY(-1px)",
         },
       },
     },

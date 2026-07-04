@@ -345,37 +345,39 @@ function jsonError(message: string, status: number): Response {
   });
 }
 
-function avatarExtension(contentType: string): string {
+function imageExtension(contentType: string): string {
   if (contentType === "image/png") return "png";
   if (contentType === "image/webp") return "webp";
   if (contentType === "image/gif") return "gif";
   return "jpg";
 }
 
-async function writeAvatarUpload(request: Request, env: Env, userId: string): Promise<string> {
+async function writeProfileImageUpload(request: Request, env: Env, userId: string): Promise<string> {
   if (!env.BUCKET) {
     throw new Error("File storage is not configured");
   }
 
   const formData = await request.formData();
-  const avatar = formData.get("avatar");
+  const image = formData.get("image");
+  const kind = formData.get("kind");
+  const folder = kind === "background" ? "backgrounds" : "avatars";
 
-  if (!(avatar instanceof File)) {
-    throw new Error("Avatar file is required");
+  if (!(image instanceof File)) {
+    throw new Error("Image file is required");
   }
 
-  if (!avatar.type.startsWith("image/")) {
-    throw new Error("Avatar must be an image");
+  if (!image.type.startsWith("image/")) {
+    throw new Error("File must be an image");
   }
 
-  if (avatar.size > maxAvatarBytes) {
-    throw new Error("Avatar must be 2 MB or smaller");
+  if (image.size > maxAvatarBytes) {
+    throw new Error("Image must be 2 MB or smaller");
   }
 
-  const key = `avatars/${userId}/${crypto.randomUUID()}.${avatarExtension(avatar.type)}`;
-  await env.BUCKET.put(key, avatar.stream(), {
+  const key = `${folder}/${userId}/${crypto.randomUUID()}.${imageExtension(image.type)}`;
+  await env.BUCKET.put(key, image.stream(), {
     httpMetadata: {
-      contentType: avatar.type
+      contentType: image.type
     }
   });
 
@@ -383,7 +385,7 @@ async function writeAvatarUpload(request: Request, env: Env, userId: string): Pr
 }
 
 async function readUserFile(env: Env, key: string): Promise<Response> {
-  if (!env.BUCKET || !key.startsWith("avatars/")) {
+  if (!env.BUCKET || (!key.startsWith("avatars/") && !key.startsWith("backgrounds/"))) {
     return new Response("Not found", { status: 404 });
   }
 
@@ -809,7 +811,7 @@ export default {
       return jsonError("Method not allowed", 405);
     }
 
-    if (url.pathname === "/api/profile/avatar") {
+    if (url.pathname === "/api/profile/image" || url.pathname === "/api/profile/avatar") {
       const session = await getSession(request, env);
       const sessionPayload = await getSessionPayload(request, env);
 
@@ -826,7 +828,7 @@ export default {
       if (request.method === "POST") {
         try {
           return Response.json({
-            avatarAssetId: await writeAvatarUpload(request, env, sessionPayload.userId)
+            assetId: await writeProfileImageUpload(request, env, sessionPayload.userId)
           }, {
             headers: apiHeaders
           });

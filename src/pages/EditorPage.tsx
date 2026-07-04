@@ -13,6 +13,7 @@ import {
   loadSession,
   saveProfile,
   uploadAvatar,
+  uploadProfileImage,
 } from "../apiClient";
 import {
   readLocalProfile,
@@ -31,6 +32,7 @@ import type { ProfileSummary, SessionState } from "../types";
 import { DesignPanel } from "./editor/DesignPanel";
 import { EditorSidebar, type EditorPanel } from "./editor/EditorSidebar";
 import { HandleSetupDialog } from "./editor/HandleSetupDialog";
+import { LayoutPanel } from "./editor/LayoutPanel";
 import { LinksPanel } from "./editor/LinksPanel";
 import { prepareAvatarFile } from "./editor/avatarImage";
 import { resolveProfileAvatarUrl } from "./editor/profileAvatarUrl";
@@ -332,6 +334,51 @@ export function EditorPage({
     }
   }
 
+  async function onBackgroundChange(file: File | null): Promise<void> {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setStatus("Choose an image file");
+      return;
+    }
+
+    try {
+      if (mode === "backend") {
+        const backgroundAssetId = await uploadProfileImage(file, "background");
+        const nextProfile = {
+          ...profile,
+          theme: {
+            ...profile.theme,
+            backgroundAssetId,
+          },
+          updatedAt: new Date().toISOString(),
+        };
+        setProfile(nextProfile);
+        void autosaveProfile(nextProfile);
+        setStatus("Background uploaded");
+        return;
+      }
+
+      const asset = await saveLocalAsset(file);
+      const nextProfile = {
+        ...profile,
+        theme: {
+          ...profile.theme,
+          backgroundAssetId: asset.id,
+        },
+        updatedAt: new Date().toISOString(),
+      };
+      setProfile(nextProfile);
+      void autosaveProfile(nextProfile);
+      setStatus("Background saved locally");
+    } catch {
+      setStatus(
+        mode === "backend"
+          ? "Background upload failed"
+          : "This browser cannot save local images",
+      );
+    }
+  }
+
   async function onExport(): Promise<void> {
     const { buildStaticZip } = await import("../staticExport");
     const blob = await buildStaticZip(profile);
@@ -465,6 +512,8 @@ export function EditorPage({
           <h1>
             {activeEditorPanel === "design"
               ? "Design"
+              : activeEditorPanel === "layout"
+                ? "Layout"
               : activeEditorPanel === "profile"
                 ? "Profile"
                 : "Links"}
@@ -533,6 +582,17 @@ export function EditorPage({
 
             {activeEditorPanel === "design" && (
               <DesignPanel
+                onBackgroundChange={(file) => {
+                  void onBackgroundChange(file);
+                }}
+                onSave={saveCurrentProfile}
+                onUpdateTheme={updateTheme}
+                profile={profile}
+              />
+            )}
+
+            {activeEditorPanel === "layout" && (
+              <LayoutPanel
                 onSave={saveCurrentProfile}
                 onUpdateTheme={updateTheme}
                 profile={profile}

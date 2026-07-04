@@ -1,8 +1,8 @@
-import { Bell, Palette, Plus, UserCircle } from "lucide-react";
+import { Bell, LayoutTemplate, Palette, Plus, UserCircle } from "lucide-react";
 import type { LinkProfile } from "../../profile";
 import type { ProfileSummary } from "../../types";
 
-export type EditorPanel = "links" | "design" | "profile";
+export type EditorPanel = "links" | "layout" | "design" | "profile";
 
 type EditorSidebarProps = {
   accountMenuOpen: boolean;
@@ -150,6 +150,14 @@ export function EditorSidebar({
           >
             <Plus aria-hidden="true" size={16} />
             Links
+          </button>
+          <button
+            className={`sidebar-nav-item${activePanel === "layout" ? " active" : ""}`}
+            onClick={() => selectPanel("layout")}
+            type="button"
+          >
+            <LayoutTemplate aria-hidden="true" size={16} />
+            Layout
           </button>
           <button
             className={`sidebar-nav-item${activePanel === "design" ? " active" : ""}`}

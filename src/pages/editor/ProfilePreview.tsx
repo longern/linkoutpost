@@ -2,7 +2,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { LinkProfile } from "../../profile";
 import { ProfilePage } from "../../PublicProfile";
-import { resolveProfileAvatarUrl } from "./profileAvatarUrl";
+import {
+  resolveProfileAssetUrl,
+  resolveProfileAvatarUrl,
+} from "./profileAvatarUrl";
 
 function useProfileAvatarUrl(profile: LinkProfile, allowLocalAssets: boolean): string | null {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -26,6 +29,31 @@ function useProfileAvatarUrl(profile: LinkProfile, allowLocalAssets: boolean): s
   return avatarUrl;
 }
 
+function useProfileBackgroundUrl(
+  profile: LinkProfile,
+  allowLocalAssets: boolean,
+): string | null {
+  const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    resolveProfileAssetUrl(profile.theme.backgroundAssetId, allowLocalAssets)
+      .then((url) => {
+        if (!cancelled) setBackgroundUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setBackgroundUrl(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [allowLocalAssets, profile]);
+
+  return backgroundUrl;
+}
+
 export function ProfilePreview({
   allowLocalAssets,
   profile,
@@ -34,6 +62,7 @@ export function ProfilePreview({
   profile: LinkProfile;
 }) {
   const avatarUrl = useProfileAvatarUrl(profile, allowLocalAssets);
+  const backgroundUrl = useProfileBackgroundUrl(profile, allowLocalAssets);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const previousLinkRects = useRef(new Map<string, DOMRect>());
 
@@ -78,6 +107,7 @@ export function ProfilePreview({
       <div className="preview-frame" ref={previewRef}>
         <ProfilePage
           avatarUrl={avatarUrl}
+          backgroundUrl={backgroundUrl}
           profile={profile}
           shareEnabled={false}
         />
@@ -96,6 +126,7 @@ export function FullscreenProfilePreview({
   profile: LinkProfile;
 }) {
   const avatarUrl = useProfileAvatarUrl(profile, allowLocalAssets);
+  const backgroundUrl = useProfileBackgroundUrl(profile, allowLocalAssets);
 
   return (
     <div className="editor-full-preview">
@@ -108,7 +139,11 @@ export function FullscreenProfilePreview({
       >
         <ArrowLeft aria-hidden="true" size={20} />
       </button>
-      <ProfilePage avatarUrl={avatarUrl} profile={profile} />
+      <ProfilePage
+        avatarUrl={avatarUrl}
+        backgroundUrl={backgroundUrl}
+        profile={profile}
+      />
     </div>
   );
 }

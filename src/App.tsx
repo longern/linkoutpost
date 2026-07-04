@@ -4,6 +4,7 @@ import { SignInPage } from "./pages/SignInPage";
 import { useEffect } from "react";
 import {
   getProfileAvatarUrl,
+  getProfileAssetUrl,
   getProfileDocumentTitle,
   isReservedPath,
   normalizeHandle
@@ -42,6 +43,9 @@ export function App({ initialState }: AppProps) {
   return (
     <ProfilePage
       avatarUrl={getProfileAvatarUrl(initialState.profile)}
+      backgroundUrl={getProfileAssetUrl(
+        initialState.profile?.theme.backgroundAssetId ?? null,
+      )}
       profile={initialState.profile}
     />
   );

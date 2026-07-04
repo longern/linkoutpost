@@ -1,5 +1,15 @@
 import { readLocalAssetAsDataUrl } from "../../localEditorStore";
-import { getProfileAvatarUrl, type LinkProfile } from "../../profile";
+import { getProfileAssetUrl, getProfileAvatarUrl, type LinkProfile } from "../../profile";
+
+export async function resolveProfileAssetUrl(
+  assetId: string | null,
+  allowLocalAsset: boolean,
+): Promise<string | null> {
+  const assetUrl = getProfileAssetUrl(assetId);
+  if (assetUrl || !assetId) return assetUrl;
+  if (!allowLocalAsset) return null;
+  return readLocalAssetAsDataUrl(assetId);
+}
 
 export async function resolveProfileAvatarUrl(
   profile: LinkProfile,
@@ -7,6 +17,5 @@ export async function resolveProfileAvatarUrl(
 ): Promise<string | null> {
   const profileAvatarUrl = getProfileAvatarUrl(profile);
   if (profileAvatarUrl || !profile.avatarAssetId) return profileAvatarUrl;
-  if (!allowLocalAsset) return null;
-  return readLocalAssetAsDataUrl(profile.avatarAssetId);
+  return resolveProfileAssetUrl(profile.avatarAssetId, allowLocalAsset);
 }
