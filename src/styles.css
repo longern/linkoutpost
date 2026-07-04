@@ -32,6 +32,7 @@
 body {
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
 }
 
@@ -1144,6 +1145,7 @@ input[type="color"] {
     display: block;
     height: auto;
     min-height: 100vh;
+    min-height: 100dvh;
     overflow: visible;
     padding-top: 60px;
   }
@@ -1164,8 +1166,8 @@ input[type="color"] {
 
   .editor-sidebar-backdrop {
     position: fixed;
-    inset: 60px 0 0;
-    z-index: 55;
+    inset: 0;
+    z-index: 90;
     display: block;
     border: 0;
     border-radius: 0;
@@ -1183,11 +1185,12 @@ input[type="color"] {
 
   .editor-sidebar {
     position: fixed;
-    top: 60px;
+    top: 0;
     left: 0;
-    z-index: 60;
+    z-index: 100;
     width: min(82vw, 300px);
-    height: calc(100vh - 60px);
+    height: 100vh;
+    height: 100dvh;
     min-height: 0;
     overflow: auto;
     transform: translateX(-100%);
