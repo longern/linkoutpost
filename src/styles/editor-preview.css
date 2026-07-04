@@ -1,0 +1,50 @@
+.preview {
+  --preview-scale: min(1, calc(100cqw / 390px), calc(100cqh / 844px));
+
+  position: sticky;
+  top: 0;
+  align-self: start;
+  width: 100%;
+  height: 100vh;
+  min-height: 0;
+  container-type: size;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: whitesmoke;
+  padding: 32px 24px;
+  box-shadow: none;
+}
+
+.preview-frame {
+  width: calc(390px * var(--preview-scale));
+  height: calc(844px * var(--preview-scale));
+}
+
+.preview-frame > main {
+  width: 390px;
+  height: 844px;
+  min-height: 0;
+  display: block;
+  overflow: auto;
+  border-radius: 30px;
+  padding: 0;
+  transform: scale(var(--preview-scale));
+  transform-origin: top left;
+  box-shadow: 0 28px 80px rgb(24 32 47 / 18%);
+}
+
+.preview-frame section {
+  width: 100%;
+  min-height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 32px 20px;
+}
+
+.preview-frame > main.public-page-card .profile-card-page {
+  height: 100%;
+  min-height: 0;
+  padding: 64px 20px 28px;
+}

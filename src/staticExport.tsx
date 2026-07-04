@@ -6,7 +6,13 @@ import { getPublicProfileCssText } from "./PublicProfileCssText";
 import { ProfilePage } from "./PublicProfile";
 import { getStaticProfileRuntimeScript } from "./profileShare";
 import { getProfileDocumentTitle, type LinkProfile } from "./profile";
-import appCss from "./styles.css?inline";
+import authAndOverlaysCss from "./styles/auth-and-overlays.css?inline";
+import editorPanelsCss from "./styles/editor-panels.css?inline";
+import editorPreviewCss from "./styles/editor-preview.css?inline";
+import editorShellCss from "./styles/editor-shell.css?inline";
+import foundationsCss from "./styles/foundations.css?inline";
+import marketingCss from "./styles/marketing.css?inline";
+import responsiveCss from "./styles/responsive.css?inline";
 
 function escapeHtml(value: string): string {
   return value
@@ -78,7 +84,16 @@ function imageExtension(type: string): string {
 }
 
 function collectStaticCss(): string {
-  return [getPublicProfileCssText(), appCss].join("\n");
+  return [
+    getPublicProfileCssText(),
+    foundationsCss,
+    marketingCss,
+    authAndOverlaysCss,
+    editorShellCss,
+    editorPanelsCss,
+    editorPreviewCss,
+    responsiveCss,
+  ].join("\n");
 }
 
 export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {

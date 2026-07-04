@@ -1,3 +1,5 @@
+import { siteTitle } from "../siteConfig";
+
 export function SiteTopbar({
   currentPath,
   signedIn
@@ -7,7 +9,7 @@ export function SiteTopbar({
 }) {
   return (
     <header className="site-topbar">
-      <a className="site-brand" href="/">LinkOutpost</a>
+      <a className="site-brand" href="/">{siteTitle}</a>
       <nav className="site-nav" aria-label="Account">
         {signedIn ? (
           <>

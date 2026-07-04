@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Download, Layers3, LockKeyhole, ServerCog } from "lucide-react";
 import { loadSession } from "../apiClient";
 import { SiteTopbar } from "../components/SiteTopbar";
+import { siteTitle } from "../siteConfig";
 import type { SessionState } from "../types";
 
 export function HomePage({ initialSession }: { initialSession: SessionState }) {
@@ -41,7 +42,7 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
             </div>
           </div>
           <div className="home-hero-copy">
-            <p className="home-kicker">LinkOutpost</p>
+            <p className="home-kicker">{siteTitle}</p>
             <h1>Link pages you can take with you.</h1>
             <p>
               Build personal link pages locally, export them as static sites, or publish them
@@ -68,7 +69,7 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
             <article className="home-feature">
               <Download aria-hidden="true" size={20} />
               <h3>Exports a real site</h3>
-              <p>Download a static ZIP that renders the same public page without depending on LinkOutpost.</p>
+              <p>Download a static ZIP that renders the same public page without depending on {siteTitle}.</p>
             </article>
             <article className="home-feature">
               <Layers3 aria-hidden="true" size={20} />
@@ -103,7 +104,7 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
 
         <footer className="home-footer">
           <div>
-            <a className="site-brand" href="/">LinkOutpost</a>
+            <a className="site-brand" href="/">{siteTitle}</a>
             <p>Portable link pages for local drafts, static exports, and hosted publishing.</p>
           </div>
           <nav aria-label="Footer">

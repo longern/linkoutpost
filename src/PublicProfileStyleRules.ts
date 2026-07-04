@@ -26,12 +26,17 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       background: "var(--profile-background-color, #ffffff)",
       border: 0,
       borderRadius: 0,
-      color: "var(--profile-text-color, #172033)",
       fontFamily: "var(--profile-font-family)",
       minHeight: "auto",
       padding: "32px 20px",
       position: "relative",
       width: "100%",
+    },
+  },
+  {
+    selector: ".public-profile-content",
+    rule: {
+      color: "var(--profile-text-color, #172033)",
     },
   },
   {
@@ -53,7 +58,6 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".profile-share-button",
     rule: {
-      color: "var(--profile-accent-color, #2563eb)",
       position: "absolute",
       right: 16,
       top: 16,
@@ -383,7 +387,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".public-page-classic",
+    selector: ".public-page-classic, .public-page-card",
     rule: {
       "@media": {
         "(min-width: 520px)": {
@@ -395,7 +399,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".public-profile-classic",
+    selector: ".public-profile-classic, .public-profile-card",
     rule: {
       "@media": {
         "(min-width: 520px)": {
@@ -415,10 +419,9 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       backgroundColor: "var(--profile-background-color, #ffffff)",
       display: "flex",
       flexDirection: "column",
-      justifyContent: "center",
       minHeight: "100vh",
       overflow: "auto",
-      padding: "28px 20px",
+      padding: "64px 20px 28px",
       "@supports": {
         "(min-height: 100dvh)": {
           minHeight: "100dvh",
@@ -426,11 +429,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       },
       "@media": {
         "(min-width: 520px)": {
-          borderRadius: 0,
-          boxShadow: "none",
-          minHeight: "100vh",
-          padding: "40px 24px",
-          width: "100%",
+          padding: "64px 28px 28px",
         },
       },
     },
@@ -443,7 +442,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       flex: "1 1 auto",
       flexDirection: "column",
       gap: 22,
-      justifyContent: "center",
+      justifyContent: "flex-start",
       minHeight: 0,
       width: "100%",
     },

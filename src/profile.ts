@@ -1,3 +1,5 @@
+import { siteTitle } from "./siteConfig";
+
 export type LinkItem = {
   id: string;
   label: string;
@@ -34,7 +36,7 @@ export type LinkProfile = {
   updatedAt: string;
 };
 
-export const siteTitle = "LinkOutpost";
+export { siteTitle } from "./siteConfig";
 
 export function getProfileDocumentTitle(profile: LinkProfile | null): string {
   const name = profile?.title.trim();

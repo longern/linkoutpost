@@ -28,6 +28,7 @@ import {
   shareProfile,
   type ProfileShareCapabilities,
 } from "./profileShare";
+import { siteTitle } from "./siteConfig";
 
 function themeStyle(theme: ProfileTheme): CSSProperties {
   return {
@@ -163,9 +164,11 @@ export function ProfilePage({
     return (
       <main className="public-page public-page-classic">
         <section className="public-profile public-profile-classic">
-          <p className="eyebrow">LinkOutpost</p>
-          <h1 className="profile-title">Profile not found</h1>
-          <p>This handle does not have a published page yet.</p>
+          <div className="public-profile-content">
+            <p className="eyebrow">{siteTitle}</p>
+            <h1 className="profile-title">Profile not found</h1>
+            <p>This handle does not have a published page yet.</p>
+          </div>
         </section>
       </main>
     );
@@ -298,23 +301,25 @@ export function ProfilePage({
     >
       <section className="public-profile public-profile-classic">
         {shareButton}
-        <ProfileAvatar avatarUrl={avatarUrl} />
-        <h1 className="profile-title">{currentProfile.title}</h1>
-        <p className="handle">@{currentProfile.handle}</p>
-        <p className="bio">{currentProfile.bio}</p>
-        <div className="public-links">
-          {currentProfile.links.map((link) => (
-            <a
-              className="public-link"
-              data-profile-link-id={link.id}
-              href={link.url}
-              key={link.id}
-              rel="noreferrer"
-              target="_blank"
-            >
-              {link.label}
-            </a>
-          ))}
+        <div className="public-profile-content">
+          <ProfileAvatar avatarUrl={avatarUrl} />
+          <h1 className="profile-title">{currentProfile.title}</h1>
+          <p className="handle">@{currentProfile.handle}</p>
+          <p className="bio">{currentProfile.bio}</p>
+          <div className="public-links">
+            {currentProfile.links.map((link) => (
+              <a
+                className="public-link"
+                data-profile-link-id={link.id}
+                href={link.url}
+                key={link.id}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
         </div>
         {shareDialog}
       </section>

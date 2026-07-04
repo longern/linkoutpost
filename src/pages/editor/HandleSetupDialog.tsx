@@ -1,4 +1,5 @@
 import { normalizeHandle } from "../../profile";
+import { siteTitle } from "../../siteConfig";
 
 type HandleSetupDialogProps = {
   error: string | null;
@@ -27,7 +28,7 @@ export function HandleSetupDialog({
       >
         <form onSubmit={onSubmit}>
           <h2 id="handle-setup-title">Create a handle</h2>
-          <p>Each handle has its own public LinkOutpost page.</p>
+          <p>Each handle has its own public {siteTitle} page.</p>
           <label>
             Handle
             <input

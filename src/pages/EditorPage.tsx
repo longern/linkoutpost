@@ -28,6 +28,7 @@ import {
   type LinkProfile,
   type ProfileTheme,
 } from "../profile";
+import { siteTitle } from "../siteConfig";
 import type { ProfileSummary, SessionState } from "../types";
 import { DesignPanel } from "./editor/DesignPanel";
 import { EditorSidebar, type EditorPanel } from "./editor/EditorSidebar";
@@ -479,7 +480,7 @@ export function EditorPage({
           <Menu aria-hidden="true" size={24} />
         </button>
         <a className="editor-mobile-brand" href="/">
-          LinkOutpost
+          {siteTitle}
         </a>
         <div className="editor-mobile-avatar" aria-label="Current user">
           {editorAvatarUrl ? (

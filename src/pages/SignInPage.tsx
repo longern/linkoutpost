@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { LogIn } from "lucide-react";
 import { loadSession } from "../apiClient";
 import { SiteTopbar } from "../components/SiteTopbar";
+import { siteTitle } from "../siteConfig";
 import type { SessionState } from "../types";
 
 export function SignInPage({ initialSession }: { initialSession: SessionState }) {
@@ -28,7 +29,7 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
       <SiteTopbar currentPath="/signin" signedIn={session.authenticated} />
       <main className="auth-page">
         <section className="auth-card">
-          <p className="auth-kicker">LinkOutpost account</p>
+          <p className="auth-kicker">{siteTitle} account</p>
           <h1>Sign in</h1>
           <p>Manage multiple handles, keep your pages synced, and publish them from one account.</p>
           <div className="auth-actions">
