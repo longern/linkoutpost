@@ -4,6 +4,7 @@ import { createProfile, isReservedPath, normalizeHandle, type LinkProfile } from
 
 export interface Env {
   ASSETS: Fetcher;
+  BUCKET?: R2Bucket;
   DB?: D1Database;
   AUTH_SECRET?: string;
   GOOGLE_CLIENT_ID?: string;
@@ -50,6 +51,7 @@ type OAuthIdentity = {
 };
 
 const textEncoder = new TextEncoder();
+const maxAvatarBytes = 2 * 1024 * 1024;
 
 function base64UrlEncode(input: ArrayBuffer | Uint8Array | string): string {
   const bytes = typeof input === "string"
@@ -326,6 +328,61 @@ function jsonError(message: string, status: number): Response {
     headers: apiHeaders,
     status
   });
+}
+
+function avatarExtension(contentType: string): string {
+  if (contentType === "image/png") return "png";
+  if (contentType === "image/webp") return "webp";
+  if (contentType === "image/gif") return "gif";
+  return "jpg";
+}
+
+async function writeAvatarUpload(request: Request, env: Env, userId: string): Promise<string> {
+  if (!env.BUCKET) {
+    throw new Error("File storage is not configured");
+  }
+
+  const formData = await request.formData();
+  const avatar = formData.get("avatar");
+
+  if (!(avatar instanceof File)) {
+    throw new Error("Avatar file is required");
+  }
+
+  if (!avatar.type.startsWith("image/")) {
+    throw new Error("Avatar must be an image");
+  }
+
+  if (avatar.size > maxAvatarBytes) {
+    throw new Error("Avatar must be 2 MB or smaller");
+  }
+
+  const key = `avatars/${userId}/${crypto.randomUUID()}.${avatarExtension(avatar.type)}`;
+  await env.BUCKET.put(key, avatar.stream(), {
+    httpMetadata: {
+      contentType: avatar.type
+    }
+  });
+
+  return key;
+}
+
+async function readUserFile(env: Env, key: string): Promise<Response> {
+  if (!env.BUCKET || !key.startsWith("avatars/")) {
+    return new Response("Not found", { status: 404 });
+  }
+
+  const object = await env.BUCKET.get(key);
+  if (!object) {
+    return new Response("Not found", { status: 404 });
+  }
+
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set("Cache-Control", "public, max-age=31536000, immutable");
+  headers.set("ETag", object.httpEtag);
+
+  return new Response(object.body, { headers });
 }
 
 function requireAuthConfig(env: Env, provider: Provider): void {
@@ -704,6 +761,11 @@ export default {
       });
     }
 
+    if (url.pathname.startsWith("/api/files/")) {
+      const key = decodeURIComponent(url.pathname.slice("/api/files/".length));
+      return readUserFile(env, key);
+    }
+
     if (url.pathname === "/api/profiles") {
       const session = await getSession(request, env);
       const sessionPayload = await getSessionPayload(request, env);
@@ -722,6 +784,36 @@ export default {
         return Response.json(await listProfilesByOwner(env, sessionPayload.userId), {
           headers: apiHeaders
         });
+      }
+
+      return jsonError("Method not allowed", 405);
+    }
+
+    if (url.pathname === "/api/profile/avatar") {
+      const session = await getSession(request, env);
+      const sessionPayload = await getSessionPayload(request, env);
+
+      if (!session.authenticated || !sessionPayload || !env.DB) {
+        return Response.json({
+          authenticated: session.authenticated,
+          error: env.DB ? "Unauthorized" : "Backend storage is not configured"
+        }, {
+          headers: apiHeaders,
+          status: session.authenticated ? 503 : 401
+        });
+      }
+
+      if (request.method === "POST") {
+        try {
+          return Response.json({
+            avatarAssetId: await writeAvatarUpload(request, env, sessionPayload.userId)
+          }, {
+            headers: apiHeaders
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Avatar upload failed";
+          return jsonError(message, 400);
+        }
       }
 
       return jsonError("Method not allowed", 405);

@@ -9,10 +9,15 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     selector: ".public-page",
     rule: {
       alignItems: "stretch",
-      display: "grid",
-      justifyItems: "center",
+      display: "flex",
+      justifyContent: "center",
       minHeight: "100vh",
       padding: 0,
+      "@supports": {
+        "(min-height: 100dvh)": {
+          minHeight: "100dvh",
+        },
+      },
     },
   },
   {
@@ -24,7 +29,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       borderRadius: 0,
       color: "var(--profile-text-color, var(--brand-text, #172033))",
       fontFamily: "var(--profile-font-family)",
-      minHeight: "100vh",
+      minHeight: "auto",
       padding: "32px 20px",
       position: "relative",
       width: "100%",
@@ -129,7 +134,8 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".public-links",
     rule: {
-      display: "grid",
+      display: "flex",
+      flexDirection: "column",
       gap: 14,
     },
   },
@@ -318,9 +324,8 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".profile-share-actions",
     rule: {
-      display: "grid",
+      display: "flex",
       gap: 10,
-      gridTemplateColumns: "1fr 1fr",
     },
   },
   {
@@ -330,6 +335,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       border: 0,
       borderRadius: 10,
       display: "inline-flex",
+      flex: "1 1 0",
       gap: 8,
       height: 44,
       justifyContent: "center",

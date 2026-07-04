@@ -25,6 +25,14 @@ export type LinkProfile = {
   updatedAt: string;
 };
 
+export function getProfileAvatarUrl(profile: LinkProfile | null): string | null {
+  const avatarAssetId = profile?.avatarAssetId;
+  if (!avatarAssetId) return null;
+  if (avatarAssetId.startsWith("data:image/")) return avatarAssetId;
+  if (avatarAssetId.startsWith("avatars/")) return `/api/files/${encodeURIComponent(avatarAssetId)}`;
+  return null;
+}
+
 export const fontOptions = [
   {
     label: "System",
@@ -55,8 +63,8 @@ export const defaultTheme: ProfileTheme = {
 
 export const defaultProfile: LinkProfile = {
   handle: "your_handle",
-  title: "Your Name",
-  bio: "One page for every link that matters.",
+  title: "",
+  bio: "",
   avatarAssetId: null,
   links: [
     {

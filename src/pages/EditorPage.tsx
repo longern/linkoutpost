@@ -1,279 +1,72 @@
-import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragOverEvent,
-  type DragStartEvent
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import {
-  ArrowLeft,
-  Bell,
-  Camera,
   Download,
   Eye,
   ExternalLink,
-  GripVertical,
-  LogOut,
   Menu,
-  Palette,
-  Plus,
-  Save,
   Settings,
-  Trash2,
-  UserCircle
+  UserCircle,
 } from "lucide-react";
-import { loadMyProfile, loadMyProfiles, loadSession, saveProfile } from "../apiClient";
 import {
-  readLocalAssetAsDataUrl,
+  loadMyProfile,
+  loadMyProfiles,
+  loadSession,
+  saveProfile,
+  uploadAvatar,
+} from "../apiClient";
+import {
   readLocalProfile,
   saveLocalAsset,
-  writeLocalProfile
+  writeLocalProfile,
 } from "../localEditorStore";
 import {
   createProfile,
-  fontOptions,
   isReservedPath,
   normalizeHandle,
   type LinkItem,
   type LinkProfile,
-  type ProfileTheme
+  type ProfileTheme,
 } from "../profile";
-import { ProfilePage } from "../PublicProfile";
 import type { ProfileSummary, SessionState } from "../types";
+import { DesignPanel } from "./editor/DesignPanel";
+import { EditorSidebar, type EditorPanel } from "./editor/EditorSidebar";
+import { HandleSetupDialog } from "./editor/HandleSetupDialog";
+import { LinksPanel } from "./editor/LinksPanel";
+import { prepareAvatarFile } from "./editor/avatarImage";
+import { resolveProfileAvatarUrl } from "./editor/profileAvatarUrl";
+import {
+  FullscreenProfilePreview,
+  ProfilePreview,
+} from "./editor/ProfilePreview";
+import { ProfilePanel } from "./editor/ProfilePanel";
 
-function moveLinksById(links: LinkItem[], activeId: string, overId: string): LinkItem[] {
-  const activeIndex = links.findIndex((link) => link.id === activeId);
-  const overIndex = links.findIndex((link) => link.id === overId);
-
-  if (activeIndex < 0 || overIndex < 0 || activeIndex === overIndex) {
-    return links;
-  }
-
-  return arrayMove(links, activeIndex, overIndex);
-}
-
-function ProfilePreview({ profile }: { profile: LinkProfile }) {
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const previewRef = useRef<HTMLDivElement | null>(null);
-  const previousLinkRects = useRef(new Map<string, DOMRect>());
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (!profile.avatarAssetId) {
-      setAvatarUrl(null);
-      return;
-    }
-
-    readLocalAssetAsDataUrl(profile.avatarAssetId)
-      .then((url) => {
-        if (!cancelled) setAvatarUrl(url);
-      })
-      .catch(() => {
-        if (!cancelled) setAvatarUrl(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [profile.avatarAssetId]);
-
-  useLayoutEffect(() => {
-    const previewElement = previewRef.current;
-    if (!previewElement) return;
-
-    const nextRects = new Map<string, DOMRect>();
-    const linkElements = previewElement.querySelectorAll<HTMLElement>("[data-profile-link-id]");
-
-    linkElements.forEach((node) => {
-      const id = node.dataset.profileLinkId;
-      if (!id) return;
-
-      const previousRect = previousLinkRects.current.get(id);
-      const nextRect = node.getBoundingClientRect();
-      nextRects.set(id, nextRect);
-
-      if (!previousRect) return;
-
-      const deltaX = previousRect.left - nextRect.left;
-      const deltaY = previousRect.top - nextRect.top;
-      if (deltaX === 0 && deltaY === 0) return;
-
-      node.style.transition = "none";
-      node.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-      node.getBoundingClientRect();
-
-      requestAnimationFrame(() => {
-        node.style.transition = "";
-        node.style.transform = "";
-      });
-    });
-
-    previousLinkRects.current = nextRects;
-  }, [profile.links]);
-
-  return (
-    <section className="preview" aria-label="Profile preview">
-      <div className="preview-frame" ref={previewRef}>
-        <ProfilePage avatarUrl={avatarUrl} profile={profile} shareEnabled={false} />
-      </div>
-    </section>
-  );
-}
-
-function FullscreenProfilePreview({
-  onBack,
-  profile
+export function EditorPage({
+  initialSession,
 }: {
-  onBack(): void;
-  profile: LinkProfile;
+  initialSession: SessionState;
 }) {
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (!profile.avatarAssetId) {
-      setAvatarUrl(null);
-      return;
-    }
-
-    readLocalAssetAsDataUrl(profile.avatarAssetId)
-      .then((url) => {
-        if (!cancelled) setAvatarUrl(url);
-      })
-      .catch(() => {
-        if (!cancelled) setAvatarUrl(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [profile.avatarAssetId]);
-
-  return (
-    <div className="editor-full-preview">
-      <button
-        aria-label="Back to editor"
-        className="circle-icon-button full-preview-back"
-        onClick={onBack}
-        title="Back to editor"
-        type="button"
-      >
-        <ArrowLeft aria-hidden="true" size={20} />
-      </button>
-      <ProfilePage avatarUrl={avatarUrl} profile={profile} />
-    </div>
-  );
-}
-
-function SortableLinkRow({
-  active,
-  link,
-  onRemove,
-  onUpdate
-}: {
-  active: boolean;
-  link: LinkItem;
-  onRemove(id: string): void;
-  onUpdate(id: string, patch: Partial<LinkItem>): void;
-}) {
-  const {
-    attributes,
-    isDragging,
-    listeners,
-    setNodeRef,
-    transform
-  } = useSortable({ id: link.id });
-  const style: CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition: isDragging
-      ? undefined
-      : "transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1)"
-  };
-
-  return (
-    <div
-      className={`link-row${active || isDragging ? " is-dragging" : ""}`}
-      ref={setNodeRef}
-      style={style}
-    >
-      <button
-        aria-label={`Drag ${link.label}`}
-        className="link-row-drag"
-        title="Drag to reorder"
-        type="button"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical aria-hidden="true" size={18} />
-      </button>
-      <div className="link-row-fields">
-        <input
-          aria-label="Link label"
-          value={link.label}
-          onChange={(event) => onUpdate(link.id, { label: event.target.value })}
-        />
-        <input
-          aria-label="Link URL"
-          value={link.url}
-          onChange={(event) => onUpdate(link.id, { url: event.target.value })}
-        />
-      </div>
-      <button
-        aria-label="Remove link"
-        className="circle-icon-button danger"
-        onClick={() => onRemove(link.id)}
-        title="Remove link"
-        type="button"
-      >
-        <Trash2 aria-hidden="true" size={18} />
-      </button>
-    </div>
-  );
-}
-
-export function EditorPage({ initialSession }: { initialSession: SessionState }) {
   const [session, setSession] = useState(initialSession);
   const [profile, setProfile] = useState<LinkProfile>(() => createProfile());
-  const [profileSummaries, setProfileSummaries] = useState<ProfileSummary[]>([]);
-  const [mode, setMode] = useState<"loading" | "offline" | "backend">("loading");
+  const [profileSummaries, setProfileSummaries] = useState<ProfileSummary[]>(
+    [],
+  );
+  const [mode, setMode] = useState<"loading" | "offline" | "backend">(
+    "loading",
+  );
   const [status, setStatus] = useState("Loading editor");
-  const [activeEditorPanel, setActiveEditorPanel] = useState<"links" | "design" | "profile">("profile");
+  const [activeEditorPanel, setActiveEditorPanel] = useState<EditorPanel>("profile");
   const [editorAvatarUrl, setEditorAvatarUrl] = useState<string | null>(null);
-  const [activeDragLinkId, setActiveDragLinkId] = useState<string | null>(null);
   const [dragLinks, setDragLinks] = useState<LinkItem[] | null>(null);
   const [handleSetupOpen, setHandleSetupOpen] = useState(false);
   const [handleDraft, setHandleDraft] = useState("");
   const [handleSetupError, setHandleSetupError] = useState<string | null>(null);
   const [handleSetupSaving, setHandleSetupSaving] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [fullPreviewOpen, setFullPreviewOpen] = useState(() => (
-    typeof window !== "undefined" && window.location.pathname === "/admin/preview"
-  ));
-  const dragLinksRef = useRef<LinkItem[] | null>(null);
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 4
-      }
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates
-    })
+  const [fullPreviewOpen, setFullPreviewOpen] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.location.pathname === "/admin/preview",
   );
 
   useEffect(() => {
@@ -306,19 +99,24 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
           setProfile(savedProfile ?? createProfile({ handle: firstHandle }));
           setHandleDraft(firstHandle);
         } else {
-          const initialHandle = normalizeHandle(nextSession.name ?? "") || "your_handle";
-          setProfile(createProfile({
-            handle: initialHandle,
-            title: nextSession.name ?? "Your Name"
-          }));
+          const initialHandle =
+            normalizeHandle(nextSession.name ?? "") || "your_handle";
+          setProfile(
+            createProfile({
+              handle: initialHandle,
+            }),
+          );
           setHandleDraft(initialHandle);
           setHandleSetupOpen(true);
         }
 
         if (typeof window !== "undefined") {
-          setHandleSetupOpen((open) => (
-            open || new URLSearchParams(window.location.search).get("setup") === "handle"
-          ));
+          setHandleSetupOpen(
+            (open) =>
+              open ||
+              new URLSearchParams(window.location.search).get("setup") ===
+                "handle",
+          );
         }
         setMode("backend");
         setStatus("Backend editor");
@@ -349,20 +147,9 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
   }, []);
 
   useEffect(() => {
-    if (mode === "offline") {
-      void writeLocalProfile(profile);
-    }
-  }, [mode, profile]);
-
-  useEffect(() => {
     let cancelled = false;
 
-    if (!profile.avatarAssetId) {
-      setEditorAvatarUrl(null);
-      return;
-    }
-
-    readLocalAssetAsDataUrl(profile.avatarAssetId)
+    resolveProfileAvatarUrl(profile, mode !== "backend")
       .then((url) => {
         if (!cancelled) setEditorAvatarUrl(url);
       })
@@ -373,9 +160,12 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
     return () => {
       cancelled = true;
     };
-  }, [profile.avatarAssetId]);
+  }, [mode, profile]);
 
-  const profileUrl = useMemo(() => `/${profile.handle || "your_handle"}`, [profile.handle]);
+  const profileUrl = useMemo(
+    () => `/${profile.handle || "your_handle"}`,
+    [profile.handle],
+  );
   const previewProfile = useMemo(() => {
     return dragLinks ? { ...profile, links: dragLinks } : profile;
   }, [dragLinks, profile]);
@@ -388,19 +178,44 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
     return summaries;
   }
 
+  async function autosaveProfile(
+    nextProfile: LinkProfile = profile,
+  ): Promise<void> {
+    if (mode === "loading") return;
+
+    if (mode === "backend") {
+      try {
+        setStatus("Saving changes");
+        await saveProfile(nextProfile);
+        await refreshProfileSummaries();
+        setStatus("Saved");
+      } catch {
+        setStatus("Autosave failed");
+      }
+      return;
+    }
+
+    await writeLocalProfile(nextProfile);
+    setStatus("Saved locally");
+  }
+
+  function saveCurrentProfile(): void {
+    void autosaveProfile(profile);
+  }
+
   function updateProfile(patch: Partial<LinkProfile>): void {
     setProfile((current) => ({
       ...current,
       ...patch,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     }));
   }
 
   function updateLink(id: string, patch: Partial<LinkItem>): void {
     updateProfile({
-      links: profile.links.map((link) => (
-        link.id === id ? { ...link, ...patch } : link
-      ))
+      links: profile.links.map((link) =>
+        link.id === id ? { ...link, ...patch } : link,
+      ),
     });
   }
 
@@ -408,89 +223,46 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
     updateProfile({
       theme: {
         ...profile.theme,
-        ...patch
-      }
+        ...patch,
+      },
     });
   }
 
   function addLink(): void {
-    updateProfile({
+    const nextProfile = {
+      ...profile,
       links: [
         ...profile.links,
         {
           id: crypto.randomUUID(),
           label: "New link",
-          url: "https://example.com"
-        }
-      ]
-    });
+          url: "https://example.com",
+        },
+      ],
+      updatedAt: new Date().toISOString(),
+    };
+    setProfile(nextProfile);
+    void autosaveProfile(nextProfile);
   }
 
   function removeLink(id: string): void {
-    updateProfile({
-      links: profile.links.filter((link) => link.id !== id)
-    });
+    const nextProfile = {
+      ...profile,
+      links: profile.links.filter((link) => link.id !== id),
+      updatedAt: new Date().toISOString(),
+    };
+    setProfile(nextProfile);
+    void autosaveProfile(nextProfile);
   }
 
-  function commitDragLinks(nextLinks: LinkItem[] | null): void {
-    dragLinksRef.current = nextLinks;
-    setDragLinks(nextLinks);
-  }
-
-  function onLinkDragStart(event: DragStartEvent): void {
-    setActiveDragLinkId(String(event.active.id));
-  }
-
-  function onLinkDragOver(event: DragOverEvent): void {
-    const { active, over } = event;
-    if (!over || active.id === over.id) {
-      commitDragLinks(null);
-      return;
-    }
-
-    const nextLinks = moveLinksById(profile.links, String(active.id), String(over.id));
-    commitDragLinks(nextLinks === profile.links ? null : nextLinks);
-  }
-
-  function clearLinkDrag(): void {
-    setActiveDragLinkId(null);
-    commitDragLinks(null);
-  }
-
-  function onLinkDragEnd(event: DragEndEvent): void {
-    const { active, over } = event;
-    const hasValidDrop = Boolean(event.over);
-
-    clearLinkDrag();
-
-    if (!hasValidDrop || !over) return;
-
-    const finalLinks = moveLinksById(profile.links, String(active.id), String(over.id));
-    if (finalLinks === profile.links) return;
-
-    setProfile((currentProfile) => ({
-      ...currentProfile,
+  function commitLinks(finalLinks: LinkItem[]): void {
+    const nextProfile = {
+      ...profile,
       links: finalLinks,
-      updatedAt: new Date().toISOString()
-    }));
-  }
-
-  async function onSave(): Promise<void> {
-    if (mode !== "backend") {
-      await writeLocalProfile(profile);
-      setStatus("Saved locally");
-      return;
-    }
-
-    try {
-      await saveProfile(profile);
-      await refreshProfileSummaries();
-      setStatus("Saved to backend");
-    } catch {
-      await writeLocalProfile(profile);
-      setMode("offline");
-      setStatus("Backend save failed, kept locally");
-    }
+      updatedAt: new Date().toISOString(),
+    };
+    setProfile(nextProfile);
+    void autosaveProfile(nextProfile);
   }
 
   async function onSelectProfile(handle: string): Promise<void> {
@@ -527,11 +299,36 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
     }
 
     try {
-      const asset = await saveLocalAsset(file);
-      updateProfile({ avatarAssetId: asset.id });
+      const avatarFile = await prepareAvatarFile(file);
+
+      if (mode === "backend") {
+        const avatarAssetId = await uploadAvatar(avatarFile);
+        const nextProfile = {
+          ...profile,
+          avatarAssetId,
+          updatedAt: new Date().toISOString(),
+        };
+        setProfile(nextProfile);
+        void autosaveProfile(nextProfile);
+        setStatus("Image uploaded");
+        return;
+      }
+
+      const asset = await saveLocalAsset(avatarFile);
+      const nextProfile = {
+        ...profile,
+        avatarAssetId: asset.id,
+        updatedAt: new Date().toISOString(),
+      };
+      setProfile(nextProfile);
+      void autosaveProfile(nextProfile);
       setStatus("Image saved locally");
     } catch {
-      setStatus("This browser cannot save local images");
+      setStatus(
+        mode === "backend"
+          ? "Image upload failed"
+          : "This browser cannot save local images",
+      );
     }
   }
 
@@ -548,21 +345,33 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
   }
 
   function openFullPreview(): void {
-    if (typeof window !== "undefined" && window.location.pathname !== "/admin/preview") {
-      window.history.pushState({ linkoutpostPreview: true }, "", "/admin/preview");
+    if (
+      typeof window !== "undefined" &&
+      window.location.pathname !== "/admin/preview"
+    ) {
+      window.history.pushState(
+        { linkoutpostPreview: true },
+        "",
+        "/admin/preview",
+      );
     }
     setFullPreviewOpen(true);
   }
 
   function closeFullPreview(): void {
-    if (typeof window !== "undefined" && window.location.pathname === "/admin/preview") {
+    if (
+      typeof window !== "undefined" &&
+      window.location.pathname === "/admin/preview"
+    ) {
       window.history.replaceState(null, "", "/admin");
     }
 
     setFullPreviewOpen(false);
   }
 
-  async function onHandleSetupSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
+  async function onHandleSetupSubmit(
+    event: React.FormEvent<HTMLFormElement>,
+  ): Promise<void> {
     event.preventDefault();
     const handle = normalizeHandle(handleDraft);
 
@@ -577,7 +386,7 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
     try {
       const nextProfile = createProfile({
         handle,
-        title: session.name ?? profile.title
+        title: profile.title,
       });
       await saveProfile(nextProfile);
       setProfile(nextProfile);
@@ -589,14 +398,22 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
         window.history.replaceState(null, "", "/admin");
       }
     } catch (error) {
-      setHandleSetupError(error instanceof Error ? error.message : "Handle create failed");
+      setHandleSetupError(
+        error instanceof Error ? error.message : "Handle create failed",
+      );
     } finally {
       setHandleSetupSaving(false);
     }
   }
 
   if (fullPreviewOpen) {
-    return <FullscreenProfilePreview onBack={closeFullPreview} profile={previewProfile} />;
+    return (
+      <FullscreenProfilePreview
+        allowLocalAssets={mode !== "backend"}
+        onBack={closeFullPreview}
+        profile={previewProfile}
+      />
+    );
   }
 
   return (
@@ -605,14 +422,18 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
         <button
           aria-controls="editor-sidebar"
           aria-expanded={mobileSidebarOpen}
-          aria-label={mobileSidebarOpen ? "Close editor sidebar" : "Open editor sidebar"}
+          aria-label={
+            mobileSidebarOpen ? "Close editor sidebar" : "Open editor sidebar"
+          }
           className="editor-mobile-menu-button"
           onClick={() => setMobileSidebarOpen((open) => !open)}
           type="button"
         >
           <Menu aria-hidden="true" size={24} />
         </button>
-        <a className="editor-mobile-brand" href="/">LinkOutpost</a>
+        <a className="editor-mobile-brand" href="/">
+          LinkOutpost
+        </a>
         <div className="editor-mobile-avatar" aria-label="Current user">
           {editorAvatarUrl ? (
             <img alt="" src={editorAvatarUrl} />
@@ -622,102 +443,22 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
         </div>
       </header>
 
-      <button
-        aria-hidden="true"
-        className={`editor-sidebar-backdrop${mobileSidebarOpen ? " is-visible" : ""}`}
-        onClick={() => setMobileSidebarOpen(false)}
-        tabIndex={-1}
-        type="button"
+      <EditorSidebar
+        accountMenuOpen={accountMenuOpen}
+        activePanel={activeEditorPanel}
+        avatarUrl={editorAvatarUrl}
+        mobileOpen={mobileSidebarOpen}
+        mode={mode}
+        onAccountMenuOpenChange={setAccountMenuOpen}
+        onCreateHandle={openNewHandleDialog}
+        onMobileOpenChange={setMobileSidebarOpen}
+        onPanelChange={setActiveEditorPanel}
+        onSelectProfile={(handle) => {
+          void onSelectProfile(handle);
+        }}
+        profile={profile}
+        profileSummaries={profileSummaries}
       />
-
-      <aside
-        className={`editor-sidebar${mobileSidebarOpen ? " is-open" : ""}`}
-        id="editor-sidebar"
-        aria-label="Editor navigation"
-      >
-        <div className="sidebar-account">
-          <UserCircle aria-hidden="true" size={22} />
-          {mode === "backend" ? (
-            <select
-              aria-label="Current handle"
-              className="handle-switcher"
-              onChange={(event) => {
-                void onSelectProfile(event.target.value);
-              }}
-              value={profile.handle}
-            >
-              {profileSummaries.length === 0 ? (
-                <option value={profile.handle}>{profile.handle || "your_handle"}</option>
-              ) : (
-                profileSummaries.map((summary) => (
-                  <option key={summary.handle} value={summary.handle}>
-                    {summary.handle}
-                  </option>
-                ))
-              )}
-            </select>
-          ) : (
-            <span>{profile.handle || "your_handle"}</span>
-          )}
-          {mode === "backend" && (
-            <button
-              aria-label="Create handle"
-              className="circle-icon-button sidebar-create-handle"
-              onClick={openNewHandleDialog}
-              title="Create handle"
-              type="button"
-            >
-              <Plus aria-hidden="true" size={16} />
-            </button>
-          )}
-          <Bell aria-hidden="true" className="sidebar-bell" size={18} />
-        </div>
-
-        <nav className="sidebar-nav" aria-label="Editor sections">
-          <button
-            className={activeEditorPanel === "profile" ? "active" : undefined}
-            onClick={() => {
-              setActiveEditorPanel("profile");
-              setMobileSidebarOpen(false);
-            }}
-            type="button"
-          >
-            <UserCircle aria-hidden="true" size={16} />
-            Profile
-          </button>
-          <button
-            className={activeEditorPanel === "links" ? "active" : undefined}
-            onClick={() => {
-              setActiveEditorPanel("links");
-              setMobileSidebarOpen(false);
-            }}
-            type="button"
-          >
-            <Plus aria-hidden="true" size={16} />
-            Links
-          </button>
-          <button
-            className={activeEditorPanel === "design" ? "active" : undefined}
-            onClick={() => {
-              setActiveEditorPanel("design");
-              setMobileSidebarOpen(false);
-            }}
-            type="button"
-          >
-            <Palette aria-hidden="true" size={16} />
-            Design
-          </button>
-        </nav>
-
-        <div className="sidebar-card">
-          <strong>{mode === "backend" ? "Backend mode" : "Local editor"}</strong>
-          <p>{status}</p>
-          <button className="primary-link" onClick={onSave} type="button">
-            <Save aria-hidden="true" size={16} />
-            Save
-          </button>
-        </div>
-      </aside>
 
       <div className="editor-pane">
         <section className="editor-toolbar">
@@ -729,7 +470,12 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
                 : "Links"}
           </h1>
           <div className="toolbar-actions">
-            <button aria-label="Settings" className="circle-icon-button" title="Settings" type="button">
+            <button
+              aria-label="Settings"
+              className="circle-icon-button"
+              title="Settings"
+              type="button"
+            >
               <Settings aria-hidden="true" size={18} />
             </button>
             {mode === "offline" && (
@@ -753,10 +499,6 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
                   <ExternalLink aria-hidden="true" size={16} />
                   View page
                 </a>
-                <a className="action-button" href="/api/logout">
-                  <LogOut aria-hidden="true" size={16} />
-                  Logout
-                </a>
               </>
             )}
           </div>
@@ -765,159 +507,36 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
         <div className="editor-scroll">
           <div className="editor-content">
             {activeEditorPanel === "profile" && (
-              <section className="profile-panel" aria-label="Profile form">
-                <div className="profile-editor-summary">
-                  <label className="profile-editor-avatar" title="Upload avatar">
-                    <span className="sr-only">Avatar image</span>
-                    <span className="profile-avatar-visual">
-                      {editorAvatarUrl ? (
-                        <img alt="" src={editorAvatarUrl} />
-                      ) : (
-                        <UserCircle aria-hidden="true" size={54} />
-                      )}
-                    </span>
-                    <span className="profile-avatar-action" aria-hidden="true">
-                      <Camera size={16} />
-                    </span>
-                    <input
-                      accept="image/*"
-                      onChange={(event) => {
-                        void onAvatarChange(event.currentTarget.files?.[0] ?? null);
-                        event.currentTarget.value = "";
-                      }}
-                      type="file"
-                    />
-                  </label>
-                  <div>
-                    <label>
-                      Handle
-                      <input
-                        value={profile.handle}
-                        onChange={(event) => {
-                          const handle = normalizeHandle(event.target.value);
-                          updateProfile({ handle });
-                        }}
-                      />
-                    </label>
-                    {isReservedPath(profile.handle) && (
-                      <p className="field-error">This handle is reserved.</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="profile-fields-grid">
-                  <label>
-                    Name
-                    <input
-                      value={profile.title}
-                      onChange={(event) => updateProfile({ title: event.target.value })}
-                    />
-                  </label>
-                  <label>
-                    Bio
-                    <textarea
-                      value={profile.bio}
-                      onChange={(event) => updateProfile({ bio: event.target.value })}
-                      rows={3}
-                    />
-                  </label>
-                </div>
-              </section>
+              <ProfilePanel
+                avatarUrl={editorAvatarUrl}
+                mode={mode}
+                onAvatarChange={(file) => {
+                  void onAvatarChange(file);
+                }}
+                onSave={saveCurrentProfile}
+                onUpdate={updateProfile}
+                profile={profile}
+              />
             )}
 
             {activeEditorPanel === "links" && (
-              <>
-                <button className="add-link-button" onClick={addLink} type="button">
-                  <Plus aria-hidden="true" size={20} />
-                  Add
-                </button>
-
-                <DndContext
-                  collisionDetection={closestCenter}
-                  onDragCancel={clearLinkDrag}
-                  onDragEnd={onLinkDragEnd}
-                  onDragOver={onLinkDragOver}
-                  onDragStart={onLinkDragStart}
-                  sensors={sensors}
-                >
-                  <SortableContext
-                    items={profile.links.map((link) => link.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <section className="link-list" aria-label="Links">
-                      {profile.links.map((link) => (
-                        <SortableLinkRow
-                          active={activeDragLinkId === link.id}
-                          key={link.id}
-                          link={link}
-                          onRemove={removeLink}
-                          onUpdate={updateLink}
-                        />
-                      ))}
-                    </section>
-                  </SortableContext>
-                </DndContext>
-              </>
+              <LinksPanel
+                links={profile.links}
+                onAdd={addLink}
+                onCommitLinks={commitLinks}
+                onPreviewLinksChange={setDragLinks}
+                onRemove={removeLink}
+                onSave={saveCurrentProfile}
+                onUpdate={updateLink}
+              />
             )}
 
             {activeEditorPanel === "design" && (
-              <section className="design-panel" aria-label="Style form">
-                <div className="theme-grid">
-                  <label>
-                    Background
-                    <input
-                      type="color"
-                      value={profile.theme.backgroundColor}
-                      onChange={(event) => updateTheme({ backgroundColor: event.target.value })}
-                    />
-                  </label>
-                  <label>
-                    Text
-                    <input
-                      type="color"
-                      value={profile.theme.textColor}
-                      onChange={(event) => updateTheme({ textColor: event.target.value })}
-                    />
-                  </label>
-                  <label>
-                    Accent
-                    <input
-                      type="color"
-                      value={profile.theme.accentColor}
-                      onChange={(event) => updateTheme({ accentColor: event.target.value })}
-                    />
-                  </label>
-                  <label>
-                    Button
-                    <input
-                      type="color"
-                      value={profile.theme.buttonBackgroundColor}
-                      onChange={(event) => updateTheme({ buttonBackgroundColor: event.target.value })}
-                    />
-                  </label>
-                  <label>
-                    Button text
-                    <input
-                      type="color"
-                      value={profile.theme.buttonTextColor}
-                      onChange={(event) => updateTheme({ buttonTextColor: event.target.value })}
-                    />
-                  </label>
-                  <label>
-                    Font
-                    <select
-                      value={profile.theme.fontFamily}
-                      onChange={(event) => updateTheme({ fontFamily: event.target.value })}
-                    >
-                      {fontOptions.map((option) => (
-                        <option key={option.label} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              </section>
+              <DesignPanel
+                onSave={saveCurrentProfile}
+                onUpdateTheme={updateTheme}
+                profile={profile}
+              />
             )}
           </div>
         </div>
@@ -925,32 +544,22 @@ export function EditorPage({ initialSession }: { initialSession: SessionState })
 
       <hr className="editor-divider" />
 
-      <ProfilePreview profile={previewProfile} />
+      <ProfilePreview
+        allowLocalAssets={mode !== "backend"}
+        profile={previewProfile}
+      />
 
       {handleSetupOpen && (
-        <div className="modal-backdrop" role="presentation">
-          <section aria-labelledby="handle-setup-title" className="modal-card" role="dialog" aria-modal="true">
-            <form onSubmit={onHandleSetupSubmit}>
-              <h2 id="handle-setup-title">Create a handle</h2>
-              <p>Each handle has its own public LinkOutpost page.</p>
-              <label>
-                Handle
-                <input
-                  autoFocus
-                  value={handleDraft}
-                  onChange={(event) => {
-                    setHandleDraft(normalizeHandle(event.target.value));
-                    setHandleSetupError(null);
-                  }}
-                />
-              </label>
-              {handleSetupError && <p className="field-error">{handleSetupError}</p>}
-              <button className="primary-link" disabled={handleSetupSaving} type="submit">
-                {handleSetupSaving ? "Creating" : "Create handle"}
-              </button>
-            </form>
-          </section>
-        </div>
+        <HandleSetupDialog
+          error={handleSetupError}
+          handleDraft={handleDraft}
+          saving={handleSetupSaving}
+          onDraftChange={setHandleDraft}
+          onErrorClear={() => setHandleSetupError(null)}
+          onSubmit={(event) => {
+            void onHandleSetupSubmit(event);
+          }}
+        />
       )}
     </main>
   );

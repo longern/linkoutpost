@@ -82,6 +82,25 @@ npx wrangler d1 migrations apply linkoutpost --local
 npx wrangler d1 migrations apply linkoutpost --remote
 ```
 
+## File storage setup
+
+Backend-mode uploaded and generated files, including avatar uploads, are stored in R2. Create a bucket:
+
+```bash
+npx wrangler r2 bucket create linkoutpost-files
+```
+
+Add the binding to `wrangler.jsonc`:
+
+```jsonc
+"r2_buckets": [
+  {
+    "binding": "BUCKET",
+    "bucket_name": "linkoutpost-files"
+  }
+]
+```
+
 ## Development
 
 ```bash

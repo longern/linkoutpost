@@ -1,7 +1,7 @@
 import { EditorPage } from "./pages/EditorPage";
 import { HomePage } from "./pages/HomePage";
 import { SignInPage } from "./pages/SignInPage";
-import { isReservedPath, normalizeHandle } from "./profile";
+import { getProfileAvatarUrl, isReservedPath, normalizeHandle } from "./profile";
 import { ProfilePage } from "./PublicProfile";
 import type { InitialState } from "./types";
 
@@ -29,7 +29,12 @@ export function App({ initialState }: AppProps) {
     return <ProfilePage profile={null} />;
   }
 
-  return <ProfilePage profile={initialState.profile} />;
+  return (
+    <ProfilePage
+      avatarUrl={getProfileAvatarUrl(initialState.profile)}
+      profile={initialState.profile}
+    />
+  );
 }
 
 export type { InitialState, ProfileSummary, SessionState } from "./types";

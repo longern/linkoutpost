@@ -40,3 +40,25 @@ export async function saveProfile(profile: LinkProfile): Promise<void> {
     throw new Error(payload.error ?? "Backend save failed");
   }
 }
+
+export async function uploadAvatar(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.set("avatar", file);
+
+  const response = await fetch("/api/profile/avatar", {
+    body: formData,
+    method: "POST"
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({ error: "Avatar upload failed" })) as {
+      error?: string;
+    };
+    throw new Error(payload.error ?? "Avatar upload failed");
+  }
+
+  const payload = await response.json() as {
+    avatarAssetId: string;
+  };
+  return payload.avatarAssetId;
+}

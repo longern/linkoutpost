@@ -8,7 +8,6 @@ export default defineConfig({
   plugins: [
     vanillaExtractPlugin(),
     react(),
-    cloudflare({ configPath: "wrangler.deploy.jsonc" }),
   ],
   server: {
     port: 10957,
