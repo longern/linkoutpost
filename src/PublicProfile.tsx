@@ -3,11 +3,10 @@ import { Copy, Share2, User, X } from "lucide-react";
 import type { LinkProfile, ProfileTheme } from "./profile";
 import {
   copyProfileUrl,
-  attachProfileShareDrawerGesture,
   getProfileShareCapabilities,
   profileShareAttributes,
   shareProfile,
-  type ProfileShareCapabilities
+  type ProfileShareCapabilities,
 } from "./profileShare";
 
 function themeStyle(theme: ProfileTheme): CSSProperties {
@@ -17,14 +16,14 @@ function themeStyle(theme: ProfileTheme): CSSProperties {
     "--profile-button-background-color": theme.buttonBackgroundColor,
     "--profile-button-text-color": theme.buttonTextColor,
     "--profile-font-family": theme.fontFamily,
-    "--profile-text-color": theme.textColor
+    "--profile-text-color": theme.textColor,
   } as CSSProperties;
 }
 
 export function ProfilePage({
   avatarUrl,
   profile,
-  shareEnabled = true
+  shareEnabled = true,
 }: {
   avatarUrl?: string | null;
   profile: LinkProfile | null;
@@ -34,7 +33,7 @@ export function ProfilePage({
     return (
       <main className="public-page">
         <section className="public-profile">
-          <p className="eyebrow">Link Outpost</p>
+          <p className="eyebrow">LinkOutpost</p>
           <h1 className="profile-title">Profile not found</h1>
           <p>This handle does not have a published page yet.</p>
         </section>
@@ -45,25 +44,19 @@ export function ProfilePage({
   const currentProfile = profile;
   const shareOverlayRef = useRef<HTMLDivElement | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
-  const [shareCapabilities, setShareCapabilities] = useState<ProfileShareCapabilities>({
-    canCopy: false,
-    canShare: false
-  });
-  const shareUrl = typeof window === "undefined"
-    ? `/${currentProfile.handle}`
-    : `${window.location.origin}/${currentProfile.handle}`;
+  const [shareCapabilities, setShareCapabilities] =
+    useState<ProfileShareCapabilities>({
+      canCopy: false,
+      canShare: false,
+    });
+  const shareUrl =
+    typeof window === "undefined"
+      ? `/${currentProfile.handle}`
+      : `${window.location.origin}/${currentProfile.handle}`;
 
   useEffect(() => {
     setShareCapabilities(getProfileShareCapabilities());
   }, []);
-
-  useEffect(() => {
-    if (!shareEnabled || !shareOverlayRef.current) return undefined;
-
-    return attachProfileShareDrawerGesture(shareOverlayRef.current, {
-      onClose: () => setShareOpen(false)
-    });
-  }, [shareEnabled]);
 
   function onSystemShare(): void {
     if (!shareCapabilities.canShare) return;
@@ -71,7 +64,7 @@ export function ProfilePage({
     void shareProfile({
       text: currentProfile.bio,
       title: currentProfile.title,
-      url: shareUrl
+      url: shareUrl,
     });
   }
 
@@ -87,9 +80,9 @@ export function ProfilePage({
           type="button"
           {...(shareEnabled
             ? profileShareAttributes({
-              text: currentProfile.bio,
-              title: currentProfile.title
-            })
+                text: currentProfile.bio,
+                title: currentProfile.title,
+              })
             : {})}
         >
           <Share2 aria-hidden="true" size={18} strokeWidth={2.2} />
@@ -119,65 +112,68 @@ export function ProfilePage({
           ))}
         </div>
         {shareEnabled && (
-        <div
-          aria-hidden={!shareOpen}
-          className={`profile-share-overlay${shareOpen ? " is-open" : ""}`}
-          data-profile-share-overlay=""
-          onClick={(event) => {
-            if (event.target === event.currentTarget) setShareOpen(false);
-          }}
-          ref={shareOverlayRef}
-        >
           <div
-            aria-modal="true"
-            className="profile-share-panel"
-            data-profile-share-panel=""
-            role="dialog"
+            aria-hidden={!shareOpen}
+            className={`profile-share-overlay${shareOpen ? " is-open" : ""}`}
+            data-profile-share-overlay=""
+            onClick={(event) => {
+              if (event.target === event.currentTarget) setShareOpen(false);
+            }}
+            ref={shareOverlayRef}
           >
-            <div className="profile-share-header">
-              <h2 className="profile-share-title">Share this page</h2>
-              <button
-                aria-label="Close share dialog"
-                className="circle-icon-button"
-                data-profile-share-close=""
-                onClick={() => setShareOpen(false)}
-                type="button"
-              >
-                <X aria-hidden="true" size={18} />
-              </button>
-            </div>
-            <div className="profile-share-url">
-              <span className="profile-share-url-text" data-profile-share-url-text="">
-                {shareUrl}
-              </span>
-            </div>
-            <div className="profile-share-actions">
-              <button
-                className="profile-share-dialog profile-share-copy-button"
-                data-profile-share-copy=""
-                disabled={!shareCapabilities.canCopy}
-                onClick={() => {
-                  if (!shareCapabilities.canCopy) return;
-                  void copyProfileUrl(shareUrl);
-                }}
-                type="button"
-              >
-                <Copy aria-hidden="true" size={16} />
-                Copy link
-              </button>
-              <button
-                className="profile-share-dialog profile-share-system-button"
-                data-profile-share-system=""
-                disabled={!shareCapabilities.canShare}
-                onClick={onSystemShare}
-                type="button"
-              >
-                <Share2 aria-hidden="true" size={16} />
-                Share
-              </button>
+            <div
+              aria-modal="true"
+              className="profile-share-panel"
+              data-profile-share-panel=""
+              role="dialog"
+            >
+              <div className="profile-share-header">
+                <h2 className="profile-share-title">Share this page</h2>
+                <button
+                  aria-label="Close share dialog"
+                  className="circle-icon-button"
+                  data-profile-share-close=""
+                  onClick={() => setShareOpen(false)}
+                  type="button"
+                >
+                  <X aria-hidden="true" size={18} />
+                </button>
+              </div>
+              <div className="profile-share-url">
+                <span
+                  className="profile-share-url-text"
+                  data-profile-share-url-text=""
+                >
+                  {shareUrl}
+                </span>
+              </div>
+              <div className="profile-share-actions">
+                <button
+                  className="profile-share-dialog profile-share-copy-button"
+                  data-profile-share-copy=""
+                  disabled={!shareCapabilities.canCopy}
+                  onClick={() => {
+                    if (!shareCapabilities.canCopy) return;
+                    void copyProfileUrl(shareUrl);
+                  }}
+                  type="button"
+                >
+                  <Copy aria-hidden="true" size={16} />
+                  Copy link
+                </button>
+                <button
+                  className="profile-share-dialog profile-share-system-button"
+                  data-profile-share-system=""
+                  disabled={!shareCapabilities.canShare}
+                  onClick={onSystemShare}
+                  type="button"
+                >
+                  <Share2 aria-hidden="true" size={16} />
+                  Share
+                </button>
+              </div>
             </div>
           </div>
-        </div>
         )}
       </section>
     </main>

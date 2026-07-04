@@ -489,13 +489,13 @@ export function EditorPage({
                 <Eye aria-hidden="true" size={18} />
               </button>
             )}
-            <button className="action-button" onClick={onExport} type="button">
+            <button className="button-secondary" onClick={onExport} type="button">
               <Download aria-hidden="true" size={16} />
               Export ZIP
             </button>
             {mode === "backend" && (
               <>
-                <a className="action-button" href={profileUrl}>
+                <a className="button-secondary" href={profileUrl}>
                   <ExternalLink aria-hidden="true" size={16} />
                   View page
                 </a>

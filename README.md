@@ -1,4 +1,4 @@
-# Link Outpost
+# LinkOutpost
 
 Cloudflare Workers + React app for personal link pages.
 

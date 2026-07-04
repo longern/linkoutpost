@@ -5,7 +5,7 @@ import { readLocalAsset } from "./localEditorStore";
 import { getPublicProfileCssText } from "./PublicProfileCssText";
 import { ProfilePage } from "./PublicProfile";
 import { getStaticProfileRuntimeScript } from "./profileShare";
-import type { LinkProfile } from "./profile";
+import { getProfileDocumentTitle, type LinkProfile } from "./profile";
 import appCss from "./styles.css?inline";
 
 function escapeHtml(value: string): string {
@@ -44,7 +44,7 @@ export async function renderStaticHtml(profile: LinkProfile, avatarHref: string 
     "<head>",
     '<meta charset="UTF-8">',
     '<meta content="width=device-width, initial-scale=1.0" name="viewport">',
-    `<title>${escapeHtml(profile.title)}</title>`,
+    `<title>${escapeHtml(getProfileDocumentTitle(profile))}</title>`,
     '<link href="./styles.css" rel="stylesheet">',
     "</head>",
     `<body>${profileMarkup}<script src="./profile.js" defer></script></body>`,

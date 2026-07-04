@@ -48,7 +48,7 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
               with hosted handles when you are ready.
             </p>
             <div className="home-hero-actions">
-              <a className="primary-link" href="/admin">Open editor</a>
+              <a className="button-primary" href="/admin">Open editor</a>
               <a className="home-secondary-link" href="/signin">Sign in</a>
             </div>
           </div>

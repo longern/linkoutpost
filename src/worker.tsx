@@ -1,6 +1,12 @@
 import { renderToReadableStream } from "react-dom/server.browser";
 import { App, type InitialState, type ProfileSummary, type SessionState } from "./App";
-import { createProfile, isReservedPath, normalizeHandle, type LinkProfile } from "./profile";
+import {
+  createProfile,
+  getProfileDocumentTitle,
+  isReservedPath,
+  normalizeHandle,
+  type LinkProfile
+} from "./profile";
 
 export interface Env {
   ASSETS: Fetcher;
@@ -24,6 +30,15 @@ const ssrHeaders = {
 
 function serializeInitialState(state: InitialState): string {
   return JSON.stringify(state).replace(/</g, "\\u003c");
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 type Provider = "google" | "twitter";
@@ -687,11 +702,16 @@ async function renderHandlePage(request: Request, env: Env): Promise<Response> {
 
   const html = await shell.text();
 
-  return new Response(
-    html.replace(
+  const documentTitle = escapeHtml(getProfileDocumentTitle(initialState.profile));
+  const renderedHtml = html
+    .replace(/<title>.*?<\/title>/, `<title>${documentTitle}</title>`)
+    .replace(
       '<div id="app"></div>',
       `<div id="app">${appHtml}</div><script>window.__LINKOUTPOST_INITIAL_STATE__=${serializeInitialState(initialState)}</script>`
-    ),
+    );
+
+  return new Response(
+    renderedHtml,
     {
       headers: ssrHeaders,
       status: initialState.profile ? 200 : 404

@@ -43,9 +43,8 @@ select {
   font: inherit;
 }
 
-button,
-.primary-link,
-.toolbar-actions a {
+.button-primary,
+.button-secondary {
   -webkit-tap-highlight-color: transparent;
   min-height: 40px;
   border: 1px solid var(--brand-border-strong);
@@ -65,11 +64,16 @@ select {
   -webkit-tap-highlight-color: transparent;
 }
 
-.primary-link {
+a,
+button {
+  cursor: pointer;
+}
+
+.button-primary {
   gap: 8px;
 }
 
-.action-button {
+.button-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -117,9 +121,8 @@ select {
   }
 }
 
-button:hover,
-.primary-link:hover,
-.toolbar-actions a:hover {
+.button-primary:hover,
+.button-secondary:hover {
   border-color: var(--brand-accent);
   color: var(--brand-accent-hover);
 }
@@ -505,11 +508,11 @@ button:hover,
   color: #526070;
 }
 
-.modal-card .primary-link {
+.modal-card .button-primary {
   width: 100%;
 }
 
-.modal-card .primary-link:disabled {
+.modal-card .button-primary:disabled {
   cursor: wait;
   opacity: 0.68;
 }
@@ -540,7 +543,7 @@ h2 {
   font-size: 2rem;
 }
 
-.primary-link {
+.button-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -548,7 +551,7 @@ h2 {
   color: #ffffff;
 }
 
-.primary-link:hover {
+.button-primary:hover {
   color: #ffffff;
 }
 
@@ -606,6 +609,7 @@ h2 {
 
 .editor-sidebar-backdrop {
   display: none;
+  cursor: default;
 }
 
 .editor-shell {
@@ -721,9 +725,7 @@ h2 {
   margin: 0;
 }
 
-.account-menu button,
-.account-menu a,
-.account-menu span {
+.account-menu-item {
   min-height: 36px;
   width: 100%;
   display: flex;
@@ -738,9 +740,8 @@ h2 {
   text-decoration: none;
 }
 
-.account-menu button:hover,
-.account-menu a:hover,
-.account-menu button.is-active {
+.account-menu-item:hover,
+.account-menu-item.is-active {
   background: #f4f3f0;
   color: var(--brand-accent);
 }
@@ -763,8 +764,7 @@ h2 {
   font-size: 0.78rem;
 }
 
-.sidebar-nav a,
-.sidebar-nav button {
+.sidebar-nav-item {
   min-height: 36px;
   width: 100%;
   display: flex;
@@ -781,14 +781,12 @@ h2 {
 }
 
 @media (max-width: 860px) {
-  .sidebar-nav a,
-  .sidebar-nav button {
+  .sidebar-nav-item {
     min-height: 48px;
   }
 }
 
-.sidebar-nav a.active,
-.sidebar-nav button.active {
+.sidebar-nav-item.active {
   background: #e7e5e0;
   color: var(--brand-accent);
 }

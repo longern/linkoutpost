@@ -40,7 +40,7 @@ export function HandleSetupDialog({
             />
           </label>
           {error && <p className="field-error">{error}</p>}
-          <button className="primary-link" disabled={saving} type="submit">
+          <button className="button-primary" disabled={saving} type="submit">
             {saving ? "Creating" : "Create handle"}
           </button>
         </form>

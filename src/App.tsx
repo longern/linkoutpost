@@ -1,7 +1,13 @@
 import { EditorPage } from "./pages/EditorPage";
 import { HomePage } from "./pages/HomePage";
 import { SignInPage } from "./pages/SignInPage";
-import { getProfileAvatarUrl, isReservedPath, normalizeHandle } from "./profile";
+import { useEffect } from "react";
+import {
+  getProfileAvatarUrl,
+  getProfileDocumentTitle,
+  isReservedPath,
+  normalizeHandle
+} from "./profile";
 import { ProfilePage } from "./PublicProfile";
 import type { InitialState } from "./types";
 
@@ -11,6 +17,10 @@ type AppProps = {
 
 export function App({ initialState }: AppProps) {
   const pathname = initialState.pathname;
+
+  useEffect(() => {
+    document.title = getProfileDocumentTitle(initialState.profile);
+  }, [initialState.profile]);
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     return <EditorPage initialSession={initialState.session} />;

@@ -127,8 +127,12 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     selector: ".bio",
     rule: {
       color: "#526070",
-      margin: "16px 0 28px",
+      margin: "16px auto 28px",
+      width: "fit-content",
       maxWidth: "58ch",
+      overflowWrap: "anywhere",
+      textAlign: "left",
+      whiteSpace: "pre-wrap",
     },
   },
   {
@@ -254,27 +258,6 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".profile-share-panel.is-dragging",
-    rule: {
-      transition: "none",
-    },
-  },
-  {
-    selector: ".profile-share-panel::before",
-    rule: {
-      background: "rgb(16 24 39 / 18%)",
-      borderRadius: 999,
-      content: '""',
-      display: "none",
-      height: 4,
-      left: "50%",
-      position: "absolute",
-      top: 6,
-      transform: "translateX(-50%)",
-      width: 36,
-    },
-  },
-  {
     selector: ".profile-share-overlay.is-open .profile-share-panel",
     rule: {
       opacity: 1,
@@ -376,7 +359,6 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
         "(hover: hover) and (pointer: fine)": {
           background:
             "color-mix(in srgb, var(--profile-accent-color, var(--brand-accent, #B64222)), black 8%)",
-          color: "#ffffff",
         },
       },
     },
@@ -403,50 +385,6 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".profile-share-overlay",
-    rule: {
-      "@media": {
-        "(max-width: 519px)": {
-          alignItems: "flex-end",
-          padding: 0,
-        },
-      },
-    },
-  },
-  {
-    selector: ".profile-share-panel",
-    rule: {
-      "@media": {
-        "(max-width: 519px)": {
-          borderRadius: "22px 22px 0 0",
-          paddingBottom: "calc(18px + env(safe-area-inset-bottom, 0px))",
-          transform: "translateY(100%)",
-          width: "100%",
-        },
-      },
-    },
-  },
-  {
-    selector: ".profile-share-overlay.is-open .profile-share-panel",
-    rule: {
-      "@media": {
-        "(max-width: 519px)": {
-          transform: "translateY(var(--profile-share-drag-y, 0px))",
-        },
-      },
-    },
-  },
-  {
-    selector: ".profile-share-panel::before",
-    rule: {
-      "@media": {
-        "(max-width: 519px)": {
-          display: "block",
-        },
-      },
-    },
-  },
-  {
     selector: ".public-page",
     rule: {
       "@media": {
@@ -456,36 +394,6 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
           padding: "40px 0 0",
         },
       },
-    },
-  },
-  {
-    selector: ".preview-frame .profile-share-overlay",
-    rule: {
-      alignItems: "flex-end",
-      padding: 0,
-    },
-  },
-  {
-    selector: ".preview-frame .profile-share-panel",
-    rule: {
-      borderRadius: "22px 22px 0 0",
-      paddingBottom: "calc(18px + env(safe-area-inset-bottom, 0px))",
-      paddingTop: 22,
-      transform: "translateY(100%)",
-      width: "100%",
-    },
-  },
-  {
-    selector: ".preview-frame .profile-share-panel::before",
-    rule: {
-      display: "block",
-    },
-  },
-  {
-    selector:
-      ".preview-frame .profile-share-overlay.is-open .profile-share-panel",
-    rule: {
-      transform: "translateY(var(--profile-share-drag-y, 0px))",
     },
   },
   {

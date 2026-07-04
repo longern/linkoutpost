@@ -20,16 +20,6 @@ type QueryRoot = {
   querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E>;
 };
 
-type DrawerGestureOptions = {
-  onClose?: (overlay: HTMLElement) => void;
-};
-
-const PROFILE_SHARE_DRAWER_MEDIA = "(max-width: 519px)";
-const PROFILE_SHARE_DRAG_CLOSE_DISTANCE = 86;
-const PROFILE_SHARE_DRAG_CLOSE_VELOCITY = 0.75;
-const PROFILE_SHARE_DRAG_FLICK_DISTANCE = 44;
-const PROFILE_SHARE_DRAG_CLICK_TOLERANCE = 6;
-
 export function getProfileShareCapabilities(): ProfileShareCapabilities {
   const browserNavigator = typeof navigator === "undefined"
     ? null
@@ -106,112 +96,6 @@ function closeShareDialog(overlay: HTMLElement): void {
   overlay.setAttribute("aria-hidden", "true");
 }
 
-function isProfileShareDrawer(overlay: HTMLElement): boolean {
-  return Boolean(
-    overlay.closest(".preview-frame") ||
-      (typeof window !== "undefined" &&
-        window.matchMedia(PROFILE_SHARE_DRAWER_MEDIA).matches)
-  );
-}
-
-function setProfileSharePanelDrag(panel: HTMLElement, y: number): void {
-  panel.style.setProperty("--profile-share-drag-y", `${Math.max(0, y)}px`);
-}
-
-function resetProfileSharePanelDrag(panel: HTMLElement): void {
-  panel.classList.remove("is-dragging");
-  panel.style.removeProperty("--profile-share-drag-y");
-}
-
-export function attachProfileShareDrawerGesture(
-  overlay: HTMLElement,
-  options: DrawerGestureOptions = {}
-): () => void {
-  const panel = overlay.querySelector<HTMLElement>("[data-profile-share-panel]");
-  if (!panel) return () => {};
-  const sharePanel = panel;
-
-  let pointerId: number | null = null;
-  let startY = 0;
-  let currentY = 0;
-  let startTime = 0;
-  let didDrag = false;
-
-  function onPointerDown(event: PointerEvent): void {
-    if (!overlay.classList.contains("is-open") || !isProfileShareDrawer(overlay)) return;
-    if (event.button !== 0 || !event.isPrimary) return;
-    if ((event.target as HTMLElement).closest("button, a, input, textarea, select")) return;
-
-    pointerId = event.pointerId;
-    startY = event.clientY;
-    currentY = event.clientY;
-    startTime = performance.now();
-    didDrag = false;
-    sharePanel.classList.add("is-dragging");
-    sharePanel.setPointerCapture(event.pointerId);
-  }
-
-  function onPointerMove(event: PointerEvent): void {
-    if (event.pointerId !== pointerId) return;
-
-    currentY = event.clientY;
-    const deltaY = Math.max(0, currentY - startY);
-    if (deltaY > PROFILE_SHARE_DRAG_CLICK_TOLERANCE) didDrag = true;
-    setProfileSharePanelDrag(sharePanel, deltaY);
-  }
-
-  function finishDrag(event: PointerEvent): void {
-    if (event.pointerId !== pointerId) return;
-
-    const deltaY = Math.max(0, currentY - startY);
-    const elapsed = Math.max(1, performance.now() - startTime);
-    const velocity = deltaY / elapsed;
-    const shouldClose =
-      deltaY >= PROFILE_SHARE_DRAG_CLOSE_DISTANCE ||
-      (deltaY >= PROFILE_SHARE_DRAG_FLICK_DISTANCE &&
-        velocity >= PROFILE_SHARE_DRAG_CLOSE_VELOCITY);
-
-    pointerId = null;
-    if (sharePanel.hasPointerCapture(event.pointerId)) {
-      sharePanel.releasePointerCapture(event.pointerId);
-    }
-
-    if (shouldClose) {
-      resetProfileSharePanelDrag(sharePanel);
-      if (options.onClose) {
-        options.onClose(overlay);
-      } else {
-        closeShareDialog(overlay);
-      }
-      return;
-    }
-
-    resetProfileSharePanelDrag(sharePanel);
-  }
-
-  function onClickCapture(event: MouseEvent): void {
-    if (!didDrag) return;
-    event.preventDefault();
-    event.stopPropagation();
-    didDrag = false;
-  }
-
-  sharePanel.addEventListener("pointerdown", onPointerDown);
-  sharePanel.addEventListener("pointermove", onPointerMove);
-  sharePanel.addEventListener("pointerup", finishDrag);
-  sharePanel.addEventListener("pointercancel", finishDrag);
-  sharePanel.addEventListener("click", onClickCapture, true);
-
-  return () => {
-    sharePanel.removeEventListener("pointerdown", onPointerDown);
-    sharePanel.removeEventListener("pointermove", onPointerMove);
-    sharePanel.removeEventListener("pointerup", finishDrag);
-    sharePanel.removeEventListener("pointercancel", finishDrag);
-    sharePanel.removeEventListener("click", onClickCapture, true);
-    resetProfileSharePanelDrag(sharePanel);
-  };
-}
-
 export function attachProfileShareButtons(root: QueryRoot = document): void {
   const capabilities = getProfileShareCapabilities();
   const buttons = root.querySelectorAll<HTMLElement>("[data-profile-share-button]");
@@ -224,7 +108,6 @@ export function attachProfileShareButtons(root: QueryRoot = document): void {
 
   root.querySelectorAll<HTMLElement>("[data-profile-share-overlay]").forEach((overlay) => {
     setShareDialogUrl(overlay, window.location.href);
-    attachProfileShareDrawerGesture(overlay);
 
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay) closeShareDialog(overlay);
@@ -276,11 +159,6 @@ export function profileShareAttributes(data: ProfileShareData): Record<string, s
 
 export function getStaticProfileRuntimeScript(): string {
   return [
-    `const PROFILE_SHARE_DRAWER_MEDIA = ${JSON.stringify(PROFILE_SHARE_DRAWER_MEDIA)};`,
-    `const PROFILE_SHARE_DRAG_CLOSE_DISTANCE = ${PROFILE_SHARE_DRAG_CLOSE_DISTANCE};`,
-    `const PROFILE_SHARE_DRAG_CLOSE_VELOCITY = ${PROFILE_SHARE_DRAG_CLOSE_VELOCITY};`,
-    `const PROFILE_SHARE_DRAG_FLICK_DISTANCE = ${PROFILE_SHARE_DRAG_FLICK_DISTANCE};`,
-    `const PROFILE_SHARE_DRAG_CLICK_TOLERANCE = ${PROFILE_SHARE_DRAG_CLICK_TOLERANCE};`,
     getProfileShareCapabilities.toString(),
     shareProfile.toString(),
     copyProfileUrl.toString(),
@@ -288,10 +166,6 @@ export function getStaticProfileRuntimeScript(): string {
     setShareDialogUrl.toString(),
     openShareDialog.toString(),
     closeShareDialog.toString(),
-    isProfileShareDrawer.toString(),
-    setProfileSharePanelDrag.toString(),
-    resetProfileSharePanelDrag.toString(),
-    attachProfileShareDrawerGesture.toString(),
     attachProfileShareButtons.toString(),
     'attachProfileShareButtons(document);'
   ].join("\n\n");

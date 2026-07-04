@@ -168,7 +168,7 @@ export function LinksPanel({
 
   return (
     <>
-      <button className="add-link-button" onClick={onAdd} type="button">
+      <button className="button-primary add-link-button" onClick={onAdd} type="button">
         <Plus aria-hidden="true" size={20} />
         Add
       </button>

@@ -89,7 +89,7 @@ export function EditorSidebar({
                     ).map((summary) => (
                       <li key={summary.handle} role="none">
                         <button
-                          className={summary.handle === profile.handle ? "is-active" : undefined}
+                          className={`account-menu-item${summary.handle === profile.handle ? " is-active" : ""}`}
                           onClick={() => {
                             onAccountMenuOpenChange(false);
                             onSelectProfile(summary.handle);
@@ -103,6 +103,7 @@ export function EditorSidebar({
                     ))}
                     <li role="none">
                       <button
+                        className="account-menu-item"
                         onClick={() => {
                           onAccountMenuOpenChange(false);
                           onCreateHandle();
@@ -115,7 +116,7 @@ export function EditorSidebar({
                     </li>
                     <li aria-hidden="true" className="account-menu-divider" role="separator" />
                     <li role="none">
-                      <a href="/api/logout" role="menuitem">
+                      <a className="account-menu-item" href="/api/logout" role="menuitem">
                         Logout
                       </a>
                     </li>
@@ -123,7 +124,9 @@ export function EditorSidebar({
                 )}
                 {mode !== "backend" && (
                   <li role="none">
-                    <span role="menuitem">@{profile.handle || "your_handle"}</span>
+                    <span className="account-menu-item" role="menuitem">
+                      @{profile.handle || "your_handle"}
+                    </span>
                   </li>
                 )}
               </ul>
@@ -133,7 +136,7 @@ export function EditorSidebar({
 
         <nav className="sidebar-nav" aria-label="Editor sections">
           <button
-            className={activePanel === "profile" ? "active" : undefined}
+            className={`sidebar-nav-item${activePanel === "profile" ? " active" : ""}`}
             onClick={() => selectPanel("profile")}
             type="button"
           >
@@ -141,7 +144,7 @@ export function EditorSidebar({
             Profile
           </button>
           <button
-            className={activePanel === "links" ? "active" : undefined}
+            className={`sidebar-nav-item${activePanel === "links" ? " active" : ""}`}
             onClick={() => selectPanel("links")}
             type="button"
           >
@@ -149,7 +152,7 @@ export function EditorSidebar({
             Links
           </button>
           <button
-            className={activePanel === "design" ? "active" : undefined}
+            className={`sidebar-nav-item${activePanel === "design" ? " active" : ""}`}
             onClick={() => selectPanel("design")}
             type="button"
           >
