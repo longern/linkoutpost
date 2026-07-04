@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, Layers3, LockKeyhole, ServerCog } from "lucide-react";
+import { FaDownload, FaLayerGroup, FaLock, FaServer } from "react-icons/fa6";
 import { loadSession } from "../apiClient";
 import { SiteTopbar } from "../components/SiteTopbar";
 import { siteTitle } from "../siteConfig";
@@ -62,22 +62,22 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
           </div>
           <div className="home-feature-grid">
             <article className="home-feature">
-              <LockKeyhole aria-hidden="true" size={20} />
+              <FaLock aria-hidden="true" size={20} />
               <h3>Works before login</h3>
               <p>Edit with browser-local data when the backend is unavailable or you do not want an account yet.</p>
             </article>
             <article className="home-feature">
-              <Download aria-hidden="true" size={20} />
+              <FaDownload aria-hidden="true" size={20} />
               <h3>Exports a real site</h3>
               <p>Download a static ZIP that renders the same public page without depending on {siteTitle}.</p>
             </article>
             <article className="home-feature">
-              <Layers3 aria-hidden="true" size={20} />
+              <FaLayerGroup aria-hidden="true" size={20} />
               <h3>Multiple handles</h3>
               <p>Use one account to manage separate pages for projects, profiles, launches, or clients.</p>
             </article>
             <article className="home-feature">
-              <ServerCog aria-hidden="true" size={20} />
+              <FaServer aria-hidden="true" size={20} />
               <h3>SSR when published</h3>
               <p>Signed-in pages are stored in D1 and rendered by handle for fast, shareable public URLs.</p>
             </article>

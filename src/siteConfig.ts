@@ -1,1 +1,3 @@
-export const siteTitle = import.meta.env.VITE_SITE_TITLE;
+const env = import.meta.env ?? {};
+
+export const siteTitle = env.VITE_SITE_TITLE || "LinkOutpost";

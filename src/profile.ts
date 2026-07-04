@@ -6,6 +6,32 @@ export type LinkItem = {
   url: string;
 };
 
+export type SocialPlatform =
+  | "bilibili"
+  | "discord"
+  | "facebook"
+  | "instagram"
+  | "github"
+  | "youtube"
+  | "tiktok"
+  | "wechat"
+  | "x"
+  | "email"
+  | "website";
+
+export type SocialLink = {
+  id: string;
+  platform: SocialPlatform;
+  userId: string;
+};
+
+export type SocialPlatformDefinition = {
+  id: SocialPlatform;
+  label: string;
+  placeholder: string;
+  urlPrefix: string;
+};
+
 export type ProfileLayout = "classic" | "card";
 
 export type ProfileCardField = {
@@ -32,6 +58,7 @@ export type LinkProfile = {
   bio: string;
   avatarAssetId: string | null;
   links: LinkItem[];
+  socialLinks: SocialLink[];
   theme: ProfileTheme;
   updatedAt: string;
 };
@@ -76,6 +103,101 @@ export const fontOptions = [
   },
 ] as const;
 
+export const socialPlatformDefinitions: SocialPlatformDefinition[] = [
+  {
+    id: "wechat",
+    label: "WeChat",
+    placeholder: "WeChat ID",
+    urlPrefix: "weixin://dl/chat?",
+  },
+  {
+    id: "bilibili",
+    label: "Bilibili",
+    placeholder: "space UID",
+    urlPrefix: "https://space.bilibili.com/",
+  },
+  {
+    id: "instagram",
+    label: "Instagram",
+    placeholder: "username",
+    urlPrefix: "https://instagram.com/",
+  },
+  {
+    id: "github",
+    label: "GitHub",
+    placeholder: "username",
+    urlPrefix: "https://github.com/",
+  },
+  {
+    id: "youtube",
+    label: "YouTube",
+    placeholder: "@channel",
+    urlPrefix: "https://youtube.com/",
+  },
+  {
+    id: "tiktok",
+    label: "TikTok",
+    placeholder: "@username",
+    urlPrefix: "https://tiktok.com/",
+  },
+  {
+    id: "x",
+    label: "X",
+    placeholder: "username",
+    urlPrefix: "https://x.com/",
+  },
+  {
+    id: "facebook",
+    label: "Facebook",
+    placeholder: "username",
+    urlPrefix: "https://facebook.com/",
+  },
+  {
+    id: "discord",
+    label: "Discord",
+    placeholder: "username",
+    urlPrefix: "https://discord.com/users/",
+  },
+  {
+    id: "email",
+    label: "Email",
+    placeholder: "name@example.com",
+    urlPrefix: "mailto:",
+  },
+  {
+    id: "website",
+    label: "Website",
+    placeholder: "example.com",
+    urlPrefix: "https://",
+  },
+];
+
+export function getSocialPlatformDefinition(
+  platform: SocialPlatform,
+): SocialPlatformDefinition {
+  return (
+    socialPlatformDefinitions.find(
+      (definition) => definition.id === platform,
+    ) ?? socialPlatformDefinitions[0]
+  );
+}
+
+export function normalizeSocialUserId(value: string): string {
+  return value
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/^@+/, "");
+}
+
+export function getSocialLinkUrl(socialLink: SocialLink): string {
+  const definition = getSocialPlatformDefinition(socialLink.platform);
+  const userId = normalizeSocialUserId(socialLink.userId);
+  if (!userId) return definition.urlPrefix;
+  if (socialLink.platform === "email")
+    return `${definition.urlPrefix}${userId}`;
+  return `${definition.urlPrefix}${userId}`;
+}
+
 export const defaultTheme: ProfileTheme = {
   accentColor: "#2563eb",
   backgroundAssetId: null,
@@ -103,6 +225,7 @@ export const defaultProfile: LinkProfile = {
       url: "https://example.com",
     },
   ],
+  socialLinks: [],
   theme: defaultTheme,
   updatedAt: new Date(0).toISOString(),
 };
@@ -114,6 +237,7 @@ export function createProfile(
     ...defaultProfile,
     ...overrides,
     links: overrides.links ?? defaultProfile.links,
+    socialLinks: overrides.socialLinks ?? defaultProfile.socialLinks,
     theme: {
       ...defaultTheme,
       ...overrides.theme,

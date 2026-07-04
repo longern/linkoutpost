@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Download,
-  Eye,
-  ExternalLink,
-  Menu,
-  Settings,
-  UserCircle,
-} from "lucide-react";
+  FaArrowUpRightFromSquare,
+  FaBars,
+  FaCircleUser,
+  FaDownload,
+  FaEye,
+  FaGear,
+} from "react-icons/fa6";
 import {
   loadMyProfile,
   loadMyProfiles,
@@ -57,7 +57,8 @@ export function EditorPage({
     "loading",
   );
   const [status, setStatus] = useState("Loading editor");
-  const [activeEditorPanel, setActiveEditorPanel] = useState<EditorPanel>("profile");
+  const [activeEditorPanel, setActiveEditorPanel] =
+    useState<EditorPanel>("profile");
   const [editorAvatarUrl, setEditorAvatarUrl] = useState<string | null>(null);
   const [dragLinks, setDragLinks] = useState<LinkItem[] | null>(null);
   const [handleSetupOpen, setHandleSetupOpen] = useState(false);
@@ -212,6 +213,16 @@ export function EditorPage({
       ...patch,
       updatedAt: new Date().toISOString(),
     }));
+  }
+
+  function commitProfile(patch: Partial<LinkProfile>): void {
+    const nextProfile = {
+      ...profile,
+      ...patch,
+      updatedAt: new Date().toISOString(),
+    };
+    setProfile(nextProfile);
+    void autosaveProfile(nextProfile);
   }
 
   function updateLink(id: string, patch: Partial<LinkItem>): void {
@@ -477,7 +488,7 @@ export function EditorPage({
           onClick={() => setMobileSidebarOpen((open) => !open)}
           type="button"
         >
-          <Menu aria-hidden="true" size={24} />
+          <FaBars aria-hidden="true" size={24} />
         </button>
         <a className="editor-mobile-brand" href="/">
           {siteTitle}
@@ -486,7 +497,7 @@ export function EditorPage({
           {editorAvatarUrl ? (
             <img alt="" src={editorAvatarUrl} />
           ) : (
-            <UserCircle aria-hidden="true" size={30} />
+            <FaCircleUser aria-hidden="true" size={30} />
           )}
         </div>
       </header>
@@ -515,9 +526,9 @@ export function EditorPage({
               ? "Design"
               : activeEditorPanel === "layout"
                 ? "Layout"
-              : activeEditorPanel === "profile"
-                ? "Profile"
-                : "Links"}
+                : activeEditorPanel === "profile"
+                  ? "Profile"
+                  : "Links"}
           </h1>
           <div className="toolbar-actions">
             <button
@@ -526,7 +537,7 @@ export function EditorPage({
               title="Settings"
               type="button"
             >
-              <Settings aria-hidden="true" size={18} />
+              <FaGear aria-hidden="true" size={18} />
             </button>
             {mode === "offline" && (
               <button
@@ -536,17 +547,25 @@ export function EditorPage({
                 title="Preview page"
                 type="button"
               >
-                <Eye aria-hidden="true" size={18} />
+                <FaEye aria-hidden="true" size={18} />
               </button>
             )}
-            <button className="button-secondary" onClick={onExport} type="button">
-              <Download aria-hidden="true" size={16} />
+            <button
+              className="button-secondary"
+              onClick={onExport}
+              type="button"
+            >
+              <FaDownload aria-hidden="true" size={16} />
               Export ZIP
             </button>
             {mode === "backend" && (
               <>
-                <a className="button-secondary" href={profileUrl}>
-                  <ExternalLink aria-hidden="true" size={16} />
+                <a
+                  className="button-secondary"
+                  href={profileUrl}
+                  target="_blank"
+                >
+                  <FaArrowUpRightFromSquare aria-hidden="true" size={16} />
                   View page
                 </a>
               </>
@@ -564,6 +583,7 @@ export function EditorPage({
                   void onAvatarChange(file);
                 }}
                 onSave={saveCurrentProfile}
+                onCommit={commitProfile}
                 onUpdate={updateProfile}
                 profile={profile}
               />

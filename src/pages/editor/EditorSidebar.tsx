@@ -1,4 +1,10 @@
-import { Bell, LayoutTemplate, Palette, Plus, UserCircle } from "lucide-react";
+import {
+  FaBell,
+  FaCircleUser,
+  FaLayerGroup,
+  FaPalette,
+  FaPlus,
+} from "react-icons/fa6";
 import type { LinkProfile } from "../../profile";
 import type { ProfileSummary } from "../../types";
 
@@ -65,12 +71,12 @@ export function EditorSidebar({
               {avatarUrl ? (
                 <img alt="" src={avatarUrl} />
               ) : (
-                <UserCircle size={24} />
+                <FaCircleUser size={24} />
               )}
             </span>
             <span>@{profile.handle || "your_handle"}</span>
           </button>
-          <Bell aria-hidden="true" className="sidebar-bell" size={18} />
+          <FaBell aria-hidden="true" className="sidebar-bell" size={18} />
           {accountMenuOpen && (
             <>
               <button
@@ -140,7 +146,7 @@ export function EditorSidebar({
             onClick={() => selectPanel("profile")}
             type="button"
           >
-            <UserCircle aria-hidden="true" size={16} />
+            <FaCircleUser aria-hidden="true" size={16} />
             Profile
           </button>
           <button
@@ -148,7 +154,7 @@ export function EditorSidebar({
             onClick={() => selectPanel("links")}
             type="button"
           >
-            <Plus aria-hidden="true" size={16} />
+            <FaPlus aria-hidden="true" size={16} />
             Links
           </button>
           <button
@@ -156,7 +162,7 @@ export function EditorSidebar({
             onClick={() => selectPanel("layout")}
             type="button"
           >
-            <LayoutTemplate aria-hidden="true" size={16} />
+            <FaLayerGroup aria-hidden="true" size={16} />
             Layout
           </button>
           <button
@@ -164,7 +170,7 @@ export function EditorSidebar({
             onClick={() => selectPanel("design")}
             type="button"
           >
-            <Palette aria-hidden="true" size={16} />
+            <FaPalette aria-hidden="true" size={16} />
             Design
           </button>
         </nav>

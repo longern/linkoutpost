@@ -1,14 +1,21 @@
-import { Camera, UserCircle } from "lucide-react";
+import { useState } from "react";
+import { FaCamera, FaCircleUser, FaPlus, FaTrash, FaXmark } from "react-icons/fa6";
 import {
   isReservedPath,
   normalizeHandle,
+  normalizeSocialUserId,
+  socialPlatformDefinitions,
   type LinkProfile,
+  type SocialLink,
+  type SocialPlatform,
 } from "../../profile";
+import { getSocialPlatformIcon } from "../../socialIcons";
 
 type ProfilePanelProps = {
   avatarUrl: string | null;
   mode: "loading" | "offline" | "backend";
   onAvatarChange(file: File | null): void;
+  onCommit(patch: Partial<LinkProfile>): void;
   onSave(): void;
   onUpdate(patch: Partial<LinkProfile>): void;
   profile: LinkProfile;
@@ -18,10 +25,40 @@ export function ProfilePanel({
   avatarUrl,
   mode,
   onAvatarChange,
+  onCommit,
   onSave,
   onUpdate,
   profile,
 }: ProfilePanelProps) {
+  const [socialDialogOpen, setSocialDialogOpen] = useState(false);
+
+  function addSocialLink(platform: SocialPlatform): void {
+    const nextSocialLinks = [
+      ...profile.socialLinks,
+      {
+        id: crypto.randomUUID(),
+        platform,
+        userId: "",
+      },
+    ];
+    onCommit({ socialLinks: nextSocialLinks });
+    setSocialDialogOpen(false);
+  }
+
+  function updateSocialLink(id: string, patch: Partial<SocialLink>): void {
+    onUpdate({
+      socialLinks: profile.socialLinks.map((link) =>
+        link.id === id ? { ...link, ...patch } : link,
+      ),
+    });
+  }
+
+  function removeSocialLink(id: string): void {
+    onCommit({
+      socialLinks: profile.socialLinks.filter((link) => link.id !== id),
+    });
+  }
+
   return (
     <section className="profile-panel" aria-label="Profile form">
       <div className="profile-editor-summary">
@@ -31,11 +68,11 @@ export function ProfilePanel({
             {avatarUrl ? (
               <img alt="" src={avatarUrl} />
             ) : (
-              <UserCircle aria-hidden="true" size={54} />
+              <FaCircleUser aria-hidden="true" size={54} />
             )}
           </span>
           <span className="profile-avatar-action" aria-hidden="true">
-            <Camera size={16} />
+            <FaCamera size={16} />
           </span>
           <input
             accept="image/*"
@@ -91,6 +128,101 @@ export function ProfilePanel({
           />
         </label>
       </div>
+
+      <section className="social-editor" aria-label="Social media links">
+        <div className="social-editor-header">
+          <strong>Social icons</strong>
+          <button
+            aria-label="Add social icon"
+            className="circle-icon-button"
+            onClick={() => setSocialDialogOpen(true)}
+            title="Add social icon"
+            type="button"
+          >
+            <FaPlus aria-hidden="true" size={18} />
+          </button>
+        </div>
+
+        {profile.socialLinks.length > 0 && (
+          <div className="social-editor-list">
+            {profile.socialLinks.map((link) => {
+              const definition = socialPlatformDefinitions.find(
+                (platform) => platform.id === link.platform,
+              );
+              const Icon = getSocialPlatformIcon(link.platform);
+
+              return (
+                <div className="social-editor-row" key={link.id}>
+                  <span className="social-editor-platform">
+                    <Icon aria-hidden="true" size={18} />
+                    {definition?.label ?? link.platform}
+                  </span>
+                  <input
+                    aria-label={`${definition?.label ?? link.platform} ID`}
+                    placeholder={definition?.placeholder ?? "username"}
+                    value={link.userId}
+                    onChange={(event) =>
+                      updateSocialLink(link.id, {
+                        userId: normalizeSocialUserId(event.target.value),
+                      })
+                    }
+                    onBlur={onSave}
+                  />
+                  <button
+                    aria-label="Remove social icon"
+                    className="circle-icon-button danger"
+                    onClick={() => removeSocialLink(link.id)}
+                    title="Remove social icon"
+                    type="button"
+                  >
+                    <FaTrash aria-hidden="true" size={16} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {socialDialogOpen && (
+        <div className="modal-backdrop" role="presentation">
+          <section
+            aria-labelledby="social-dialog-title"
+            aria-modal="true"
+            className="modal-card"
+            role="dialog"
+          >
+            <div className="profile-social-dialog-header">
+              <h2 id="social-dialog-title">Add social icon</h2>
+              <button
+                aria-label="Close social icon dialog"
+                className="circle-icon-button"
+                onClick={() => setSocialDialogOpen(false)}
+                type="button"
+              >
+                <FaXmark aria-hidden="true" size={18} />
+              </button>
+            </div>
+            <div className="social-platform-grid">
+              {socialPlatformDefinitions.map((platform) => {
+                const Icon = getSocialPlatformIcon(platform.id);
+
+                return (
+                  <button
+                    className="social-platform-option"
+                    key={platform.id}
+                    onClick={() => addSocialLink(platform.id)}
+                    type="button"
+                  >
+                    <Icon aria-hidden="true" size={20} />
+                    {platform.label}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   );
 }

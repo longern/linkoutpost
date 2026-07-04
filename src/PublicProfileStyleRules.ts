@@ -527,10 +527,10 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       display: "flex",
       flexDirection: "column",
       gap: 18,
-      left: 100,
-      margin: 0,
       position: "absolute",
-      right: 36,
+      left: "30%",
+      margin: 0,
+      right: "10%",
       top: "60%",
       zIndex: 1,
     },
@@ -569,6 +569,35 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
+    selector: ".profile-card-meta",
+    rule: {
+      color: "var(--profile-text-color, #172033)",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      width: "min(100%, 360px)",
+    },
+  },
+  {
+    selector: ".profile-card-meta .handle",
+    rule: {
+      margin: "0 0 10px",
+    },
+  },
+  {
+    selector: ".profile-card-meta .bio",
+    rule: {
+      margin: "0 auto 18px",
+    },
+  },
+  {
+    selector: ".profile-card-meta .public-links",
+    rule: {
+      marginTop: 20,
+      width: "100%",
+    },
+  },
+  {
     selector: ".profile-social-links",
     rule: {
       display: "flex",
@@ -576,6 +605,12 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       gap: 12,
       justifyContent: "center",
       width: "min(100%, 360px)",
+    },
+  },
+  {
+    selector: ".public-profile-content .profile-social-links",
+    rule: {
+      margin: "-10px auto 24px",
     },
   },
   {

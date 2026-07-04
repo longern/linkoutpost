@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { FaArrowLeft } from "react-icons/fa6";
 import type { LinkProfile } from "../../profile";
 import { ProfilePage } from "../../PublicProfile";
 import {
@@ -137,7 +137,7 @@ export function FullscreenProfilePreview({
         title="Back to editor"
         type="button"
       >
-        <ArrowLeft aria-hidden="true" size={20} />
+        <FaArrowLeft aria-hidden="true" size={20} />
       </button>
       <ProfilePage
         avatarUrl={avatarUrl}

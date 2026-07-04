@@ -198,6 +198,18 @@
     align-self: flex-end;
   }
 
+  .social-editor-row {
+    grid-template-columns: 1fr 40px;
+  }
+
+  .social-editor-platform {
+    grid-column: 1 / -1;
+  }
+
+  .social-platform-grid {
+    grid-template-columns: 1fr;
+  }
+
   .toolbar-actions > * {
     flex: 1 1 auto;
     text-align: center;

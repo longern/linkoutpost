@@ -223,13 +223,14 @@ async function readProfileByHandle(env: Env, handle: string): Promise<LinkProfil
   if (!env.DB || isReservedPath(handle)) return null;
 
   const row = await env.DB.prepare(
-    "SELECT handle, title, bio, avatar_asset_id, links_json, theme_json, updated_at FROM linkoutpost_profiles WHERE handle = ?"
+    "SELECT handle, title, bio, avatar_asset_id, links_json, social_links_json, theme_json, updated_at FROM linkoutpost_profiles WHERE handle = ?"
   ).bind(handle).first<{
     avatar_asset_id: string | null;
     handle: string;
     title: string;
     bio: string;
     links_json: string;
+    social_links_json: string;
     theme_json: string;
     updated_at: string;
   }>();
@@ -241,6 +242,7 @@ async function readProfileByHandle(env: Env, handle: string): Promise<LinkProfil
     bio: row.bio,
     handle: row.handle,
     links: JSON.parse(row.links_json) as LinkProfile["links"],
+    socialLinks: JSON.parse(row.social_links_json) as LinkProfile["socialLinks"],
     theme: JSON.parse(row.theme_json) as LinkProfile["theme"],
     title: row.title,
     updatedAt: row.updated_at
@@ -317,13 +319,14 @@ async function writeProfile(env: Env, userId: string, profile: LinkProfile): Pro
   }
 
   await env.DB.prepare(
-    `INSERT INTO linkoutpost_profiles (handle, owner_user_id, title, bio, avatar_asset_id, links_json, theme_json, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO linkoutpost_profiles (handle, owner_user_id, title, bio, avatar_asset_id, links_json, social_links_json, theme_json, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(handle) DO UPDATE SET
        title = excluded.title,
        bio = excluded.bio,
        avatar_asset_id = excluded.avatar_asset_id,
        links_json = excluded.links_json,
+       social_links_json = excluded.social_links_json,
        theme_json = excluded.theme_json,
        updated_at = excluded.updated_at`
   ).bind(
@@ -333,6 +336,7 @@ async function writeProfile(env: Env, userId: string, profile: LinkProfile): Pro
     profile.bio,
     profile.avatarAssetId,
     JSON.stringify(profile.links),
+    JSON.stringify(profile.socialLinks),
     JSON.stringify(profile.theme),
     new Date().toISOString()
   ).run();

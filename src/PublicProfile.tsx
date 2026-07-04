@@ -5,22 +5,15 @@ import {
   type CSSProperties,
   type RefObject,
 } from "react";
+import { FaCopy, FaUser, FaXmark } from "react-icons/fa6";
+import { RxShare2 } from "react-icons/rx";
 import {
-  AtSign,
-  Camera,
-  Code2,
-  Copy,
-  Globe,
-  Link,
-  Mail,
-  Music2,
-  Share2,
-  User,
-  Video,
-  X,
-  type LucideIcon,
-} from "lucide-react";
-import type { LinkItem, LinkProfile, ProfileTheme } from "./profile";
+  getSocialLinkUrl,
+  type LinkItem,
+  type LinkProfile,
+  type ProfileTheme,
+  type SocialLink,
+} from "./profile";
 import {
   copyProfileUrl,
   getProfileShareCapabilities,
@@ -29,6 +22,7 @@ import {
   type ProfileShareCapabilities,
 } from "./profileShare";
 import { siteTitle } from "./siteConfig";
+import { getSocialPlatformIcon } from "./socialIcons";
 
 function themeStyle(theme: ProfileTheme): CSSProperties {
   return {
@@ -41,22 +35,49 @@ function themeStyle(theme: ProfileTheme): CSSProperties {
   } as CSSProperties;
 }
 
-function iconForLink(link: LinkItem): LucideIcon {
-  const value = `${link.label} ${link.url}`.toLowerCase();
-  if (value.includes("github") || value.includes("gitlab")) return Code2;
-  if (value.includes("instagram")) return Camera;
-  if (value.includes("linkedin")) return AtSign;
-  if (value.includes("youtube") || value.includes("video")) return Video;
-  if (value.includes("mailto:") || value.includes("email")) return Mail;
-  if (
-    value.includes("spotify") ||
-    value.includes("tiktok") ||
-    value.includes("music")
-  ) {
-    return Music2;
-  }
-  if (value.includes("http")) return Globe;
-  return Link;
+function ProfileSocialLinks({ links }: { links: SocialLink[] }) {
+  const visibleLinks = links.filter((link) => link.userId.trim());
+  if (visibleLinks.length === 0) return null;
+
+  return (
+    <div className="profile-social-links" aria-label="Social links">
+      {visibleLinks.map((link) => {
+        const Icon = getSocialPlatformIcon(link.platform);
+        return (
+          <a
+            aria-label={link.platform}
+            className="profile-social-link"
+            href={getSocialLinkUrl(link)}
+            key={link.id}
+            rel="noreferrer"
+            target="_blank"
+            title={link.platform}
+          >
+            <Icon aria-hidden="true" size={20} />
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+
+function PublicLinks({ links }: { links: LinkItem[] }) {
+  return (
+    <div className="public-links">
+      {links.map((link) => (
+        <a
+          className="public-link"
+          data-profile-link-id={link.id}
+          href={link.url}
+          key={link.id}
+          rel="noreferrer"
+          target="_blank"
+        >
+          {link.label}
+        </a>
+      ))}
+    </div>
+  );
 }
 
 function ProfileAvatar({ avatarUrl }: { avatarUrl?: string | null }) {
@@ -64,7 +85,7 @@ function ProfileAvatar({ avatarUrl }: { avatarUrl?: string | null }) {
     <img alt="" className="profile-avatar" src={avatarUrl} />
   ) : (
     <div aria-hidden="true" className="profile-avatar-placeholder">
-      <User size={38} strokeWidth={1.8} />
+      <FaUser size={34} />
     </div>
   );
 }
@@ -111,11 +132,14 @@ function ShareDialog({
             onClick={onClose}
             type="button"
           >
-            <X aria-hidden="true" size={18} />
+            <FaXmark aria-hidden="true" size={18} />
           </button>
         </div>
         <div className="profile-share-url">
-          <span className="profile-share-url-text" data-profile-share-url-text="">
+          <span
+            className="profile-share-url-text"
+            data-profile-share-url-text=""
+          >
             {shareUrl}
           </span>
         </div>
@@ -130,7 +154,7 @@ function ShareDialog({
             }}
             type="button"
           >
-            <Copy aria-hidden="true" size={16} />
+            <FaCopy aria-hidden="true" size={16} />
             Copy link
           </button>
           <button
@@ -140,7 +164,7 @@ function ShareDialog({
             onClick={onSystemShare}
             type="button"
           >
-            <Share2 aria-hidden="true" size={16} />
+            <RxShare2 aria-hidden="true" size={16} />
             Share
           </button>
         </div>
@@ -216,7 +240,7 @@ export function ProfilePage({
           })
         : {})}
     >
-      <Share2 aria-hidden="true" size={18} strokeWidth={2.2} />
+      <RxShare2 aria-hidden="true" size={18} />
     </button>
   );
 
@@ -268,24 +292,13 @@ export function ProfilePage({
                 </dl>
               )}
             </article>
-            <div className="profile-social-links" aria-label="Social links">
-              {currentProfile.links.map((link) => {
-                const Icon = iconForLink(link);
-                return (
-                  <a
-                    aria-label={link.label}
-                    className="profile-social-link"
-                    data-profile-link-id={link.id}
-                    href={link.url}
-                    key={link.id}
-                    rel="noreferrer"
-                    target="_blank"
-                    title={link.label}
-                  >
-                    <Icon aria-hidden="true" size={20} strokeWidth={2} />
-                  </a>
-                );
-              })}
+            <div className="profile-card-meta">
+              <p className="handle">@{currentProfile.handle}</p>
+              {currentProfile.bio.trim() && (
+                <p className="bio">{currentProfile.bio}</p>
+              )}
+              <ProfileSocialLinks links={currentProfile.socialLinks} />
+              <PublicLinks links={currentProfile.links} />
             </div>
           </div>
           {shareDialog}
@@ -306,20 +319,8 @@ export function ProfilePage({
           <h1 className="profile-title">{currentProfile.title}</h1>
           <p className="handle">@{currentProfile.handle}</p>
           <p className="bio">{currentProfile.bio}</p>
-          <div className="public-links">
-            {currentProfile.links.map((link) => (
-              <a
-                className="public-link"
-                data-profile-link-id={link.id}
-                href={link.url}
-                key={link.id}
-                rel="noreferrer"
-                target="_blank"
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
+          <ProfileSocialLinks links={currentProfile.socialLinks} />
+          <PublicLinks links={currentProfile.links} />
         </div>
         {shareDialog}
       </section>

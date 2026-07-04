@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from "lucide-react";
+import { FaPlus, FaTrash } from "react-icons/fa6";
 import type { LinkProfile, ProfileTheme } from "../../profile";
 
 type LayoutPanelProps = {
@@ -65,7 +65,7 @@ export function LayoutPanel({
               title="Add card field"
               type="button"
             >
-              <Plus aria-hidden="true" size={18} />
+              <FaPlus aria-hidden="true" size={18} />
             </button>
           </div>
 
@@ -97,7 +97,7 @@ export function LayoutPanel({
                   title="Remove card field"
                   type="button"
                 >
-                  <Trash2 aria-hidden="true" size={18} />
+                  <FaTrash aria-hidden="true" size={18} />
                 </button>
               </div>
             ))}

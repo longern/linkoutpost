@@ -18,7 +18,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { FaGripVertical, FaPlus, FaTrash } from "react-icons/fa6";
 import type { LinkItem } from "../../profile";
 
 function moveLinksById(
@@ -72,7 +72,7 @@ function SortableLinkRow({
         {...attributes}
         {...listeners}
       >
-        <GripVertical aria-hidden="true" size={18} />
+        <FaGripVertical aria-hidden="true" size={18} />
       </button>
       <div className="link-row-fields">
         <input
@@ -95,7 +95,7 @@ function SortableLinkRow({
         title="Remove link"
         type="button"
       >
-        <Trash2 aria-hidden="true" size={18} />
+        <FaTrash aria-hidden="true" size={18} />
       </button>
     </div>
   );
@@ -169,7 +169,7 @@ export function LinksPanel({
   return (
     <>
       <button className="button-primary add-link-button" onClick={onAdd} type="button">
-        <Plus aria-hidden="true" size={20} />
+        <FaPlus aria-hidden="true" size={20} />
         Add
       </button>
 

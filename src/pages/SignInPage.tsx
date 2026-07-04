@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LogIn } from "lucide-react";
+import { FaRightToBracket } from "react-icons/fa6";
 import { loadSession } from "../apiClient";
 import { SiteTopbar } from "../components/SiteTopbar";
 import { siteTitle } from "../siteConfig";
@@ -34,11 +34,11 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
           <p>Manage multiple handles, keep your pages synced, and publish them from one account.</p>
           <div className="auth-actions">
             <a className="button-secondary auth-provider-link" href="/api/auth/google/start">
-              <LogIn aria-hidden="true" size={16} />
+              <FaRightToBracket aria-hidden="true" size={16} />
               Continue with Google
             </a>
             <a className="button-secondary auth-provider-link" href="/api/auth/twitter/start">
-              <LogIn aria-hidden="true" size={16} />
+              <FaRightToBracket aria-hidden="true" size={16} />
               Continue with Twitter
             </a>
           </div>
