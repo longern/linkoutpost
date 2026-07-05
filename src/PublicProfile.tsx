@@ -6,6 +6,7 @@ import {
   type RefObject,
 } from "react";
 import { FaCopy, FaUser, FaXmark } from "react-icons/fa6";
+import { LuCopyCheck } from "react-icons/lu";
 import { RxShare2 } from "react-icons/rx";
 import {
   getSocialLinkUrl,
@@ -24,12 +25,52 @@ import {
 import { siteTitle } from "./siteConfig";
 import { getSocialPlatformIcon } from "./socialIcons";
 
+function parseHexColor(value: string): [number, number, number] | null {
+  const hex = value.trim().replace(/^#/, "");
+
+  if (/^[0-9a-f]{3}$/i.test(hex)) {
+    return hex.split("").map((character) => {
+      const channel = Number.parseInt(`${character}${character}`, 16);
+      return channel;
+    }) as [number, number, number];
+  }
+
+  if (/^[0-9a-f]{6}$/i.test(hex)) {
+    return [
+      Number.parseInt(hex.slice(0, 2), 16),
+      Number.parseInt(hex.slice(2, 4), 16),
+      Number.parseInt(hex.slice(4, 6), 16),
+    ];
+  }
+
+  return null;
+}
+
+function getRelativeLuminance([red, green, blue]: [number, number, number]): number {
+  const [r, g, b] = [red, green, blue].map((value) => {
+    const channel = value / 255;
+    return channel <= 0.03928
+      ? channel / 12.92
+      : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function getProfileControlColor(backgroundColor: string): string {
+  const rgb = parseHexColor(backgroundColor);
+  if (!rgb) return "#111827";
+
+  return getRelativeLuminance(rgb) < 0.45 ? "#ffffff" : "#111827";
+}
+
 function themeStyle(theme: ProfileTheme): CSSProperties {
   return {
     "--profile-accent-color": theme.accentColor,
     "--profile-background-color": theme.backgroundColor,
     "--profile-button-background-color": theme.buttonBackgroundColor,
     "--profile-button-text-color": theme.buttonTextColor,
+    "--profile-control-color": getProfileControlColor(theme.backgroundColor),
     "--profile-font-family": theme.fontFamily,
     "--profile-text-color": theme.textColor,
   } as CSSProperties;
@@ -37,12 +78,41 @@ function themeStyle(theme: ProfileTheme): CSSProperties {
 
 function ProfileSocialLinks({ links }: { links: SocialLink[] }) {
   const visibleLinks = links.filter((link) => link.userId.trim());
+  const [copiedSocialId, setCopiedSocialId] = useState<string | null>(null);
   if (visibleLinks.length === 0) return null;
 
   return (
     <div className="profile-social-links" aria-label="Social links">
       {visibleLinks.map((link) => {
         const Icon = getSocialPlatformIcon(link.platform);
+        if (link.platform === "wechat") {
+          const copied = copiedSocialId === link.id;
+          return (
+            <button
+              aria-label="Copy WeChat ID"
+              className={`profile-social-link${copied ? " is-copied" : ""}`}
+              data-profile-wechat-copy=""
+              data-wechat-id={link.userId}
+              key={link.id}
+              onClick={() => {
+                if (!navigator.clipboard?.writeText) return;
+                void navigator.clipboard.writeText(link.userId).then(() => {
+                  setCopiedSocialId(link.id);
+                  window.setTimeout(() => setCopiedSocialId(null), 1400);
+                });
+              }}
+              title="Copy WeChat ID"
+              type="button"
+            >
+              {copied ? (
+                <LuCopyCheck aria-hidden="true" data-wechat-success-icon="" size={20} />
+              ) : (
+                <Icon aria-hidden="true" data-wechat-default-icon="" size={20} />
+              )}
+            </button>
+          );
+        }
+
         return (
           <a
             aria-label={link.platform}

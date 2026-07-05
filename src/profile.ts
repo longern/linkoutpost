@@ -108,7 +108,7 @@ export const socialPlatformDefinitions: SocialPlatformDefinition[] = [
     id: "wechat",
     label: "WeChat",
     placeholder: "WeChat ID",
-    urlPrefix: "weixin://dl/chat?",
+    urlPrefix: "",
   },
   {
     id: "bilibili",

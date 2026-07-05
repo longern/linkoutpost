@@ -28,7 +28,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       borderRadius: 0,
       fontFamily: "var(--profile-font-family)",
       minHeight: "auto",
-      padding: "32px 20px",
+      padding: "80px 20px 32px",
       position: "relative",
       width: "100%",
     },
@@ -56,8 +56,9 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".profile-share-button",
+    selector: ".public-profile .profile-share-button",
     rule: {
+      color: "var(--profile-control-color, currentColor)",
       position: "absolute",
       right: 16,
       top: 16,
@@ -180,8 +181,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     rule: {
       "@media": {
         "(hover: hover) and (pointer: fine)": {
-          background:
-            "color-mix(in srgb, var(--profile-accent-color, #2563eb), transparent 90%)",
+          background: "color-mix(in srgb, currentColor, transparent 90%)",
           color: "currentColor",
         },
       },
@@ -192,8 +192,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     rule: {
       "@media": {
         "(hover: hover) and (pointer: fine)": {
-          background:
-            "color-mix(in srgb, var(--profile-accent-color, #2563eb), transparent 82%)",
+          background: "color-mix(in srgb, currentColor, transparent 82%)",
         },
       },
     },
@@ -203,7 +202,9 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     rule: {
       "@media": {
         "(hover: hover) and (pointer: fine)": {
-          background: "rgb(16 24 39 / 8%)",
+          backgroundColor:
+            "color-mix(in srgb, var(--profile-control-color, currentColor), transparent 92%)",
+          color: "var(--profile-control-color, currentColor)",
         },
       },
     },
@@ -213,7 +214,9 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     rule: {
       "@media": {
         "(hover: hover) and (pointer: fine)": {
-          background: "rgb(16 24 39 / 12%)",
+          backgroundColor:
+            "color-mix(in srgb, var(--profile-control-color, currentColor), transparent 88%)",
+          color: "var(--profile-control-color, currentColor)",
         },
       },
     },
@@ -403,11 +406,10 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     rule: {
       "@media": {
         "(min-width: 520px)": {
-          border: 0,
           borderRadius: "22px 22px 0 0",
           boxShadow: "0 24px 70px rgb(16 24 39 / 14%)",
           minHeight: "calc(100vh - 40px)",
-          padding: "36px 28px 0",
+          padding: "80px 28px 16px",
           width: "min(100%, 430px)",
         },
       },
@@ -616,13 +618,21 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       borderRadius: 999,
       boxShadow: "none",
       color: "inherit",
+      cursor: "pointer",
       display: "inline-flex",
+      font: "inherit",
       width: 48,
       height: 48,
       padding: 8,
       justifyContent: "center",
       textDecoration: "none",
-      transition: "background-color 160ms ease",
+      transition: "background-color 160ms ease, color 160ms ease",
+    },
+  },
+  {
+    selector: ".profile-social-link.is-copied",
+    rule: {
+      color: "#16a34a",
     },
   },
   {
