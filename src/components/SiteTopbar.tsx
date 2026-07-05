@@ -13,14 +13,14 @@ export function SiteTopbar({
       <nav className="site-nav" aria-label="Account">
         {signedIn ? (
           <>
-            <a href="/admin">Admin</a>
-            <a href="/api/logout">Sign out</a>
+            <a className="button-primary button-pill site-nav-primary" href="/admin">Admin</a>
+            <a href="/api/logout">Log out</a>
           </>
         ) : (
           <>
             <a href="/admin">Local editor</a>
             {currentPath !== "/signin" && <a href="/signin">Sign in</a>}
-            <a href="/signin">Sign up</a>
+            <a className="button-primary button-pill site-nav-primary" href="/signin">Sign up</a>
           </>
         )}
       </nav>

@@ -122,6 +122,12 @@ export function EditorPage({
         if (cancelled) return;
 
         setProfileSummaries(summaries);
+        const requestedHandle =
+          typeof window !== "undefined"
+            ? normalizeHandle(
+                new URLSearchParams(window.location.search).get("handle") ?? "",
+              )
+            : "";
 
         if (summaries.length > 0) {
           const firstHandle = summaries[0].handle;
@@ -132,24 +138,40 @@ export function EditorPage({
           setHandleDraft(firstHandle);
         } else {
           const initialHandle =
-            normalizeHandle(nextSession.name ?? "") || "your_handle";
-          setProfile(
-            createProfile({
-              handle: initialHandle,
-            }),
-          );
-          setHandleDraft(initialHandle);
-          setHandleSetupOpen(true);
+            requestedHandle ||
+            normalizeHandle(nextSession.name ?? "") ||
+            "your_handle";
+          const initialProfile = createProfile({
+            handle: initialHandle,
+          });
+
+          if (requestedHandle) {
+            try {
+              await saveProfile(initialProfile);
+              if (cancelled) return;
+              setProfile(initialProfile);
+              setProfileSummaries([{
+                handle: initialProfile.handle,
+                title: initialProfile.title,
+                updatedAt: initialProfile.updatedAt,
+              }]);
+              setHandleDraft(initialProfile.handle);
+            } catch (error) {
+              if (cancelled) return;
+              setProfile(initialProfile);
+              setHandleDraft(initialHandle);
+              setHandleSetupError(
+                error instanceof Error ? error.message : "Handle create failed",
+              );
+              setHandleSetupOpen(true);
+            }
+          } else {
+            setProfile(initialProfile);
+            setHandleDraft(initialHandle);
+            setHandleSetupOpen(true);
+          }
         }
 
-        if (typeof window !== "undefined") {
-          setHandleSetupOpen(
-            (open) =>
-              open ||
-              new URLSearchParams(window.location.search).get("setup") ===
-                "handle",
-          );
-        }
         setMode("backend");
         setStatus("Backend editor");
       } catch {

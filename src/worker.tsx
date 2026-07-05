@@ -57,6 +57,17 @@ function isClientAppRoute(pathname: string): boolean {
   );
 }
 
+function safeLocalRedirect(value: string | null): string | undefined {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return undefined;
+
+  try {
+    const url = new URL(value, "https://local.invalid");
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return undefined;
+  }
+}
+
 function removeClientEntrypoints(html: string): string {
   return html
     .replace(/<script\b[^>]*\btype=["']module["'][^>]*><\/script>\s*/gi, "")
@@ -90,6 +101,7 @@ type SessionPayload = {
 type OAuthState = {
   codeVerifier: string;
   provider: Provider;
+  redirectTo?: string;
   state: string;
 };
 
@@ -170,6 +182,13 @@ function getOptionalAuthSecret(env: Env, request: Request): string | null {
   }
 }
 
+function getAuthProviders(env: Env): SessionState["authProviders"] {
+  return {
+    google: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
+    twitter: Boolean(env.TWITTER_CLIENT_ID && env.TWITTER_CLIENT_SECRET),
+  };
+}
+
 async function hmacSign(secret: string, value: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -215,6 +234,7 @@ async function getSession(request: Request, env: Env): Promise<SessionState> {
   const secret = getOptionalAuthSecret(env, request);
   if (!secret) {
     return {
+      authProviders: getAuthProviders(env),
       authenticated: false,
       name: null,
       provider: null,
@@ -229,6 +249,7 @@ async function getSession(request: Request, env: Env): Promise<SessionState> {
 
   if (!payload || payload.exp < Math.floor(Date.now() / 1000)) {
     return {
+      authProviders: getAuthProviders(env),
       authenticated: false,
       name: null,
       provider: null,
@@ -237,6 +258,7 @@ async function getSession(request: Request, env: Env): Promise<SessionState> {
   }
 
   return {
+    authProviders: getAuthProviders(env),
     authenticated: true,
     name: payload.name,
     provider: payload.provider,
@@ -509,6 +531,7 @@ async function startOAuth(request: Request, env: Env, provider: Provider): Promi
   const state: OAuthState = {
     codeVerifier: randomToken(64),
     provider,
+    redirectTo: safeLocalRedirect(url.searchParams.get("redirect_to")),
     state: randomToken(32)
   };
   const signedState = await signCookieValue(env.AUTH_SECRET ?? "", state);
@@ -736,7 +759,7 @@ async function completeOAuth(request: Request, env: Env, provider: Provider): Pr
   const signedSession = await signCookieValue(getAuthSecret(env, request), session);
 
   const headers = new Headers({
-    "Location": user.created ? "/admin?setup=handle" : "/admin"
+    "Location": oauthState.redirectTo ?? (user.created ? "/admin?setup=handle" : "/admin")
   });
   headers.append("Set-Cookie", cookie(
     request,

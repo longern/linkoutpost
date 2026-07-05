@@ -1,6 +1,10 @@
 import type { LinkProfile } from "./profile";
 
 export type SessionState = {
+  authProviders?: {
+    google: boolean;
+    twitter: boolean;
+  };
   authenticated: boolean;
   name?: string | null;
   provider?: "google" | "twitter" | null;

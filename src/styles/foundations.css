@@ -54,6 +54,10 @@ select {
 .button-secondary {
   -webkit-tap-highlight-color: transparent;
   min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: 1px solid var(--brand-border-strong);
   border-radius: 8px;
   background: var(--brand-raised-background);
@@ -61,6 +65,12 @@ select {
   cursor: pointer;
   padding: 8px 14px;
   text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    filter 160ms ease;
 }
 
 a,
@@ -76,6 +86,16 @@ button {
   cursor: pointer;
 }
 
+button {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    filter 160ms ease,
+    opacity 160ms ease;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -87,15 +107,19 @@ button {
 }
 
 .button-primary {
-  gap: 8px;
+  border-color: var(--brand-accent);
+  background: var(--brand-accent);
+  color: #ffffff;
 }
 
 .button-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
   white-space: nowrap;
+}
+
+.button-pill {
+  border-radius: 999px;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .circle-icon-button {
@@ -138,8 +162,25 @@ button {
   }
 }
 
-.button-primary:hover,
 .button-secondary:hover {
   border-color: var(--brand-accent);
   color: var(--brand-accent-hover);
+}
+
+.button-secondary:active {
+  background: rgb(var(--brand-accent-rgb) / 8%);
+  border-color: var(--brand-accent);
+  color: var(--brand-accent-hover);
+  transition-duration: 80ms;
+}
+
+.button-primary:hover {
+  border-color: var(--brand-accent-hover);
+  background: var(--brand-accent-hover);
+  color: #ffffff;
+}
+
+.button-primary:active {
+  filter: brightness(0.94);
+  transition-duration: 80ms;
 }

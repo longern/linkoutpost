@@ -52,6 +52,11 @@
     justify-content: flex-start;
   }
 
+  .home-handle-form {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+  }
+
   .home-section,
   .home-workflow,
   .home-footer {

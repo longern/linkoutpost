@@ -62,6 +62,17 @@
   color: #172033;
 }
 
+.auth-provider-link:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.auth-provider-link:disabled:hover {
+  background: #ffffff;
+  border-color: rgb(var(--brand-shadow-rgb) / 16%);
+  color: #233044;
+}
+
 .auth-secondary-link {
   display: inline-block;
   margin-top: 20px;
@@ -156,16 +167,4 @@ h1 {
 
 h2 {
   font-size: 2rem;
-}
-
-.button-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--brand-accent);
-  color: #ffffff;
-}
-
-.button-primary:hover {
-  color: #ffffff;
 }

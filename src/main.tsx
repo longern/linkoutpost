@@ -21,6 +21,10 @@ const initialState =
     pathname: window.location.pathname,
     profile: null,
     session: {
+      authProviders: {
+        google: false,
+        twitter: false,
+      },
       authenticated: false,
       name: null,
       provider: null,

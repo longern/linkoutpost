@@ -1,15 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { FaDownload, FaLayerGroup, FaLock, FaServer } from "react-icons/fa6";
 import { loadSession } from "../apiClient";
 import { SiteTopbar } from "../components/SiteTopbar";
+import { isReservedPath, normalizeHandle } from "../profile";
 import { siteTitle } from "../siteConfig";
 import type { SessionState } from "../types";
 
 export function HomePage({ initialSession }: { initialSession: SessionState }) {
   const [session, setSession] = useState(initialSession);
+  const [host, setHost] = useState("");
+  const [handleDraft, setHandleDraft] = useState("");
+  const [handleError, setHandleError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    setHost(window.location.host);
 
     loadSession()
       .then((nextSession) => {
@@ -23,6 +28,20 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
       cancelled = true;
     };
   }, [initialSession]);
+
+  function onGetStarted(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+
+    const handle = normalizeHandle(handleDraft);
+    if (!handle || isReservedPath(handle)) {
+      setHandleError("Choose a valid handle.");
+      return;
+    }
+
+    window.location.href = session.authenticated
+      ? `/admin?setup=handle&handle=${encodeURIComponent(handle)}`
+      : `/signin?handle=${encodeURIComponent(handle)}`;
+  }
 
   return (
     <>
@@ -48,10 +67,26 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
               Build personal link pages locally, export them as static sites, or publish them
               with hosted handles when you are ready.
             </p>
-            <div className="home-hero-actions">
-              <a className="button-primary" href="/admin">Open editor</a>
-              <a className="home-secondary-link" href="/signin">Sign in</a>
-            </div>
+            <form className="home-handle-form" onSubmit={onGetStarted}>
+              <div className="home-handle-field">
+                <span>{host || "your-site"}/</span>
+                <input
+                  aria-label="Handle"
+                  autoCapitalize="off"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  onChange={(event) => {
+                    setHandleDraft(normalizeHandle(event.currentTarget.value));
+                    setHandleError(null);
+                  }}
+                  placeholder="your_handle"
+                  spellCheck={false}
+                  value={handleDraft}
+                />
+              </div>
+              <button className="button-primary" type="submit">Get Started</button>
+              {handleError && <p className="home-handle-error">{handleError}</p>}
+            </form>
           </div>
         </section>
 
