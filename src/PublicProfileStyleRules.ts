@@ -659,7 +659,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     rule: {
       display: "flex",
       flexWrap: "wrap",
-      gap: 12,
+      gap: 4,
       justifyContent: "center",
       width: "min(100%, 360px)",
     },

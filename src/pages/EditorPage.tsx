@@ -41,7 +41,10 @@ import { HandleSetupDialog } from "./editor/HandleSetupDialog";
 import { LayoutPanel } from "./editor/LayoutPanel";
 import { LinksPanel } from "./editor/LinksPanel";
 import { prepareAvatarFile } from "./editor/avatarImage";
-import { resolveProfileAvatarUrl } from "./editor/profileAvatarUrl";
+import {
+  resolveProfileAssetUrl,
+  resolveProfileAvatarUrl,
+} from "./editor/profileAvatarUrl";
 import {
   FullscreenProfilePreview,
   ProfilePreview,
@@ -67,6 +70,8 @@ export function EditorPage({
   const [activeEditorPanel, setActiveEditorPanel] =
     useState<EditorPanel>("profile");
   const [editorAvatarUrl, setEditorAvatarUrl] = useState<string | null>(null);
+  const [editorBackgroundUrl, setEditorBackgroundUrl] = useState<string | null>(null);
+  const [editorBannerImageUrl, setEditorBannerImageUrl] = useState<string | null>(null);
   const [dragLinks, setDragLinks] = useState<LinkItem[] | null>(null);
   const [handleSetupOpen, setHandleSetupOpen] = useState(false);
   const [handleDraft, setHandleDraft] = useState("");
@@ -205,6 +210,48 @@ export function EditorPage({
       if (objectUrl?.startsWith("blob:")) URL.revokeObjectURL(objectUrl);
     };
   }, [mode, profile]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let backgroundObjectUrl: string | null = null;
+    let bannerObjectUrl: string | null = null;
+
+    async function resolveEditorMedia(): Promise<void> {
+      const allowLocalAssets = mode !== "backend";
+      const [backgroundUrl, bannerImageUrl] = await Promise.all([
+        resolveProfileAssetUrl(profile.theme.backgroundAssetId, allowLocalAssets),
+        resolveProfileAssetUrl(profile.theme.bannerImageAssetId, allowLocalAssets),
+      ]);
+
+      if (cancelled) {
+        if (backgroundUrl?.startsWith("blob:")) URL.revokeObjectURL(backgroundUrl);
+        if (bannerImageUrl?.startsWith("blob:")) URL.revokeObjectURL(bannerImageUrl);
+        return;
+      }
+
+      backgroundObjectUrl = backgroundUrl;
+      bannerObjectUrl = bannerImageUrl;
+      setEditorBackgroundUrl(backgroundUrl);
+      setEditorBannerImageUrl(bannerImageUrl);
+    }
+
+    void resolveEditorMedia().catch(() => {
+      if (!cancelled) {
+        setEditorBackgroundUrl(null);
+        setEditorBannerImageUrl(null);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      if (backgroundObjectUrl?.startsWith("blob:")) URL.revokeObjectURL(backgroundObjectUrl);
+      if (bannerObjectUrl?.startsWith("blob:")) URL.revokeObjectURL(bannerObjectUrl);
+    };
+  }, [
+    mode,
+    profile.theme.backgroundAssetId,
+    profile.theme.bannerImageAssetId,
+  ]);
 
   const profileUrl = useMemo(
     () => `/${profile.handle || "your_handle"}`,
@@ -492,6 +539,20 @@ export function EditorPage({
           : "This browser cannot save local images",
       );
     }
+  }
+
+  function onBackgroundRemove(): void {
+    const nextProfile = {
+      ...profile,
+      theme: {
+        ...profile.theme,
+        backgroundAssetId: null,
+      },
+      updatedAt: new Date().toISOString(),
+    };
+    setProfile(nextProfile);
+    void autosaveProfile(nextProfile);
+    setStatus("Background removed");
   }
 
   async function onBannerImageChange(file: File | null): Promise<void> {
@@ -995,9 +1056,12 @@ export function EditorPage({
 
             {activeEditorPanel === "design" && (
               <DesignPanel
+                backgroundUrl={editorBackgroundUrl}
+                bannerImageUrl={editorBannerImageUrl}
                 onBackgroundChange={(file) => {
                   void onBackgroundChange(file);
                 }}
+                onBackgroundRemove={onBackgroundRemove}
                 onBannerImageChange={(file) => {
                   void onBannerImageChange(file);
                 }}

@@ -201,8 +201,9 @@
     gap: 8px;
   }
 
-  .theme-grid {
+  .design-field {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .card-field-editor-row {
