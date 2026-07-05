@@ -294,8 +294,24 @@ input[type="color"] {
 }
 
 .card-field-editor-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 40px;
   align-items: center;
+  gap: 8px;
+  transition:
+    opacity 160ms ease,
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.card-field-editor-row.is-dragging {
+  opacity: 0.96;
+  position: relative;
+  z-index: 2;
+}
+
+.card-field-editor-inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 8px;
 }
 

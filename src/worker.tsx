@@ -28,6 +28,8 @@ const ssrHeaders = {
   "X-Linkoutpost-Worker": "ssr"
 };
 
+let cachedProfileRuntimeScript: string | null = null;
+
 function serializeInitialState(state: InitialState): string {
   return JSON.stringify(state).replace(/</g, "\\u003c");
 }
@@ -39,6 +41,41 @@ function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function escapeScript(value: string): string {
+  return value.replace(/<\/script/gi, "<\\/script");
+}
+
+function isClientAppRoute(pathname: string): boolean {
+  return (
+    pathname === "/" ||
+    pathname === "/signin" ||
+    pathname.startsWith("/signin/") ||
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/")
+  );
+}
+
+function removeClientEntrypoints(html: string): string {
+  return html
+    .replace(/<script\b[^>]*\btype=["']module["'][^>]*><\/script>\s*/gi, "")
+    .replace(/<link\b[^>]*\brel=["']modulepreload["'][^>]*>\s*/gi, "");
+}
+
+async function readProfileRuntimeScript(env: Env, request: Request): Promise<string> {
+  if (cachedProfileRuntimeScript) return cachedProfileRuntimeScript;
+
+  const response = await env.ASSETS.fetch(
+    new URL("/assets/profile-runtime.js", request.url),
+  );
+
+  if (!response.ok) {
+    throw new Error("Missing profile runtime asset");
+  }
+
+  cachedProfileRuntimeScript = await response.text();
+  return cachedProfileRuntimeScript;
 }
 
 type Provider = "google" | "twitter";
@@ -709,11 +746,21 @@ async function renderHandlePage(request: Request, env: Env): Promise<Response> {
   const html = await shell.text();
 
   const documentTitle = escapeHtml(getProfileDocumentTitle(initialState.profile));
-  const renderedHtml = html
+  const isPublicProfileRoute = !isClientAppRoute(url.pathname);
+  const profileRuntimeScript = isPublicProfileRoute
+    ? `<script>${escapeScript(await readProfileRuntimeScript(env, request))}</script>`
+    : "";
+  const renderedHtml = (isPublicProfileRoute ? removeClientEntrypoints(html) : html)
     .replace(/<title>.*?<\/title>/, `<title>${documentTitle}</title>`)
     .replace(
       '<div id="app"></div>',
-      `<div id="app">${appHtml}</div><script>window.__LINKOUTPOST_INITIAL_STATE__=${serializeInitialState(initialState)}</script>`
+      isPublicProfileRoute
+        ? `<div id="app">${appHtml}</div>`
+        : `<div id="app">${appHtml}</div><script>window.__LINKOUTPOST_INITIAL_STATE__=${serializeInitialState(initialState)}</script>`
+    )
+    .replace(
+      "</body>",
+      isPublicProfileRoute ? `${profileRuntimeScript}</body>` : "</body>"
     );
 
   return new Response(

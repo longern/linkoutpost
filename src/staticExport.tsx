@@ -4,7 +4,6 @@ import { createRoot, type Root } from "react-dom/client";
 import { readLocalAsset } from "./localEditorStore";
 import { getPublicProfileCssText } from "./PublicProfileCssText";
 import { ProfilePage } from "./PublicProfile";
-import { getStaticProfileRuntimeScript } from "./profileShare";
 import { getProfileDocumentTitle, type LinkProfile } from "./profile";
 import authAndOverlaysCss from "./styles/auth-and-overlays.css?inline";
 import editorPanelsCss from "./styles/editor-panels.css?inline";
@@ -71,7 +70,7 @@ export async function renderStaticHtml(
     `<title>${escapeHtml(getProfileDocumentTitle(profile))}</title>`,
     '<link href="./styles.css" rel="stylesheet">',
     "</head>",
-    `<body>${profileMarkup}<script src="./profile.js" defer></script></body>`,
+    `<body>${profileMarkup}<script src="./profile.js" type="module"></script></body>`,
     "</html>"
   ].join("");
 }
@@ -96,14 +95,24 @@ function collectStaticCss(): string {
   ].join("\n");
 }
 
+async function readProfileRuntimeScript(): Promise<string> {
+  const response = await fetch("/assets/profile-runtime.js");
+  if (!response.ok) {
+    throw new Error("Profile runtime asset is missing");
+  }
+
+  return response.text();
+}
+
 export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {
   const files: Record<string, Uint8Array> = {
-    "profile.json": strToU8(JSON.stringify(profile, null, 2)),
-    "profile.js": strToU8(getStaticProfileRuntimeScript()),
+    "profile.js": strToU8(await readProfileRuntimeScript()),
     "styles.css": strToU8(collectStaticCss())
   };
   let avatarHref: string | null = null;
   let backgroundHref: string | null = null;
+  let avatarAssetPath: string | null = null;
+  let backgroundAssetPath: string | null = null;
 
   if (profile.avatarAssetId) {
     const asset = await readLocalAsset(profile.avatarAssetId);
@@ -112,6 +121,7 @@ export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {
       const filename = `assets/avatar.${extension}`;
       files[filename] = new Uint8Array(await asset.blob.arrayBuffer());
       avatarHref = `./${filename}`;
+      avatarAssetPath = filename;
     }
   }
 
@@ -122,8 +132,25 @@ export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {
       const filename = `assets/background.${extension}`;
       files[filename] = new Uint8Array(await asset.blob.arrayBuffer());
       backgroundHref = `./${filename}`;
+      backgroundAssetPath = filename;
     }
   }
+
+  files["linkoutpost-export.json"] = strToU8(
+    JSON.stringify(
+      {
+        app: "linkoutpost",
+        version: 1,
+        profile,
+        assets: {
+          avatar: avatarAssetPath,
+          background: backgroundAssetPath,
+        },
+      },
+      null,
+      2,
+    ),
+  );
 
   files["index.html"] = strToU8(
     await renderStaticHtml(profile, avatarHref, backgroundHref),

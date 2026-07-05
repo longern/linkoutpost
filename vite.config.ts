@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
+import { resolve } from "node:path";
 
 import { cloudflare } from "@cloudflare/vite-plugin";
 
@@ -41,6 +42,21 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: "dist",
       emptyOutDir: true,
+      rollupOptions: {
+        input: {
+          app: resolve(__dirname, "index.html"),
+          profileRuntime: resolve(__dirname, "src/profileRuntime.ts"),
+        },
+        output: {
+          entryFileNames(chunk) {
+            if (chunk.name === "profileRuntime") {
+              return "assets/profile-runtime.js";
+            }
+
+            return "assets/[name]-[hash].js";
+          },
+        },
+      },
     },
   };
 });

@@ -181,8 +181,24 @@
     padding: 20px;
   }
 
+  .link-list {
+    gap: 14px;
+  }
+
   .link-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 28px minmax(0, 1fr) 40px;
+    gap: 8px;
+    border-radius: 18px;
+    padding: 16px 14px 16px 4px;
+  }
+
+  .link-row-drag {
+    width: 28px;
+    height: 36px;
+  }
+
+  .link-row-fields {
+    gap: 8px;
   }
 
   .theme-grid {
@@ -190,12 +206,11 @@
   }
 
   .card-field-editor-row {
-    align-items: stretch;
-    flex-direction: column;
+    grid-template-columns: 28px minmax(0, 1fr) 40px;
   }
 
-  .card-field-editor-row .circle-icon-button {
-    align-self: flex-end;
+  .card-field-editor-inputs {
+    grid-template-columns: 1fr;
   }
 
   .social-editor-row {

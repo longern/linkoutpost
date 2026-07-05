@@ -49,7 +49,7 @@ function ProfileSocialLinks({ links }: { links: SocialLink[] }) {
             className="profile-social-link"
             href={getSocialLinkUrl(link)}
             key={link.id}
-            rel="noreferrer"
+            rel="noreferrer noopener"
             target="_blank"
             title={link.platform}
           >

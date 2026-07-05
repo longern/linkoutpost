@@ -112,6 +112,26 @@
   opacity: 0.68;
 }
 
+.zip-import-dialog {
+  display: grid;
+  gap: 16px;
+}
+
+.zip-import-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.zip-import-actions label {
+  display: grid;
+  gap: 6px;
+}
+
+.zip-import-actions .button-primary,
+.zip-import-actions .button-secondary {
+  width: 100%;
+}
+
 .eyebrow {
   margin: 0 0 12px;
   color: var(--brand-accent);
@@ -149,4 +169,3 @@ h2 {
 .button-primary:hover {
   color: #ffffff;
 }
-

@@ -42,7 +42,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".public-profile .circle-icon-button",
     rule: {
-      background: "transparent",
+      backgroundColor: "transparent",
       border: 0,
       borderRadius: 999,
       color: "currentColor",
@@ -576,24 +576,18 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       flexDirection: "column",
       alignItems: "center",
       width: "min(100%, 360px)",
-    },
-  },
-  {
-    selector: ".profile-card-meta .handle",
-    rule: {
-      margin: "0 0 10px",
+      gap: 8,
     },
   },
   {
     selector: ".profile-card-meta .bio",
     rule: {
-      margin: "0 auto 18px",
+      margin: "0 auto 8px",
     },
   },
   {
     selector: ".profile-card-meta .public-links",
     rule: {
-      marginTop: 20,
       width: "100%",
     },
   },
@@ -617,18 +611,18 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     selector: ".profile-social-link",
     rule: {
       alignItems: "center",
-      background: "rgb(255 255 255 / 86%)",
-      border: "1px solid rgb(255 255 255 / 58%)",
+      background: "transparent",
+      border: 0,
       borderRadius: 999,
-      boxShadow: "0 12px 28px rgb(16 24 39 / 16%)",
-      color: "var(--profile-accent-color, #2563eb)",
+      boxShadow: "none",
+      color: "inherit",
       display: "inline-flex",
-      height: 44,
+      width: 48,
+      height: 48,
+      padding: 8,
       justifyContent: "center",
       textDecoration: "none",
-      transition:
-        "background-color 160ms ease, color 160ms ease, transform 160ms ease",
-      width: 44,
+      transition: "background-color 160ms ease",
     },
   },
   {
@@ -636,8 +630,17 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     rule: {
       "@media": {
         "(hover: hover) and (pointer: fine)": {
-          background: "#ffffff",
-          transform: "translateY(-1px)",
+          backgroundColor: "color-mix(in srgb, currentColor, transparent 92%)",
+        },
+      },
+    },
+  },
+  {
+    selector: ".profile-social-link:active",
+    rule: {
+      "@media": {
+        "(hover: hover) and (pointer: fine)": {
+          backgroundColor: "color-mix(in srgb, currentColor, transparent 88%)",
         },
       },
     },

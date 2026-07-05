@@ -156,17 +156,3 @@ export function profileShareAttributes(data: ProfileShareData): Record<string, s
     ...(data.url ? { "data-share-url": data.url } : {})
   };
 }
-
-export function getStaticProfileRuntimeScript(): string {
-  return [
-    getProfileShareCapabilities.toString(),
-    shareProfile.toString(),
-    copyProfileUrl.toString(),
-    getButtonShareData.toString(),
-    setShareDialogUrl.toString(),
-    openShareDialog.toString(),
-    closeShareDialog.toString(),
-    attachProfileShareButtons.toString(),
-    'attachProfileShareButtons(document);'
-  ].join("\n\n");
-}

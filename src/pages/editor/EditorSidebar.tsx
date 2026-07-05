@@ -7,6 +7,7 @@ import {
 } from "react-icons/fa6";
 import type { LinkProfile } from "../../profile";
 import type { ProfileSummary } from "../../types";
+import { AccountHandleMenu } from "./AccountHandleMenu";
 
 export type EditorPanel = "links" | "layout" | "design" | "profile";
 
@@ -18,6 +19,8 @@ type EditorSidebarProps = {
   mode: "loading" | "offline" | "backend";
   onAccountMenuOpenChange(open: boolean): void;
   onCreateHandle(): void;
+  onDeleteProfile(handle: string): void;
+  onImportZip(): void;
   onMobileOpenChange(open: boolean): void;
   onPanelChange(panel: EditorPanel): void;
   onSelectProfile(handle: string): void;
@@ -33,6 +36,8 @@ export function EditorSidebar({
   mode,
   onAccountMenuOpenChange,
   onCreateHandle,
+  onDeleteProfile,
+  onImportZip,
   onMobileOpenChange,
   onPanelChange,
   onSelectProfile,
@@ -86,56 +91,16 @@ export function EditorSidebar({
                 tabIndex={-1}
                 type="button"
               />
-              <ul className="account-menu" role="menu">
-                {mode === "backend" && (
-                  <>
-                    {(profileSummaries.length === 0
-                      ? [{ handle: profile.handle || "your_handle", title: "" }]
-                      : profileSummaries
-                    ).map((summary) => (
-                      <li key={summary.handle} role="none">
-                        <button
-                          className={`account-menu-item${summary.handle === profile.handle ? " is-active" : ""}`}
-                          onClick={() => {
-                            onAccountMenuOpenChange(false);
-                            onSelectProfile(summary.handle);
-                          }}
-                          role="menuitem"
-                          type="button"
-                        >
-                          @{summary.handle}
-                        </button>
-                      </li>
-                    ))}
-                    <li role="none">
-                      <button
-                        className="account-menu-item"
-                        onClick={() => {
-                          onAccountMenuOpenChange(false);
-                          onCreateHandle();
-                        }}
-                        role="menuitem"
-                        type="button"
-                      >
-                        Create new handle
-                      </button>
-                    </li>
-                    <li aria-hidden="true" className="account-menu-divider" role="separator" />
-                    <li role="none">
-                      <a className="account-menu-item" href="/api/logout" role="menuitem">
-                        Logout
-                      </a>
-                    </li>
-                  </>
-                )}
-                {mode !== "backend" && (
-                  <li role="none">
-                    <span className="account-menu-item" role="menuitem">
-                      @{profile.handle || "your_handle"}
-                    </span>
-                  </li>
-                )}
-              </ul>
+              <AccountHandleMenu
+                mode={mode}
+                onClose={() => onAccountMenuOpenChange(false)}
+                onCreateHandle={onCreateHandle}
+                onDeleteProfile={onDeleteProfile}
+                onImportZip={onImportZip}
+                onSelectProfile={onSelectProfile}
+                profile={profile}
+                profileSummaries={profileSummaries}
+              />
             </>
           )}
         </div>

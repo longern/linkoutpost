@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FaArrowUpRightFromSquare,
   FaBars,
@@ -16,8 +16,12 @@ import {
   uploadProfileImage,
 } from "../apiClient";
 import {
+  deleteLocalProfile,
+  readLocalProfileByHandle,
   readLocalProfile,
+  readLocalProfileSummaries,
   saveLocalAsset,
+  saveLocalAssetBlob,
   writeLocalProfile,
 } from "../localEditorStore";
 import {
@@ -29,6 +33,7 @@ import {
   type ProfileTheme,
 } from "../profile";
 import { siteTitle } from "../siteConfig";
+import type { ImportedStaticProfile } from "../staticImport";
 import type { ProfileSummary, SessionState } from "../types";
 import { DesignPanel } from "./editor/DesignPanel";
 import { EditorSidebar, type EditorPanel } from "./editor/EditorSidebar";
@@ -65,8 +70,14 @@ export function EditorPage({
   const [handleDraft, setHandleDraft] = useState("");
   const [handleSetupError, setHandleSetupError] = useState<string | null>(null);
   const [handleSetupSaving, setHandleSetupSaving] = useState(false);
+  const [importCandidate, setImportCandidate] =
+    useState<ImportedStaticProfile | null>(null);
+  const [importHandleDraft, setImportHandleDraft] = useState("");
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSaving, setImportSaving] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const zipInputRef = useRef<HTMLInputElement | null>(null);
   const [fullPreviewOpen, setFullPreviewOpen] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -84,7 +95,17 @@ export function EditorPage({
 
         if (!nextSession.authenticated || nextSession.storage !== "backend") {
           const offlineProfile = await readLocalProfile();
+          const summaries = await readLocalProfileSummaries();
+          if (cancelled) return;
           setProfile(offlineProfile);
+          setProfileSummaries(
+            summaries.length > 0 ? summaries : [{
+              handle: offlineProfile.handle,
+              title: offlineProfile.title,
+              updatedAt: offlineProfile.updatedAt,
+            }],
+          );
+          setHandleDraft(offlineProfile.handle);
           setMode("offline");
           setStatus("Offline editor");
           return;
@@ -126,7 +147,17 @@ export function EditorPage({
         setStatus("Backend editor");
       } catch {
         if (cancelled) return;
-        setProfile(await readLocalProfile());
+        const offlineProfile = await readLocalProfile();
+        const summaries = await readLocalProfileSummaries();
+        setProfile(offlineProfile);
+        setProfileSummaries(
+          summaries.length > 0 ? summaries : [{
+            handle: offlineProfile.handle,
+            title: offlineProfile.title,
+            updatedAt: offlineProfile.updatedAt,
+          }],
+        );
+        setHandleDraft(offlineProfile.handle);
         setMode("offline");
         setStatus("Backend unavailable, using offline editor");
       }
@@ -175,7 +206,11 @@ export function EditorPage({
   }, [dragLinks, profile]);
 
   async function refreshProfileSummaries(): Promise<ProfileSummary[]> {
-    if (mode !== "backend") return [];
+    if (mode !== "backend") {
+      const summaries = await readLocalProfileSummaries();
+      setProfileSummaries(summaries);
+      return summaries;
+    }
 
     const summaries = await loadMyProfiles();
     setProfileSummaries(summaries);
@@ -200,6 +235,7 @@ export function EditorPage({
     }
 
     await writeLocalProfile(nextProfile);
+    await refreshProfileSummaries();
     setStatus("Saved locally");
   }
 
@@ -242,6 +278,19 @@ export function EditorPage({
     });
   }
 
+  function commitTheme(patch: Partial<ProfileTheme>): void {
+    const nextProfile = {
+      ...profile,
+      theme: {
+        ...profile.theme,
+        ...patch,
+      },
+      updatedAt: new Date().toISOString(),
+    };
+    setProfile(nextProfile);
+    void autosaveProfile(nextProfile);
+  }
+
   function addLink(): void {
     const nextProfile = {
       ...profile,
@@ -280,7 +329,26 @@ export function EditorPage({
   }
 
   async function onSelectProfile(handle: string): Promise<void> {
-    if (mode !== "backend" || !handle || handle === profile.handle) return;
+    if (!handle || handle === profile.handle) return;
+
+    if (mode !== "backend") {
+      try {
+        setStatus("Loading profile");
+        const nextProfile = await readLocalProfileByHandle(handle);
+        if (!nextProfile) {
+          setStatus("Profile not found");
+          return;
+        }
+
+        setProfile(nextProfile);
+        setHandleDraft(nextProfile.handle);
+        setActiveEditorPanel("profile");
+        setStatus("Offline editor");
+      } catch {
+        setStatus("Profile load failed");
+      }
+      return;
+    }
 
     try {
       setStatus("Loading profile");
@@ -303,6 +371,32 @@ export function EditorPage({
     setHandleDraft("");
     setHandleSetupError(null);
     setHandleSetupOpen(true);
+  }
+
+  async function onDeleteLocalProfile(handle: string): Promise<void> {
+    if (mode === "backend") return;
+
+    const normalizedHandle = normalizeHandle(handle);
+    if (!normalizedHandle) return;
+
+    try {
+      setStatus("Deleting profile");
+      const nextProfile = await deleteLocalProfile(normalizedHandle);
+      const summaries = await readLocalProfileSummaries();
+      setProfile(nextProfile);
+      setProfileSummaries(
+        summaries.length > 0 ? summaries : [{
+          handle: nextProfile.handle,
+          title: nextProfile.title,
+          updatedAt: nextProfile.updatedAt,
+        }],
+      );
+      setHandleDraft(nextProfile.handle);
+      setActiveEditorPanel("profile");
+      setStatus("Profile deleted");
+    } catch {
+      setStatus("Profile delete failed");
+    }
   }
 
   async function onAvatarChange(file: File | null): Promise<void> {
@@ -403,6 +497,174 @@ export function EditorPage({
     setStatus("Static ZIP exported");
   }
 
+  function handleExists(handle: string): boolean {
+    return profileSummaries.some((summary) => summary.handle === handle);
+  }
+
+  function createAvailableHandle(baseHandle: string): string {
+    const normalizedBase = (normalizeHandle(baseHandle) || "imported").slice(0, 34);
+    let candidate = normalizedBase;
+    let index = 2;
+
+    while (handleExists(candidate)) {
+      candidate = normalizeHandle(`${normalizedBase}-${index}`);
+      index += 1;
+    }
+
+    return candidate;
+  }
+
+  function resetImportDialog(): void {
+    setImportCandidate(null);
+    setImportHandleDraft("");
+    setImportError(null);
+    setImportSaving(false);
+  }
+
+  async function prepareImportedProfile(
+    imported: ImportedStaticProfile,
+    handle: string,
+  ): Promise<LinkProfile> {
+    const fallbackAvatarAssetId = imported.profile.avatarAssetId?.startsWith("data:image/")
+      ? imported.profile.avatarAssetId
+      : null;
+    const fallbackBackgroundAssetId = imported.profile.theme.backgroundAssetId?.startsWith("data:image/")
+      ? imported.profile.theme.backgroundAssetId
+      : null;
+    let nextProfile = createProfile({
+      ...imported.profile,
+      handle,
+      avatarAssetId: fallbackAvatarAssetId,
+      theme: {
+        ...imported.profile.theme,
+        backgroundAssetId: fallbackBackgroundAssetId,
+      },
+      updatedAt: new Date().toISOString(),
+    });
+
+    if (imported.avatar) {
+      if (mode === "backend") {
+        const file = new File([imported.avatar.blob], imported.avatar.name, {
+          type: imported.avatar.type,
+        });
+        nextProfile = {
+          ...nextProfile,
+          avatarAssetId: await uploadAvatar(file),
+        };
+      } else {
+        const asset = await saveLocalAssetBlob(
+          imported.avatar.blob,
+          imported.avatar.name,
+          imported.avatar.type,
+        );
+        nextProfile = {
+          ...nextProfile,
+          avatarAssetId: asset.id,
+        };
+      }
+    }
+
+    if (imported.background) {
+      if (mode === "backend") {
+        const file = new File([imported.background.blob], imported.background.name, {
+          type: imported.background.type,
+        });
+        nextProfile = {
+          ...nextProfile,
+          theme: {
+            ...nextProfile.theme,
+            backgroundAssetId: await uploadProfileImage(file, "background"),
+          },
+        };
+      } else {
+        const asset = await saveLocalAssetBlob(
+          imported.background.blob,
+          imported.background.name,
+          imported.background.type,
+        );
+        nextProfile = {
+          ...nextProfile,
+          theme: {
+            ...nextProfile.theme,
+            backgroundAssetId: asset.id,
+          },
+        };
+      }
+    }
+
+    return nextProfile;
+  }
+
+  async function commitImportedProfile(
+    imported: ImportedStaticProfile,
+    handle: string,
+  ): Promise<void> {
+    const normalizedHandle = normalizeHandle(handle);
+
+    if (!normalizedHandle || isReservedPath(normalizedHandle)) {
+      setImportError("Choose a valid handle.");
+      return;
+    }
+
+    setImportSaving(true);
+    setImportError(null);
+
+    try {
+      setStatus("Importing ZIP");
+      const nextProfile = await prepareImportedProfile(imported, normalizedHandle);
+
+      if (mode === "backend") {
+        await saveProfile(nextProfile);
+      } else {
+        await writeLocalProfile(nextProfile);
+      }
+
+      setProfile(nextProfile);
+      setHandleDraft(nextProfile.handle);
+      await refreshProfileSummaries();
+      resetImportDialog();
+      setActiveEditorPanel("profile");
+      setStatus("ZIP imported");
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : "ZIP import failed");
+      setStatus("ZIP import failed");
+      setImportSaving(false);
+    }
+  }
+
+  async function onZipImportChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ): Promise<void> {
+    const file = event.target.files?.[0] ?? null;
+    event.target.value = "";
+    if (!file) return;
+
+    try {
+      setStatus("Reading ZIP");
+      const { readProfileFromStaticZip } = await import("../staticImport");
+      const imported = await readProfileFromStaticZip(file);
+      const importedHandle = normalizeHandle(imported.profile.handle);
+
+      if (!importedHandle || isReservedPath(importedHandle)) {
+        setImportCandidate(imported);
+        setImportHandleDraft(createAvailableHandle(importedHandle || "imported"));
+        setImportError("Choose a valid handle.");
+        return;
+      }
+
+      if (handleExists(importedHandle)) {
+        setImportCandidate(imported);
+        setImportHandleDraft(createAvailableHandle(importedHandle));
+        setImportError(null);
+        return;
+      }
+
+      await commitImportedProfile(imported, importedHandle);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "ZIP import failed");
+    }
+  }
+
   function openFullPreview(): void {
     if (
       typeof window !== "undefined" &&
@@ -447,7 +709,13 @@ export function EditorPage({
         handle,
         title: profile.title,
       });
-      await saveProfile(nextProfile);
+
+      if (mode === "backend") {
+        await saveProfile(nextProfile);
+      } else {
+        await writeLocalProfile(nextProfile);
+      }
+
       setProfile(nextProfile);
       await refreshProfileSummaries();
       setHandleSetupOpen(false);
@@ -515,8 +783,22 @@ export function EditorPage({
         onSelectProfile={(handle) => {
           void onSelectProfile(handle);
         }}
+        onDeleteProfile={(handle) => {
+          void onDeleteLocalProfile(handle);
+        }}
+        onImportZip={() => zipInputRef.current?.click()}
         profile={profile}
         profileSummaries={profileSummaries}
+      />
+
+      <input
+        ref={zipInputRef}
+        accept=".zip,application/zip"
+        className="visually-hidden"
+        onChange={(event) => {
+          void onZipImportChange(event);
+        }}
+        type="file"
       />
 
       <div className="editor-pane">
@@ -614,6 +896,7 @@ export function EditorPage({
 
             {activeEditorPanel === "layout" && (
               <LayoutPanel
+                onCommitTheme={commitTheme}
                 onSave={saveCurrentProfile}
                 onUpdateTheme={updateTheme}
                 profile={profile}
@@ -641,6 +924,71 @@ export function EditorPage({
             void onHandleSetupSubmit(event);
           }}
         />
+      )}
+
+      {importCandidate && (
+        <div className="modal-backdrop" role="presentation">
+          <section
+            aria-labelledby="zip-import-conflict-title"
+            className="modal-card zip-import-dialog"
+            role="dialog"
+          >
+            <h2 id="zip-import-conflict-title">Import ZIP</h2>
+            <p>
+              The ZIP uses @{importCandidate.profile.handle || "imported"}.
+              Choose how to import it.
+            </p>
+            <div className="zip-import-actions">
+              <button
+                className="button-secondary"
+                disabled={importSaving}
+                onClick={() => {
+                  void commitImportedProfile(
+                    importCandidate,
+                    importCandidate.profile.handle,
+                  );
+                }}
+                type="button"
+              >
+                Overwrite
+              </button>
+              <label>
+                Rename to
+                <input
+                  value={importHandleDraft}
+                  onChange={(event) => {
+                    setImportHandleDraft(normalizeHandle(event.target.value));
+                    setImportError(null);
+                  }}
+                />
+              </label>
+              <button
+                className="button-primary"
+                disabled={importSaving}
+                onClick={() => {
+                  const renamedHandle = normalizeHandle(importHandleDraft);
+                  if (handleExists(renamedHandle)) {
+                    setImportError("That handle already exists.");
+                    return;
+                  }
+                  void commitImportedProfile(importCandidate, renamedHandle);
+                }}
+                type="button"
+              >
+                Rename and import
+              </button>
+              <button
+                className="button-secondary"
+                disabled={importSaving}
+                onClick={resetImportDialog}
+                type="button"
+              >
+                Cancel
+              </button>
+            </div>
+            {importError && <p className="field-error">{importError}</p>}
+          </section>
+        </div>
       )}
     </main>
   );
