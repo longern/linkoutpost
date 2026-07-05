@@ -1,3 +1,4 @@
+import { FaTrash } from "react-icons/fa6";
 import {
   fontOptions,
   type LinkProfile,
@@ -6,6 +7,8 @@ import {
 
 type DesignPanelProps = {
   onBackgroundChange(file: File | null): void;
+  onProfileImageChange(file: File | null): void;
+  onProfileImageRemove(): void;
   onSave(): void;
   onUpdateTheme(patch: Partial<ProfileTheme>): void;
   profile: LinkProfile;
@@ -13,6 +16,8 @@ type DesignPanelProps = {
 
 export function DesignPanel({
   onBackgroundChange,
+  onProfileImageChange,
+  onProfileImageRemove,
   onSave,
   onUpdateTheme,
   profile,
@@ -33,6 +38,31 @@ export function DesignPanel({
               type="file"
             />
           </label>
+          <label>
+            Profile image (classic)
+            <input
+              accept="image/*,video/*"
+              onChange={(event) => {
+                onProfileImageChange(event.currentTarget.files?.[0] ?? null);
+                event.currentTarget.value = "";
+              }}
+              type="file"
+            />
+          </label>
+          {profile.theme.profileImageAssetId && (
+            <div className="theme-file-action">
+              <span>Profile image is set</span>
+              <button
+                aria-label="Remove profile image"
+                className="circle-icon-button danger"
+                onClick={onProfileImageRemove}
+                title="Remove profile image"
+                type="button"
+              >
+                <FaTrash aria-hidden="true" size={18} />
+              </button>
+            </div>
+          )}
           <label>
             Background
             <input

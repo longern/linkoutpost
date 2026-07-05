@@ -46,6 +46,9 @@ export function App({ initialState }: AppProps) {
       backgroundUrl={getProfileAssetUrl(
         initialState.profile?.theme.backgroundAssetId ?? null,
       )}
+      profileImageUrl={getProfileAssetUrl(
+        initialState.profile?.theme.profileImageAssetId ?? null,
+      )}
       profile={initialState.profile}
     />
   );

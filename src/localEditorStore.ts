@@ -351,14 +351,8 @@ export async function readLocalAsset(id: string): Promise<StoredAsset | null> {
   }
 }
 
-export async function readLocalAssetAsDataUrl(id: string): Promise<string | null> {
+export async function readLocalAssetAsObjectUrl(id: string): Promise<string | null> {
   const asset = await readLocalAsset(id);
   if (!asset) return null;
-
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(reader.error);
-    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : null);
-    reader.readAsDataURL(asset.blob);
-  });
+  return URL.createObjectURL(asset.blob);
 }

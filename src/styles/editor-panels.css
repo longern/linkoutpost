@@ -272,6 +272,16 @@ input[type="color"] {
   gap: 12px;
 }
 
+.theme-file-action {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #526070;
+  font-size: 0.92rem;
+}
+
 .card-layout-editor {
   display: flex;
   flex-direction: column;

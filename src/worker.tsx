@@ -104,6 +104,7 @@ type OAuthIdentity = {
 
 const textEncoder = new TextEncoder();
 const maxAvatarBytes = 2 * 1024 * 1024;
+const maxProfileMediaBytes = 10 * 1024 * 1024;
 
 function base64UrlEncode(input: ArrayBuffer | Uint8Array | string): string {
   const bytes = typeof input === "string"
@@ -386,10 +387,14 @@ function jsonError(message: string, status: number): Response {
   });
 }
 
-function imageExtension(contentType: string): string {
+function mediaExtension(contentType: string): string {
   if (contentType === "image/png") return "png";
   if (contentType === "image/webp") return "webp";
   if (contentType === "image/gif") return "gif";
+  if (contentType === "video/mp4") return "mp4";
+  if (contentType === "video/webm") return "webm";
+  if (contentType === "video/ogg") return "ogv";
+  if (contentType === "video/quicktime") return "mov";
   return "jpg";
 }
 
@@ -401,21 +406,36 @@ async function writeProfileImageUpload(request: Request, env: Env, userId: strin
   const formData = await request.formData();
   const image = formData.get("image");
   const kind = formData.get("kind");
-  const folder = kind === "background" ? "backgrounds" : "avatars";
+  const folder =
+    kind === "background"
+      ? "backgrounds"
+      : kind === "profile"
+        ? "profiles"
+        : "avatars";
 
   if (!(image instanceof File)) {
     throw new Error("Image file is required");
   }
 
-  if (!image.type.startsWith("image/")) {
-    throw new Error("File must be an image");
+  const isProfileMedia = kind === "profile";
+  const validType = isProfileMedia
+    ? image.type.startsWith("image/") || image.type.startsWith("video/")
+    : image.type.startsWith("image/");
+
+  if (!validType) {
+    throw new Error(isProfileMedia ? "File must be an image or video" : "File must be an image");
   }
 
-  if (image.size > maxAvatarBytes) {
-    throw new Error("Image must be 2 MB or smaller");
+  const maxBytes = isProfileMedia ? maxProfileMediaBytes : maxAvatarBytes;
+  if (image.size > maxBytes) {
+    throw new Error(
+      isProfileMedia
+        ? "Profile media must be 10 MB or smaller"
+        : "Image must be 2 MB or smaller"
+    );
   }
 
-  const key = `${folder}/${userId}/${crypto.randomUUID()}.${imageExtension(image.type)}`;
+  const key = `${folder}/${userId}/${crypto.randomUUID()}.${mediaExtension(image.type)}`;
   await env.BUCKET.put(key, image.stream(), {
     httpMetadata: {
       contentType: image.type
@@ -426,7 +446,12 @@ async function writeProfileImageUpload(request: Request, env: Env, userId: strin
 }
 
 async function readUserFile(env: Env, key: string): Promise<Response> {
-  if (!env.BUCKET || (!key.startsWith("avatars/") && !key.startsWith("backgrounds/"))) {
+  if (
+    !env.BUCKET ||
+    (!key.startsWith("avatars/") &&
+      !key.startsWith("backgrounds/") &&
+      !key.startsWith("profiles/"))
+  ) {
     return new Response("Not found", { status: 404 });
   }
 
@@ -811,7 +836,7 @@ export default {
     if (url.pathname === "/api/logout") {
       return new Response(null, {
         headers: {
-          "Location": "/admin",
+          "Location": "/",
           "Set-Cookie": clearCookie(request, "linkoutpost_session")
         },
         status: 302

@@ -26,6 +26,7 @@ async function renderProfileMarkup(
   profile: LinkProfile,
   avatarHref: string | null,
   backgroundHref: string | null,
+  profileImageHref: string | null,
 ): Promise<string> {
   const container = document.createElement("div");
   let root: Root | null = null;
@@ -39,6 +40,7 @@ async function renderProfileMarkup(
         <ProfilePage
           avatarUrl={avatarHref}
           backgroundUrl={backgroundHref}
+          profileImageUrl={profileImageHref}
           profile={profile}
         />,
       );
@@ -54,11 +56,13 @@ export async function renderStaticHtml(
   profile: LinkProfile,
   avatarHref: string | null,
   backgroundHref: string | null,
+  profileImageHref: string | null,
 ): Promise<string> {
   const profileMarkup = await renderProfileMarkup(
     profile,
     avatarHref,
     backgroundHref,
+    profileImageHref,
   );
 
   return [
@@ -79,6 +83,10 @@ function imageExtension(type: string): string {
   if (type === "image/png") return "png";
   if (type === "image/webp") return "webp";
   if (type === "image/gif") return "gif";
+  if (type === "video/mp4") return "mp4";
+  if (type === "video/webm") return "webm";
+  if (type === "video/ogg") return "ogv";
+  if (type === "video/quicktime") return "mov";
   return "jpg";
 }
 
@@ -111,8 +119,10 @@ export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {
   };
   let avatarHref: string | null = null;
   let backgroundHref: string | null = null;
+  let profileImageHref: string | null = null;
   let avatarAssetPath: string | null = null;
   let backgroundAssetPath: string | null = null;
+  let profileImageAssetPath: string | null = null;
 
   if (profile.avatarAssetId) {
     const asset = await readLocalAsset(profile.avatarAssetId);
@@ -136,6 +146,17 @@ export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {
     }
   }
 
+  if (profile.theme.profileImageAssetId) {
+    const asset = await readLocalAsset(profile.theme.profileImageAssetId);
+    if (asset) {
+      const extension = imageExtension(asset.type);
+      const filename = `assets/profile.${extension}`;
+      files[filename] = new Uint8Array(await asset.blob.arrayBuffer());
+      profileImageHref = `./${filename}`;
+      profileImageAssetPath = filename;
+    }
+  }
+
   files["linkoutpost-export.json"] = strToU8(
     JSON.stringify(
       {
@@ -145,6 +166,7 @@ export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {
         assets: {
           avatar: avatarAssetPath,
           background: backgroundAssetPath,
+          profileImage: profileImageAssetPath,
         },
       },
       null,
@@ -153,7 +175,7 @@ export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {
   );
 
   files["index.html"] = strToU8(
-    await renderStaticHtml(profile, avatarHref, backgroundHref),
+    await renderStaticHtml(profile, avatarHref, backgroundHref, profileImageHref),
   );
 
   const bytes = zipSync({

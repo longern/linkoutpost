@@ -49,6 +49,7 @@ export type ProfileTheme = {
   cardFields: ProfileCardField[];
   fontFamily: string;
   layout: ProfileLayout;
+  profileImageAssetId: string | null;
   textColor: string;
 };
 
@@ -78,7 +79,7 @@ export function getProfileAvatarUrl(
 
 export function getProfileAssetUrl(assetId: string | null): string | null {
   if (!assetId) return null;
-  if (assetId.startsWith("data:image/")) return assetId;
+  if (assetId.startsWith("data:image/") || assetId.startsWith("data:video/")) return assetId;
   if (assetId.includes("/")) return `/api/files/${encodeURIComponent(assetId)}`;
   return null;
 }
@@ -210,6 +211,7 @@ export const defaultTheme: ProfileTheme = {
   ],
   fontFamily: fontOptions[0].value,
   layout: "classic",
+  profileImageAssetId: null,
   textColor: "#172033",
 };
 

@@ -64,6 +64,10 @@ function getProfileControlColor(backgroundColor: string): string {
   return getRelativeLuminance(rgb) < 0.45 ? "#ffffff" : "#111827";
 }
 
+function isVideoProfileMedia(url: string): boolean {
+  return /^data:video\//i.test(url) || /\.(mp4|webm|ogv|ogg|mov)(?:[?#].*)?$/i.test(url);
+}
+
 function themeStyle(theme: ProfileTheme): CSSProperties {
   return {
     "--profile-accent-color": theme.accentColor,
@@ -246,11 +250,13 @@ function ShareDialog({
 export function ProfilePage({
   avatarUrl,
   backgroundUrl,
+  profileImageUrl,
   profile,
   shareEnabled = true,
 }: {
   avatarUrl?: string | null;
   backgroundUrl?: string | null;
+  profileImageUrl?: string | null;
   profile: LinkProfile | null;
   shareEnabled?: boolean;
 }) {
@@ -382,8 +388,26 @@ export function ProfilePage({
       className="public-page public-page-classic"
       style={themeStyle(currentProfile.theme)}
     >
-      <section className="public-profile public-profile-classic">
+      <section
+        className={`public-profile public-profile-classic${profileImageUrl ? " has-profile-image" : ""}`}
+      >
         {shareButton}
+        {profileImageUrl && (
+          <div className="profile-hero-image-wrap">
+            {isVideoProfileMedia(profileImageUrl) ? (
+              <video
+                autoPlay
+                className="profile-hero-image"
+                loop
+                muted
+                playsInline
+                src={profileImageUrl}
+              />
+            ) : (
+              <img alt="" className="profile-hero-image" src={profileImageUrl} />
+            )}
+          </div>
+        )}
         <div className="public-profile-content">
           <ProfileAvatar avatarUrl={avatarUrl} />
           <h1 className="profile-title">{currentProfile.title}</h1>

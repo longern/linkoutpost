@@ -48,6 +48,8 @@ import {
 } from "./editor/ProfilePreview";
 import { ProfilePanel } from "./editor/ProfilePanel";
 
+const maxProfileMediaBytes = 10 * 1024 * 1024;
+
 export function EditorPage({
   initialSession,
 }: {
@@ -183,10 +185,16 @@ export function EditorPage({
 
   useEffect(() => {
     let cancelled = false;
+    let objectUrl: string | null = null;
 
     resolveProfileAvatarUrl(profile, mode !== "backend")
       .then((url) => {
-        if (!cancelled) setEditorAvatarUrl(url);
+        if (cancelled) {
+          if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
+          return;
+        }
+        objectUrl = url;
+        setEditorAvatarUrl(url);
       })
       .catch(() => {
         if (!cancelled) setEditorAvatarUrl(null);
@@ -194,6 +202,7 @@ export function EditorPage({
 
     return () => {
       cancelled = true;
+      if (objectUrl?.startsWith("blob:")) URL.revokeObjectURL(objectUrl);
     };
   }, [mode, profile]);
 
@@ -485,6 +494,69 @@ export function EditorPage({
     }
   }
 
+  async function onProfileImageChange(file: File | null): Promise<void> {
+    if (!file) return;
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+      setStatus("Choose an image or video file");
+      return;
+    }
+    if (file.size > maxProfileMediaBytes) {
+      setStatus("Profile media must be 10 MB or smaller");
+      return;
+    }
+
+    try {
+      if (mode === "backend") {
+        const profileImageAssetId = await uploadProfileImage(file, "profile");
+        const nextProfile = {
+          ...profile,
+          theme: {
+            ...profile.theme,
+            profileImageAssetId,
+          },
+          updatedAt: new Date().toISOString(),
+        };
+        setProfile(nextProfile);
+        void autosaveProfile(nextProfile);
+        setStatus("Profile image uploaded");
+        return;
+      }
+
+      const asset = await saveLocalAsset(file);
+      const nextProfile = {
+        ...profile,
+        theme: {
+          ...profile.theme,
+          profileImageAssetId: asset.id,
+        },
+        updatedAt: new Date().toISOString(),
+      };
+      setProfile(nextProfile);
+      void autosaveProfile(nextProfile);
+      setStatus("Profile image saved locally");
+    } catch {
+      setStatus(
+        mode === "backend"
+          ? "Profile image upload failed"
+          : "This browser cannot save local images",
+      );
+    }
+  }
+
+  function onProfileImageRemove(): void {
+    const nextProfile = {
+      ...profile,
+      theme: {
+        ...profile.theme,
+        profileImageAssetId: null,
+      },
+      updatedAt: new Date().toISOString(),
+    };
+    setProfile(nextProfile);
+    void autosaveProfile(nextProfile);
+    setStatus("Profile image removed");
+  }
+
   async function onExport(): Promise<void> {
     const { buildStaticZip } = await import("../staticExport");
     const blob = await buildStaticZip(profile);
@@ -531,6 +603,12 @@ export function EditorPage({
     const fallbackBackgroundAssetId = imported.profile.theme.backgroundAssetId?.startsWith("data:image/")
       ? imported.profile.theme.backgroundAssetId
       : null;
+    const fallbackProfileImageAssetId = (
+      imported.profile.theme.profileImageAssetId?.startsWith("data:image/") ||
+      imported.profile.theme.profileImageAssetId?.startsWith("data:video/")
+    )
+      ? imported.profile.theme.profileImageAssetId
+      : null;
     let nextProfile = createProfile({
       ...imported.profile,
       handle,
@@ -538,6 +616,7 @@ export function EditorPage({
       theme: {
         ...imported.profile.theme,
         backgroundAssetId: fallbackBackgroundAssetId,
+        profileImageAssetId: fallbackProfileImageAssetId,
       },
       updatedAt: new Date().toISOString(),
     });
@@ -587,6 +666,34 @@ export function EditorPage({
           theme: {
             ...nextProfile.theme,
             backgroundAssetId: asset.id,
+          },
+        };
+      }
+    }
+
+    if (imported.profileImage) {
+      if (mode === "backend") {
+        const file = new File([imported.profileImage.blob], imported.profileImage.name, {
+          type: imported.profileImage.type,
+        });
+        nextProfile = {
+          ...nextProfile,
+          theme: {
+            ...nextProfile.theme,
+            profileImageAssetId: await uploadProfileImage(file, "profile"),
+          },
+        };
+      } else {
+        const asset = await saveLocalAssetBlob(
+          imported.profileImage.blob,
+          imported.profileImage.name,
+          imported.profileImage.type,
+        );
+        nextProfile = {
+          ...nextProfile,
+          theme: {
+            ...nextProfile.theme,
+            profileImageAssetId: asset.id,
           },
         };
       }
@@ -888,6 +995,10 @@ export function EditorPage({
                 onBackgroundChange={(file) => {
                   void onBackgroundChange(file);
                 }}
+                onProfileImageChange={(file) => {
+                  void onProfileImageChange(file);
+                }}
+                onProfileImageRemove={onProfileImageRemove}
                 onSave={saveCurrentProfile}
                 onUpdateTheme={updateTheme}
                 profile={profile}

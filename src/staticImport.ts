@@ -6,6 +6,7 @@ type ExportManifest = {
   assets?: {
     avatar?: string | null;
     background?: string | null;
+    profileImage?: string | null;
   };
   profile?: Partial<LinkProfile>;
   version?: number;
@@ -22,6 +23,7 @@ export type ImportedStaticAsset = {
 export type ImportedStaticProfile = {
   avatar: ImportedStaticAsset | null;
   background: ImportedStaticAsset | null;
+  profileImage: ImportedStaticAsset | null;
   profile: LinkProfile;
 };
 
@@ -42,6 +44,10 @@ function contentTypeFromPath(path: string): string {
   if (lowerPath.endsWith(".webp")) return "image/webp";
   if (lowerPath.endsWith(".gif")) return "image/gif";
   if (lowerPath.endsWith(".svg")) return "image/svg+xml";
+  if (lowerPath.endsWith(".mp4")) return "video/mp4";
+  if (lowerPath.endsWith(".webm")) return "video/webm";
+  if (lowerPath.endsWith(".ogv") || lowerPath.endsWith(".ogg")) return "video/ogg";
+  if (lowerPath.endsWith(".mov")) return "video/quicktime";
   return "image/jpeg";
 }
 
@@ -76,10 +82,12 @@ export async function readProfileFromStaticZip(file: File): Promise<ImportedStat
   const profile = createProfile(manifest.profile);
   const avatarPath = manifest.assets?.avatar;
   const backgroundPath = manifest.assets?.background;
+  const profileImagePath = manifest.assets?.profileImage;
 
   return {
     avatar: readAsset(files, avatarPath),
     background: readAsset(files, backgroundPath),
+    profileImage: readAsset(files, profileImagePath),
     profile: createProfile({
       ...profile,
       updatedAt: new Date().toISOString(),

@@ -1,4 +1,4 @@
-import { readLocalAssetAsDataUrl } from "../../localEditorStore";
+import { readLocalAssetAsObjectUrl } from "../../localEditorStore";
 import { getProfileAssetUrl, getProfileAvatarUrl, type LinkProfile } from "../../profile";
 
 export async function resolveProfileAssetUrl(
@@ -8,7 +8,7 @@ export async function resolveProfileAssetUrl(
   const assetUrl = getProfileAssetUrl(assetId);
   if (assetUrl || !assetId) return assetUrl;
   if (!allowLocalAsset) return null;
-  return readLocalAssetAsDataUrl(assetId);
+  return readLocalAssetAsObjectUrl(assetId);
 }
 
 export async function resolveProfileAvatarUrl(

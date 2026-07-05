@@ -45,7 +45,7 @@ export async function uploadAvatar(file: File): Promise<string> {
   return uploadProfileImage(file, "avatar");
 }
 
-export async function uploadProfileImage(file: File, kind: "avatar" | "background"): Promise<string> {
+export async function uploadProfileImage(file: File, kind: "avatar" | "background" | "profile"): Promise<string> {
   const formData = new FormData();
   formData.set("image", file);
   formData.set("kind", kind);

@@ -37,6 +37,8 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     selector: ".public-profile-content",
     rule: {
       color: "var(--profile-text-color, #172033)",
+      position: "relative",
+      zIndex: 1,
     },
   },
   {
@@ -58,10 +60,13 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".public-profile .profile-share-button",
     rule: {
+      backgroundColor:
+        "color-mix(in srgb, var(--profile-background-color, #ffffff), transparent 74%)",
       color: "var(--profile-control-color, currentColor)",
       position: "absolute",
       right: 16,
       top: 16,
+      zIndex: 3,
     },
   },
   {
@@ -72,6 +77,62 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       height: 96,
       margin: "18px auto",
       width: 96,
+    },
+  },
+  {
+    selector: ".public-profile-classic.has-profile-image",
+    rule: {
+      paddingTop: 0,
+      overflow: "hidden",
+    },
+  },
+  {
+    selector: ".profile-hero-image-wrap",
+    rule: {
+      aspectRatio: "16 / 9",
+      margin: "0 -20px",
+      overflow: "hidden",
+      position: "relative",
+      "@media": {
+        "(min-width: 520px)": {
+          margin: "0 -28px",
+        },
+      },
+    },
+  },
+  {
+    selector: ".profile-hero-image-wrap::after",
+    rule: {
+      background:
+        "linear-gradient(to bottom, rgb(0 0 0 / 0%) 45%, var(--profile-background-color, #ffffff) 100%)",
+      content: '""',
+      inset: 0,
+      pointerEvents: "none",
+      position: "absolute",
+    },
+  },
+  {
+    selector: ".profile-hero-image",
+    rule: {
+      display: "block",
+      height: "100%",
+      objectFit: "cover",
+      width: "100%",
+    },
+  },
+  {
+    selector:
+      ".public-profile-classic.has-profile-image .public-profile-content",
+    rule: {
+      marginTop: -48,
+    },
+  },
+  {
+    selector:
+      ".public-profile-classic.has-profile-image .profile-avatar, .public-profile-classic.has-profile-image .profile-avatar-placeholder",
+    rule: {
+      boxShadow: "0 14px 36px rgb(16 24 39 / 20%)",
+      marginTop: 0,
     },
   },
   {
@@ -203,7 +264,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       "@media": {
         "(hover: hover) and (pointer: fine)": {
           backgroundColor:
-            "color-mix(in srgb, var(--profile-control-color, currentColor), transparent 92%)",
+            "color-mix(in srgb, color-mix(in srgb, var(--profile-background-color, #ffffff), transparent 64%), var(--profile-control-color, currentColor) 5%)",
           color: "var(--profile-control-color, currentColor)",
         },
       },
@@ -215,7 +276,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       "@media": {
         "(hover: hover) and (pointer: fine)": {
           backgroundColor:
-            "color-mix(in srgb, var(--profile-control-color, currentColor), transparent 88%)",
+            "color-mix(in srgb, color-mix(in srgb, var(--profile-background-color, #ffffff), transparent 54%), var(--profile-control-color, currentColor) 8%)",
           color: "var(--profile-control-color, currentColor)",
         },
       },

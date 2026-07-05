@@ -7,15 +7,26 @@ import {
   resolveProfileAvatarUrl,
 } from "./profileAvatarUrl";
 
+function revokeObjectUrl(url: string | null): void {
+  if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
+}
+
 function useProfileAvatarUrl(profile: LinkProfile, allowLocalAssets: boolean): string | null {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
+    let objectUrl: string | null = null;
+
     resolveProfileAvatarUrl(profile, allowLocalAssets)
       .then((url) => {
-        if (!cancelled) setAvatarUrl(url);
+        if (cancelled) {
+          revokeObjectUrl(url);
+          return;
+        }
+        objectUrl = url;
+        setAvatarUrl(url);
       })
       .catch(() => {
         if (!cancelled) setAvatarUrl(null);
@@ -23,6 +34,7 @@ function useProfileAvatarUrl(profile: LinkProfile, allowLocalAssets: boolean): s
 
     return () => {
       cancelled = true;
+      revokeObjectUrl(objectUrl);
     };
   }, [allowLocalAssets, profile]);
 
@@ -38,9 +50,16 @@ function useProfileBackgroundUrl(
   useEffect(() => {
     let cancelled = false;
 
+    let objectUrl: string | null = null;
+
     resolveProfileAssetUrl(profile.theme.backgroundAssetId, allowLocalAssets)
       .then((url) => {
-        if (!cancelled) setBackgroundUrl(url);
+        if (cancelled) {
+          revokeObjectUrl(url);
+          return;
+        }
+        objectUrl = url;
+        setBackgroundUrl(url);
       })
       .catch(() => {
         if (!cancelled) setBackgroundUrl(null);
@@ -48,10 +67,44 @@ function useProfileBackgroundUrl(
 
     return () => {
       cancelled = true;
+      revokeObjectUrl(objectUrl);
     };
   }, [allowLocalAssets, profile]);
 
   return backgroundUrl;
+}
+
+function useProfileImageUrl(
+  profile: LinkProfile,
+  allowLocalAssets: boolean,
+): string | null {
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    let objectUrl: string | null = null;
+
+    resolveProfileAssetUrl(profile.theme.profileImageAssetId, allowLocalAssets)
+      .then((url) => {
+        if (cancelled) {
+          revokeObjectUrl(url);
+          return;
+        }
+        objectUrl = url;
+        setProfileImageUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setProfileImageUrl(null);
+      });
+
+    return () => {
+      cancelled = true;
+      revokeObjectUrl(objectUrl);
+    };
+  }, [allowLocalAssets, profile]);
+
+  return profileImageUrl;
 }
 
 export function ProfilePreview({
@@ -63,6 +116,7 @@ export function ProfilePreview({
 }) {
   const avatarUrl = useProfileAvatarUrl(profile, allowLocalAssets);
   const backgroundUrl = useProfileBackgroundUrl(profile, allowLocalAssets);
+  const profileImageUrl = useProfileImageUrl(profile, allowLocalAssets);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const previousLinkRects = useRef(new Map<string, DOMRect>());
 
@@ -108,6 +162,7 @@ export function ProfilePreview({
         <ProfilePage
           avatarUrl={avatarUrl}
           backgroundUrl={backgroundUrl}
+          profileImageUrl={profileImageUrl}
           profile={profile}
           shareEnabled={false}
         />
@@ -127,6 +182,7 @@ export function FullscreenProfilePreview({
 }) {
   const avatarUrl = useProfileAvatarUrl(profile, allowLocalAssets);
   const backgroundUrl = useProfileBackgroundUrl(profile, allowLocalAssets);
+  const profileImageUrl = useProfileImageUrl(profile, allowLocalAssets);
 
   return (
     <div className="editor-full-preview">
@@ -142,6 +198,7 @@ export function FullscreenProfilePreview({
       <ProfilePage
         avatarUrl={avatarUrl}
         backgroundUrl={backgroundUrl}
+        profileImageUrl={profileImageUrl}
         profile={profile}
       />
     </div>
