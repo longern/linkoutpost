@@ -104,7 +104,7 @@ type OAuthIdentity = {
 
 const textEncoder = new TextEncoder();
 const maxAvatarBytes = 2 * 1024 * 1024;
-const maxProfileMediaBytes = 10 * 1024 * 1024;
+const maxBannerMediaBytes = 10 * 1024 * 1024;
 
 function base64UrlEncode(input: ArrayBuffer | Uint8Array | string): string {
   const bytes = typeof input === "string"
@@ -398,7 +398,7 @@ function mediaExtension(contentType: string): string {
   return "jpg";
 }
 
-async function writeProfileImageUpload(request: Request, env: Env, userId: string): Promise<string> {
+async function writeProfileAssetUpload(request: Request, env: Env, userId: string): Promise<string> {
   if (!env.BUCKET) {
     throw new Error("File storage is not configured");
   }
@@ -409,7 +409,7 @@ async function writeProfileImageUpload(request: Request, env: Env, userId: strin
   const folder =
     kind === "background"
       ? "backgrounds"
-      : kind === "profile"
+      : kind === "banner"
         ? "profiles"
         : "avatars";
 
@@ -417,20 +417,20 @@ async function writeProfileImageUpload(request: Request, env: Env, userId: strin
     throw new Error("Image file is required");
   }
 
-  const isProfileMedia = kind === "profile";
-  const validType = isProfileMedia
+  const isBannerMedia = kind === "banner";
+  const validType = isBannerMedia
     ? image.type.startsWith("image/") || image.type.startsWith("video/")
     : image.type.startsWith("image/");
 
   if (!validType) {
-    throw new Error(isProfileMedia ? "File must be an image or video" : "File must be an image");
+    throw new Error(isBannerMedia ? "File must be an image or video" : "File must be an image");
   }
 
-  const maxBytes = isProfileMedia ? maxProfileMediaBytes : maxAvatarBytes;
+  const maxBytes = isBannerMedia ? maxBannerMediaBytes : maxAvatarBytes;
   if (image.size > maxBytes) {
     throw new Error(
-      isProfileMedia
-        ? "Profile media must be 10 MB or smaller"
+      isBannerMedia
+        ? "Banner media must be 10 MB or smaller"
         : "Image must be 2 MB or smaller"
     );
   }
@@ -904,7 +904,7 @@ export default {
       if (request.method === "POST") {
         try {
           return Response.json({
-            assetId: await writeProfileImageUpload(request, env, sessionPayload.userId)
+            assetId: await writeProfileAssetUpload(request, env, sessionPayload.userId)
           }, {
             headers: apiHeaders
           });

@@ -49,7 +49,7 @@ export type ProfileTheme = {
   cardFields: ProfileCardField[];
   fontFamily: string;
   layout: ProfileLayout;
-  profileImageAssetId: string | null;
+  bannerImageAssetId: string | null;
   textColor: string;
 };
 
@@ -211,7 +211,7 @@ export const defaultTheme: ProfileTheme = {
   ],
   fontFamily: fontOptions[0].value,
   layout: "classic",
-  profileImageAssetId: null,
+  bannerImageAssetId: null,
   textColor: "#172033",
 };
 

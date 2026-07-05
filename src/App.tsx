@@ -46,8 +46,8 @@ export function App({ initialState }: AppProps) {
       backgroundUrl={getProfileAssetUrl(
         initialState.profile?.theme.backgroundAssetId ?? null,
       )}
-      profileImageUrl={getProfileAssetUrl(
-        initialState.profile?.theme.profileImageAssetId ?? null,
+      bannerImageUrl={getProfileAssetUrl(
+        initialState.profile?.theme.bannerImageAssetId ?? null,
       )}
       profile={initialState.profile}
     />

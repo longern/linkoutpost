@@ -42,10 +42,10 @@ export async function saveProfile(profile: LinkProfile): Promise<void> {
 }
 
 export async function uploadAvatar(file: File): Promise<string> {
-  return uploadProfileImage(file, "avatar");
+  return uploadProfileAsset(file, "avatar");
 }
 
-export async function uploadProfileImage(file: File, kind: "avatar" | "background" | "profile"): Promise<string> {
+export async function uploadProfileAsset(file: File, kind: "avatar" | "background" | "banner"): Promise<string> {
   const formData = new FormData();
   formData.set("image", file);
   formData.set("kind", kind);

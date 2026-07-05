@@ -30,7 +30,7 @@ async function renderProfileMarkup(
   profile: LinkProfile,
   avatarHref: string | null,
   backgroundHref: string | null,
-  profileImageHref: string | null,
+  bannerImageHref: string | null,
 ): Promise<string> {
   const container = document.createElement("div");
   let root: Root | null = null;
@@ -44,7 +44,7 @@ async function renderProfileMarkup(
         <ProfilePage
           avatarUrl={avatarHref}
           backgroundUrl={backgroundHref}
-          profileImageUrl={profileImageHref}
+          bannerImageUrl={bannerImageHref}
           profile={profile}
         />,
       );
@@ -60,13 +60,13 @@ export async function renderStaticHtml(
   profile: LinkProfile,
   avatarHref: string | null,
   backgroundHref: string | null,
-  profileImageHref: string | null,
+  bannerImageHref: string | null,
 ): Promise<string> {
   const profileMarkup = await renderProfileMarkup(
     profile,
     avatarHref,
     backgroundHref,
-    profileImageHref,
+    bannerImageHref,
   );
 
   return [
@@ -194,10 +194,10 @@ export async function buildStaticZip(
     "background",
     assetSource,
   );
-  const profileImage = await addStaticExportAsset(
+  const bannerImage = await addStaticExportAsset(
     files,
-    profile.theme.profileImageAssetId,
-    "profile",
+    profile.theme.bannerImageAssetId,
+    "banner",
     assetSource,
   );
 
@@ -210,7 +210,7 @@ export async function buildStaticZip(
         assets: {
           avatar: avatar.path,
           background: background.path,
-          profileImage: profileImage.path,
+          bannerImage: bannerImage.path,
         },
       },
       null,
@@ -223,7 +223,7 @@ export async function buildStaticZip(
       profile,
       avatar.href,
       background.href,
-      profileImage.href,
+      bannerImage.href,
     ),
   );
 

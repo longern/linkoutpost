@@ -64,7 +64,7 @@ function getProfileControlColor(backgroundColor: string): string {
   return getRelativeLuminance(rgb) < 0.45 ? "#ffffff" : "#111827";
 }
 
-function isVideoProfileMedia(url: string): boolean {
+function isVideoBannerMedia(url: string): boolean {
   return /^data:video\//i.test(url) || /\.(mp4|webm|ogv|ogg|mov)(?:[?#].*)?$/i.test(url);
 }
 
@@ -250,13 +250,13 @@ function ShareDialog({
 export function ProfilePage({
   avatarUrl,
   backgroundUrl,
-  profileImageUrl,
+  bannerImageUrl,
   profile,
   shareEnabled = true,
 }: {
   avatarUrl?: string | null;
   backgroundUrl?: string | null;
-  profileImageUrl?: string | null;
+  bannerImageUrl?: string | null;
   profile: LinkProfile | null;
   shareEnabled?: boolean;
 }) {
@@ -389,22 +389,22 @@ export function ProfilePage({
       style={themeStyle(currentProfile.theme)}
     >
       <section
-        className={`public-profile public-profile-classic${profileImageUrl ? " has-profile-image" : ""}`}
+        className={`public-profile public-profile-classic${bannerImageUrl ? " has-banner-image" : ""}`}
       >
         {shareButton}
-        {profileImageUrl && (
-          <div className="profile-hero-image-wrap">
-            {isVideoProfileMedia(profileImageUrl) ? (
+        {bannerImageUrl && (
+          <div className="banner-hero-image-wrap">
+            {isVideoBannerMedia(bannerImageUrl) ? (
               <video
                 autoPlay
-                className="profile-hero-image"
+                className="banner-hero-image"
                 loop
                 muted
                 playsInline
-                src={profileImageUrl}
+                src={bannerImageUrl}
               />
             ) : (
-              <img alt="" className="profile-hero-image" src={profileImageUrl} />
+              <img alt="" className="banner-hero-image" src={bannerImageUrl} />
             )}
           </div>
         )}

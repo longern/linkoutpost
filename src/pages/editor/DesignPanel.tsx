@@ -7,8 +7,8 @@ import {
 
 type DesignPanelProps = {
   onBackgroundChange(file: File | null): void;
-  onProfileImageChange(file: File | null): void;
-  onProfileImageRemove(): void;
+  onBannerImageChange(file: File | null): void;
+  onBannerImageRemove(): void;
   onSave(): void;
   onUpdateTheme(patch: Partial<ProfileTheme>): void;
   profile: LinkProfile;
@@ -16,8 +16,8 @@ type DesignPanelProps = {
 
 export function DesignPanel({
   onBackgroundChange,
-  onProfileImageChange,
-  onProfileImageRemove,
+  onBannerImageChange,
+  onBannerImageRemove,
   onSave,
   onUpdateTheme,
   profile,
@@ -39,24 +39,24 @@ export function DesignPanel({
             />
           </label>
           <label>
-            Profile image (classic)
+            Banner image (classic)
             <input
               accept="image/*,video/*"
               onChange={(event) => {
-                onProfileImageChange(event.currentTarget.files?.[0] ?? null);
+                onBannerImageChange(event.currentTarget.files?.[0] ?? null);
                 event.currentTarget.value = "";
               }}
               type="file"
             />
           </label>
-          {profile.theme.profileImageAssetId && (
+          {profile.theme.bannerImageAssetId && (
             <div className="theme-file-action">
-              <span>Profile image is set</span>
+              <span>Banner image is set</span>
               <button
-                aria-label="Remove profile image"
+                aria-label="Remove banner image"
                 className="circle-icon-button danger"
-                onClick={onProfileImageRemove}
-                title="Remove profile image"
+                onClick={onBannerImageRemove}
+                title="Remove banner image"
                 type="button"
               >
                 <FaTrash aria-hidden="true" size={18} />

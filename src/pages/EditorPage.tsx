@@ -13,7 +13,7 @@ import {
   loadSession,
   saveProfile,
   uploadAvatar,
-  uploadProfileImage,
+  uploadProfileAsset,
 } from "../apiClient";
 import {
   deleteLocalProfile,
@@ -48,7 +48,7 @@ import {
 } from "./editor/ProfilePreview";
 import { ProfilePanel } from "./editor/ProfilePanel";
 
-const maxProfileMediaBytes = 10 * 1024 * 1024;
+const maxBannerMediaBytes = 10 * 1024 * 1024;
 
 export function EditorPage({
   initialSession,
@@ -458,7 +458,7 @@ export function EditorPage({
 
     try {
       if (mode === "backend") {
-        const backgroundAssetId = await uploadProfileImage(file, "background");
+        const backgroundAssetId = await uploadProfileAsset(file, "background");
         const nextProfile = {
           ...profile,
           theme: {
@@ -494,31 +494,31 @@ export function EditorPage({
     }
   }
 
-  async function onProfileImageChange(file: File | null): Promise<void> {
+  async function onBannerImageChange(file: File | null): Promise<void> {
     if (!file) return;
     if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
       setStatus("Choose an image or video file");
       return;
     }
-    if (file.size > maxProfileMediaBytes) {
-      setStatus("Profile media must be 10 MB or smaller");
+    if (file.size > maxBannerMediaBytes) {
+      setStatus("Banner media must be 10 MB or smaller");
       return;
     }
 
     try {
       if (mode === "backend") {
-        const profileImageAssetId = await uploadProfileImage(file, "profile");
+        const bannerImageAssetId = await uploadProfileAsset(file, "banner");
         const nextProfile = {
           ...profile,
           theme: {
             ...profile.theme,
-            profileImageAssetId,
+            bannerImageAssetId,
           },
           updatedAt: new Date().toISOString(),
         };
         setProfile(nextProfile);
         void autosaveProfile(nextProfile);
-        setStatus("Profile image uploaded");
+        setStatus("Banner image uploaded");
         return;
       }
 
@@ -527,34 +527,34 @@ export function EditorPage({
         ...profile,
         theme: {
           ...profile.theme,
-          profileImageAssetId: asset.id,
+          bannerImageAssetId: asset.id,
         },
         updatedAt: new Date().toISOString(),
       };
       setProfile(nextProfile);
       void autosaveProfile(nextProfile);
-      setStatus("Profile image saved locally");
+      setStatus("Banner image saved locally");
     } catch {
       setStatus(
         mode === "backend"
-          ? "Profile image upload failed"
+          ? "Banner image upload failed"
           : "This browser cannot save local images",
       );
     }
   }
 
-  function onProfileImageRemove(): void {
+  function onBannerImageRemove(): void {
     const nextProfile = {
       ...profile,
       theme: {
         ...profile.theme,
-        profileImageAssetId: null,
+        bannerImageAssetId: null,
       },
       updatedAt: new Date().toISOString(),
     };
     setProfile(nextProfile);
     void autosaveProfile(nextProfile);
-    setStatus("Profile image removed");
+    setStatus("Banner image removed");
   }
 
   async function onExport(): Promise<void> {
@@ -606,11 +606,11 @@ export function EditorPage({
     const fallbackBackgroundAssetId = imported.profile.theme.backgroundAssetId?.startsWith("data:image/")
       ? imported.profile.theme.backgroundAssetId
       : null;
-    const fallbackProfileImageAssetId = (
-      imported.profile.theme.profileImageAssetId?.startsWith("data:image/") ||
-      imported.profile.theme.profileImageAssetId?.startsWith("data:video/")
+    const fallbackBannerImageAssetId = (
+      imported.profile.theme.bannerImageAssetId?.startsWith("data:image/") ||
+      imported.profile.theme.bannerImageAssetId?.startsWith("data:video/")
     )
-      ? imported.profile.theme.profileImageAssetId
+      ? imported.profile.theme.bannerImageAssetId
       : null;
     let nextProfile = createProfile({
       ...imported.profile,
@@ -619,7 +619,7 @@ export function EditorPage({
       theme: {
         ...imported.profile.theme,
         backgroundAssetId: fallbackBackgroundAssetId,
-        profileImageAssetId: fallbackProfileImageAssetId,
+        bannerImageAssetId: fallbackBannerImageAssetId,
       },
       updatedAt: new Date().toISOString(),
     });
@@ -655,7 +655,7 @@ export function EditorPage({
           ...nextProfile,
           theme: {
             ...nextProfile.theme,
-            backgroundAssetId: await uploadProfileImage(file, "background"),
+            backgroundAssetId: await uploadProfileAsset(file, "background"),
           },
         };
       } else {
@@ -674,29 +674,29 @@ export function EditorPage({
       }
     }
 
-    if (imported.profileImage) {
+    if (imported.bannerImage) {
       if (mode === "backend") {
-        const file = new File([imported.profileImage.blob], imported.profileImage.name, {
-          type: imported.profileImage.type,
+        const file = new File([imported.bannerImage.blob], imported.bannerImage.name, {
+          type: imported.bannerImage.type,
         });
         nextProfile = {
           ...nextProfile,
           theme: {
             ...nextProfile.theme,
-            profileImageAssetId: await uploadProfileImage(file, "profile"),
+            bannerImageAssetId: await uploadProfileAsset(file, "banner"),
           },
         };
       } else {
         const asset = await saveLocalAssetBlob(
-          imported.profileImage.blob,
-          imported.profileImage.name,
-          imported.profileImage.type,
+          imported.bannerImage.blob,
+          imported.bannerImage.name,
+          imported.bannerImage.type,
         );
         nextProfile = {
           ...nextProfile,
           theme: {
             ...nextProfile.theme,
-            profileImageAssetId: asset.id,
+            bannerImageAssetId: asset.id,
           },
         };
       }
@@ -998,10 +998,10 @@ export function EditorPage({
                 onBackgroundChange={(file) => {
                   void onBackgroundChange(file);
                 }}
-                onProfileImageChange={(file) => {
-                  void onProfileImageChange(file);
+                onBannerImageChange={(file) => {
+                  void onBannerImageChange(file);
                 }}
-                onProfileImageRemove={onProfileImageRemove}
+                onBannerImageRemove={onBannerImageRemove}
                 onSave={saveCurrentProfile}
                 onUpdateTheme={updateTheme}
                 profile={profile}

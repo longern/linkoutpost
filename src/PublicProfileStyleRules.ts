@@ -80,14 +80,14 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".public-profile-classic.has-profile-image",
+    selector: ".public-profile-classic.has-banner-image",
     rule: {
       paddingTop: 0,
       overflow: "hidden",
     },
   },
   {
-    selector: ".profile-hero-image-wrap",
+    selector: ".banner-hero-image-wrap",
     rule: {
       aspectRatio: "16 / 9",
       margin: "0 -20px",
@@ -101,7 +101,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".profile-hero-image-wrap::after",
+    selector: ".banner-hero-image-wrap::after",
     rule: {
       background:
         "linear-gradient(to bottom, rgb(0 0 0 / 0%) 45%, var(--profile-background-color, #ffffff) 100%)",
@@ -112,7 +112,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".profile-hero-image",
+    selector: ".banner-hero-image",
     rule: {
       display: "block",
       height: "100%",
@@ -122,14 +122,14 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   },
   {
     selector:
-      ".public-profile-classic.has-profile-image .public-profile-content",
+      ".public-profile-classic.has-banner-image .public-profile-content",
     rule: {
       marginTop: -48,
     },
   },
   {
     selector:
-      ".public-profile-classic.has-profile-image .profile-avatar, .public-profile-classic.has-profile-image .profile-avatar-placeholder",
+      ".public-profile-classic.has-banner-image .profile-avatar, .public-profile-classic.has-banner-image .profile-avatar-placeholder",
     rule: {
       boxShadow: "0 14px 36px rgb(16 24 39 / 20%)",
       marginTop: 0,
