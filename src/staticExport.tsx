@@ -4,7 +4,11 @@ import { createRoot, type Root } from "react-dom/client";
 import { readLocalAsset } from "./localEditorStore";
 import { getPublicProfileCssText } from "./PublicProfileCssText";
 import { ProfilePage } from "./PublicProfile";
-import { getProfileDocumentTitle, type LinkProfile } from "./profile";
+import {
+  getProfileAssetUrl,
+  getProfileDocumentTitle,
+  type LinkProfile,
+} from "./profile";
 import authAndOverlaysCss from "./styles/auth-and-overlays.css?inline";
 import editorPanelsCss from "./styles/editor-panels.css?inline";
 import editorPreviewCss from "./styles/editor-preview.css?inline";
@@ -79,7 +83,19 @@ export async function renderStaticHtml(
   ].join("");
 }
 
-function imageExtension(type: string): string {
+type StaticExportAssetSource = "backend" | "local";
+
+type StaticExportAsset = {
+  blob: Blob;
+  type: string;
+};
+
+type StaticExportAssetResult = {
+  href: string | null;
+  path: string | null;
+};
+
+function mediaExtension(type: string): string {
   if (type === "image/png") return "png";
   if (type === "image/webp") return "webp";
   if (type === "image/gif") return "gif";
@@ -88,6 +104,52 @@ function imageExtension(type: string): string {
   if (type === "video/ogg") return "ogv";
   if (type === "video/quicktime") return "mov";
   return "jpg";
+}
+
+async function readStaticExportAsset(
+  assetId: string | null,
+  source: StaticExportAssetSource,
+): Promise<StaticExportAsset | null> {
+  if (!assetId) return null;
+
+  if (source === "local") {
+    const asset = await readLocalAsset(assetId);
+    if (!asset) return null;
+    return { blob: asset.blob, type: asset.type };
+  }
+
+  const assetUrl = getProfileAssetUrl(assetId);
+  if (!assetUrl) return null;
+
+  const response = await fetch(assetUrl);
+  if (!response.ok) return null;
+
+  const blob = await response.blob();
+  return {
+    blob,
+    type:
+      blob.type ||
+      response.headers.get("content-type") ||
+      "application/octet-stream",
+  };
+}
+
+async function addStaticExportAsset(
+  files: Record<string, Uint8Array>,
+  assetId: string | null,
+  name: string,
+  source: StaticExportAssetSource,
+): Promise<StaticExportAssetResult> {
+  const asset = await readStaticExportAsset(assetId, source);
+  if (!asset) return { href: null, path: null };
+
+  const filename = `assets/${name}.${mediaExtension(asset.type)}`;
+  files[filename] = new Uint8Array(await asset.blob.arrayBuffer());
+
+  return {
+    href: `./${filename}`,
+    path: filename,
+  };
 }
 
 function collectStaticCss(): string {
@@ -112,50 +174,32 @@ async function readProfileRuntimeScript(): Promise<string> {
   return response.text();
 }
 
-export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {
+export async function buildStaticZip(
+  profile: LinkProfile,
+  assetSource: StaticExportAssetSource,
+): Promise<Blob> {
   const files: Record<string, Uint8Array> = {
     "profile.js": strToU8(await readProfileRuntimeScript()),
     "styles.css": strToU8(collectStaticCss())
   };
-  let avatarHref: string | null = null;
-  let backgroundHref: string | null = null;
-  let profileImageHref: string | null = null;
-  let avatarAssetPath: string | null = null;
-  let backgroundAssetPath: string | null = null;
-  let profileImageAssetPath: string | null = null;
-
-  if (profile.avatarAssetId) {
-    const asset = await readLocalAsset(profile.avatarAssetId);
-    if (asset) {
-      const extension = imageExtension(asset.type);
-      const filename = `assets/avatar.${extension}`;
-      files[filename] = new Uint8Array(await asset.blob.arrayBuffer());
-      avatarHref = `./${filename}`;
-      avatarAssetPath = filename;
-    }
-  }
-
-  if (profile.theme.backgroundAssetId) {
-    const asset = await readLocalAsset(profile.theme.backgroundAssetId);
-    if (asset) {
-      const extension = imageExtension(asset.type);
-      const filename = `assets/background.${extension}`;
-      files[filename] = new Uint8Array(await asset.blob.arrayBuffer());
-      backgroundHref = `./${filename}`;
-      backgroundAssetPath = filename;
-    }
-  }
-
-  if (profile.theme.profileImageAssetId) {
-    const asset = await readLocalAsset(profile.theme.profileImageAssetId);
-    if (asset) {
-      const extension = imageExtension(asset.type);
-      const filename = `assets/profile.${extension}`;
-      files[filename] = new Uint8Array(await asset.blob.arrayBuffer());
-      profileImageHref = `./${filename}`;
-      profileImageAssetPath = filename;
-    }
-  }
+  const avatar = await addStaticExportAsset(
+    files,
+    profile.avatarAssetId,
+    "avatar",
+    assetSource,
+  );
+  const background = await addStaticExportAsset(
+    files,
+    profile.theme.backgroundAssetId,
+    "background",
+    assetSource,
+  );
+  const profileImage = await addStaticExportAsset(
+    files,
+    profile.theme.profileImageAssetId,
+    "profile",
+    assetSource,
+  );
 
   files["linkoutpost-export.json"] = strToU8(
     JSON.stringify(
@@ -164,9 +208,9 @@ export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {
         version: 1,
         profile,
         assets: {
-          avatar: avatarAssetPath,
-          background: backgroundAssetPath,
-          profileImage: profileImageAssetPath,
+          avatar: avatar.path,
+          background: background.path,
+          profileImage: profileImage.path,
         },
       },
       null,
@@ -175,7 +219,12 @@ export async function buildStaticZip(profile: LinkProfile): Promise<Blob> {
   );
 
   files["index.html"] = strToU8(
-    await renderStaticHtml(profile, avatarHref, backgroundHref, profileImageHref),
+    await renderStaticHtml(
+      profile,
+      avatar.href,
+      background.href,
+      profileImage.href,
+    ),
   );
 
   const bytes = zipSync({

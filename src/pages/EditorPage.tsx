@@ -559,7 +559,10 @@ export function EditorPage({
 
   async function onExport(): Promise<void> {
     const { buildStaticZip } = await import("../staticExport");
-    const blob = await buildStaticZip(profile);
+    const blob = await buildStaticZip(
+      profile,
+      mode === "backend" ? "backend" : "local",
+    );
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
