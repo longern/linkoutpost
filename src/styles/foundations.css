@@ -9,6 +9,13 @@
   --brand-row-background: #fffdfc;
   --brand-shadow-rgb: 79 45 32;
   --brand-text: #172033;
+  --z-app-bar: 1100;
+  --z-drawer-backdrop: 1190;
+  --z-drawer: 1200;
+  --z-modal: 1300;
+  --z-popover-backdrop: 1310;
+  --z-popover: 1320;
+  --z-tooltip: 1500;
 
   color: var(--brand-text);
   background: var(--brand-page-background);
