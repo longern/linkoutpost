@@ -24,16 +24,7 @@ export function AccountHandleMenu({
   profile,
   profileSummaries,
 }: AccountHandleMenuProps) {
-  const summaries =
-    profileSummaries.length === 0
-      ? [
-          {
-            handle: profile.handle || "your_handle",
-            title: "",
-            updatedAt: profile.updatedAt,
-          },
-        ]
-      : profileSummaries;
+  const summaries = profileSummaries;
 
   return (
     <ul className={`account-menu${className ? ` ${className}` : ""}`} role="menu">
@@ -88,7 +79,7 @@ export function AccountHandleMenu({
               </a>
             </li>
           )}
-          {mode === "offline" && (
+          {mode === "offline" && profile.handle && (
             <li role="none">
               <button
                 className="account-menu-item"
@@ -99,7 +90,7 @@ export function AccountHandleMenu({
                 role="menuitem"
                 type="button"
               >
-                Delete @{profile.handle || "your_handle"}
+                Delete @{profile.handle}
               </button>
             </li>
           )}
@@ -108,7 +99,7 @@ export function AccountHandleMenu({
       {mode === "loading" && (
         <li role="none">
           <span className="account-menu-item" role="menuitem">
-            @{profile.handle || "your_handle"}
+            {profile.handle ? `@${profile.handle}` : "No handle"}
           </span>
         </li>
       )}

@@ -77,12 +77,14 @@ function SortableLinkRow({
       <div className="link-row-fields">
         <input
           aria-label="Link label"
+          placeholder="Link title"
           value={link.label}
           onChange={(event) => onUpdate(link.id, { label: event.target.value })}
           onBlur={onSave}
         />
         <input
           aria-label="Link URL"
+          placeholder="https://example.com"
           value={link.url}
           onChange={(event) => onUpdate(link.id, { url: event.target.value })}
           onBlur={onSave}

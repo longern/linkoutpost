@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { FaCamera, FaCircleUser, FaPlus, FaTrash, FaXmark } from "react-icons/fa6";
 import {
-  isReservedPath,
-  normalizeHandle,
   normalizeSocialUserId,
   socialPlatformDefinitions,
   type LinkProfile,
@@ -13,7 +11,6 @@ import { getSocialPlatformIcon } from "../../socialIcons";
 
 type ProfilePanelProps = {
   avatarUrl: string | null;
-  mode: "loading" | "offline" | "backend";
   onAvatarChange(file: File | null): void;
   onCommit(patch: Partial<LinkProfile>): void;
   onSave(): void;
@@ -23,7 +20,6 @@ type ProfilePanelProps = {
 
 export function ProfilePanel({
   avatarUrl,
-  mode,
   onAvatarChange,
   onCommit,
   onSave,
@@ -83,27 +79,10 @@ export function ProfilePanel({
             type="file"
           />
         </label>
-        <div>
-          {mode === "backend" ? (
-            <div className="readonly-field">
-              <span>Handle</span>
-              <strong>@{profile.handle}</strong>
-            </div>
-          ) : (
-            <label>
-              Handle
-              <input
-                value={profile.handle}
-                onChange={(event) => {
-                  onUpdate({ handle: normalizeHandle(event.target.value) });
-                }}
-                onBlur={onSave}
-              />
-            </label>
-          )}
-          {isReservedPath(profile.handle) && (
-            <p className="field-error">This handle is reserved.</p>
-          )}
+        <div className="profile-editor-identity">
+          <span className="profile-editor-handle">
+            {profile.handle ? `@${profile.handle}` : "No handle"}
+          </span>
         </div>
       </div>
 

@@ -75,6 +75,7 @@ export function EditorPage({
   const [editorBannerImageUrl, setEditorBannerImageUrl] = useState<string | null>(null);
   const [dragLinks, setDragLinks] = useState<LinkItem[] | null>(null);
   const [handleSetupOpen, setHandleSetupOpen] = useState(false);
+  const [handleSetupRequired, setHandleSetupRequired] = useState(false);
   const [handleDraft, setHandleDraft] = useState("");
   const [handleSetupError, setHandleSetupError] = useState<string | null>(null);
   const [handleSetupSaving, setHandleSetupSaving] = useState(false);
@@ -107,15 +108,19 @@ export function EditorPage({
           const offlineProfile = await readLocalProfile();
           const summaries = await readLocalProfileSummaries();
           if (cancelled) return;
+          const needsLocalHandle =
+            summaries.length === 0 && !normalizeHandle(offlineProfile.handle);
           setProfile(offlineProfile);
           setProfileSummaries(
-            summaries.length > 0 ? summaries : [{
+            summaries.length > 0 || needsLocalHandle ? summaries : [{
               handle: offlineProfile.handle,
               title: offlineProfile.title,
               updatedAt: offlineProfile.updatedAt,
             }],
           );
-          setHandleDraft(offlineProfile.handle);
+          setHandleDraft(needsLocalHandle ? "" : offlineProfile.handle);
+          setHandleSetupRequired(needsLocalHandle);
+          setHandleSetupOpen(needsLocalHandle);
           setMode("offline");
           setStatus("Offline editor");
           return;
@@ -142,8 +147,7 @@ export function EditorPage({
         } else {
           const initialHandle =
             requestedHandle ||
-            normalizeHandle(nextSession.name ?? "") ||
-            "your_handle";
+            normalizeHandle(nextSession.name ?? "");
           const initialProfile = createProfile({
             handle: initialHandle,
           });
@@ -166,11 +170,13 @@ export function EditorPage({
               setHandleSetupError(
                 error instanceof Error ? error.message : "Handle create failed",
               );
+              setHandleSetupRequired(true);
               setHandleSetupOpen(true);
             }
           } else {
             setProfile(initialProfile);
             setHandleDraft(initialHandle);
+            setHandleSetupRequired(true);
             setHandleSetupOpen(true);
           }
         }
@@ -181,15 +187,19 @@ export function EditorPage({
         if (cancelled) return;
         const offlineProfile = await readLocalProfile();
         const summaries = await readLocalProfileSummaries();
+        const needsLocalHandle =
+          summaries.length === 0 && !normalizeHandle(offlineProfile.handle);
         setProfile(offlineProfile);
         setProfileSummaries(
-          summaries.length > 0 ? summaries : [{
+          summaries.length > 0 || needsLocalHandle ? summaries : [{
             handle: offlineProfile.handle,
             title: offlineProfile.title,
             updatedAt: offlineProfile.updatedAt,
           }],
         );
-        setHandleDraft(offlineProfile.handle);
+        setHandleDraft(needsLocalHandle ? "" : offlineProfile.handle);
+        setHandleSetupRequired(needsLocalHandle);
+        setHandleSetupOpen(needsLocalHandle);
         setMode("offline");
         setStatus("Backend unavailable, using offline editor");
       }
@@ -279,7 +289,7 @@ export function EditorPage({
   ]);
 
   const profileUrl = useMemo(
-    () => `/${profile.handle || "your_handle"}`,
+    () => (profile.handle ? `/${profile.handle}` : "/"),
     [profile.handle],
   );
   const previewProfile = useMemo(() => {
@@ -379,8 +389,8 @@ export function EditorPage({
         ...profile.links,
         {
           id: crypto.randomUUID(),
-          label: "New link",
-          url: "https://example.com",
+          label: "",
+          url: "",
         },
       ],
       updatedAt: new Date().toISOString(),
@@ -451,6 +461,7 @@ export function EditorPage({
   function openNewHandleDialog(): void {
     setHandleDraft("");
     setHandleSetupError(null);
+    setHandleSetupRequired(false);
     setHandleSetupOpen(true);
   }
 
@@ -459,20 +470,34 @@ export function EditorPage({
 
     const normalizedHandle = normalizeHandle(handle);
     if (!normalizedHandle) return;
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(`Delete @${normalizedHandle}? This cannot be undone.`)
+    ) {
+      return;
+    }
 
     try {
       setStatus("Deleting profile");
       const nextProfile = await deleteLocalProfile(normalizedHandle);
       const summaries = await readLocalProfileSummaries();
+      const needsLocalHandle =
+        summaries.length === 0 && !normalizeHandle(nextProfile.handle);
       setProfile(nextProfile);
+      if (needsLocalHandle) {
+        setHandleDraft("");
+        setHandleSetupRequired(true);
+        setHandleSetupOpen(true);
+      } else {
+        setHandleDraft(nextProfile.handle);
+      }
       setProfileSummaries(
-        summaries.length > 0 ? summaries : [{
+        summaries.length > 0 || needsLocalHandle ? summaries : [{
           handle: nextProfile.handle,
           title: nextProfile.title,
           updatedAt: nextProfile.updatedAt,
         }],
       );
-      setHandleDraft(nextProfile.handle);
       setActiveEditorPanel("profile");
       setStatus("Profile deleted");
     } catch {
@@ -914,6 +939,7 @@ export function EditorPage({
 
       setProfile(nextProfile);
       await refreshProfileSummaries();
+      setHandleSetupRequired(false);
       setHandleSetupOpen(false);
       setStatus("Handle created");
 
@@ -1094,7 +1120,6 @@ export function EditorPage({
             {activeEditorPanel === "profile" && (
               <ProfilePanel
                 avatarUrl={editorAvatarUrl}
-                mode={mode}
                 onAvatarChange={(file) => {
                   void onAvatarChange(file);
                 }}
@@ -1159,6 +1184,14 @@ export function EditorPage({
           error={handleSetupError}
           handleDraft={handleDraft}
           saving={handleSetupSaving}
+          onClose={
+            handleSetupRequired
+              ? undefined
+              : () => {
+                  setHandleSetupOpen(false);
+                  setHandleSetupError(null);
+                }
+          }
           onDraftChange={setHandleDraft}
           onErrorClear={() => setHandleSetupError(null)}
           onSubmit={(event) => {

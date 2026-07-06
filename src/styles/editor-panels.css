@@ -116,6 +116,22 @@
   transition: opacity 160ms ease;
 }
 
+.profile-editor-identity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.profile-editor-handle {
+  min-width: 0;
+  overflow: hidden;
+  color: #344054;
+  font-size: 0.98rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -125,10 +141,15 @@
   white-space: nowrap;
 }
 
-@media (max-width: 860px) {
+@media (hover: hover) and (pointer: fine) {
   .profile-editor-avatar:hover .profile-avatar-action {
     opacity: 1;
   }
+}
+
+.profile-editor-avatar:focus-within .profile-avatar-action,
+.profile-editor-avatar:active .profile-avatar-action {
+  opacity: 1;
 }
 
 .profile-fields-grid {

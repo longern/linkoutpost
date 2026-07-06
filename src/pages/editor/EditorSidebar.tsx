@@ -164,7 +164,7 @@ export function EditorSidebar({
                 <FaCircleUser size={24} />
               )}
             </span>
-            <span>@{profile.handle || "your_handle"}</span>
+            <span>{profile.handle ? `@${profile.handle}` : "No handle"}</span>
             <FaChevronDown
               aria-hidden="true"
               className={`account-menu-chevron${accountMenuOpen ? " is-open" : ""}`}

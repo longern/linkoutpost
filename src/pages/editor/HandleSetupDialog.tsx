@@ -1,10 +1,12 @@
 import { normalizeHandle } from "../../profile";
 import { siteTitle } from "../../siteConfig";
+import { FaXmark } from "react-icons/fa6";
 
 type HandleSetupDialogProps = {
   error: string | null;
   handleDraft: string;
   saving: boolean;
+  onClose?: () => void;
   onDraftChange(handle: string): void;
   onErrorClear(): void;
   onSubmit(event: React.FormEvent<HTMLFormElement>): void;
@@ -14,6 +16,7 @@ export function HandleSetupDialog({
   error,
   handleDraft,
   saving,
+  onClose,
   onDraftChange,
   onErrorClear,
   onSubmit,
@@ -27,7 +30,19 @@ export function HandleSetupDialog({
         aria-modal="true"
       >
         <form onSubmit={onSubmit}>
-          <h2 id="handle-setup-title">Create a handle</h2>
+          <div className="handle-setup-header">
+            <h2 id="handle-setup-title">Create a handle</h2>
+            {onClose && (
+              <button
+                aria-label="Close handle dialog"
+                className="circle-icon-button"
+                onClick={onClose}
+                type="button"
+              >
+                <FaXmark aria-hidden="true" size={18} />
+              </button>
+            )}
+          </div>
           <p>Each handle has its own public {siteTitle} page.</p>
           <label>
             Handle

@@ -75,6 +75,11 @@ function writeLocalStorageActiveHandle(handle: string): void {
   window.localStorage.setItem(localActiveHandleKey, normalizeHandle(handle));
 }
 
+function clearLocalStorageActiveProfile(): void {
+  window.localStorage.removeItem(localActiveHandleKey);
+  window.localStorage.removeItem(legacyOfflineKey);
+}
+
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = window.indexedDB.open(dbName, dbVersion);
@@ -183,14 +188,23 @@ async function getAllProfilesFromStore(): Promise<LinkProfile[]> {
 
 export async function readLocalProfileSummaries(): Promise<ProfileSummary[]> {
   if (!("indexedDB" in window)) {
-    return readLocalStorageProfiles().map(toSummary).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return readLocalStorageProfiles()
+      .filter((profile) => Boolean(profile.handle))
+      .map(toSummary)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
 
   try {
     const profiles = await getAllProfilesFromStore();
-    return profiles.map(toSummary).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return profiles
+      .filter((profile) => Boolean(profile.handle))
+      .map(toSummary)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   } catch {
-    return readLocalStorageProfiles().map(toSummary).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return readLocalStorageProfiles()
+      .filter((profile) => Boolean(profile.handle))
+      .map(toSummary)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
 }
 
@@ -240,10 +254,16 @@ export async function readLocalProfile(): Promise<LinkProfile> {
 export async function writeLocalProfile(profile: LinkProfile): Promise<void> {
   const nextProfile = createProfile({
     ...profile,
-    handle: normalizeHandle(profile.handle) || "your_handle",
+    handle: normalizeHandle(profile.handle),
   });
 
   if (!("indexedDB" in window)) {
+    if (!nextProfile.handle) {
+      clearLocalStorageActiveProfile();
+      writeLegacyProfile(nextProfile);
+      return;
+    }
+
     const profiles = readLocalStorageProfiles().filter(
       (storedProfile) => storedProfile.handle !== nextProfile.handle,
     );
@@ -255,8 +275,12 @@ export async function writeLocalProfile(profile: LinkProfile): Promise<void> {
   }
 
   try {
-    await putInStore(profileStore, nextProfile, profileKey(nextProfile.handle));
-    await putInStore(profileStore, nextProfile.handle, activeHandleKey);
+    if (nextProfile.handle) {
+      await putInStore(profileStore, nextProfile, profileKey(nextProfile.handle));
+      await putInStore(profileStore, nextProfile.handle, activeHandleKey);
+    } else {
+      await deleteFromStore(profileStore, activeHandleKey);
+    }
     await putInStore(profileStore, nextProfile, activeProfileKey);
   } catch {
     writeLegacyProfile(nextProfile);
@@ -294,8 +318,14 @@ export async function deleteLocalProfile(handle: string): Promise<LinkProfile> {
     const profiles = readLocalStorageProfiles().filter(
       (storedProfile) => storedProfile.handle !== normalizedHandle,
     );
-    const nextProfile = profiles[0] ?? createProfile();
-    writeLocalStorageProfiles(profiles.length > 0 ? profiles : [nextProfile]);
+    if (profiles.length === 0) {
+      writeLocalStorageProfiles([]);
+      clearLocalStorageActiveProfile();
+      return createProfile();
+    }
+
+    const nextProfile = profiles[0];
+    writeLocalStorageProfiles(profiles);
     writeLocalStorageActiveHandle(nextProfile.handle);
     writeLegacyProfile(nextProfile);
     return nextProfile;
@@ -304,10 +334,12 @@ export async function deleteLocalProfile(handle: string): Promise<LinkProfile> {
   try {
     await deleteFromStore(profileStore, profileKey(normalizedHandle));
     const profiles = await getAllProfilesFromStore();
-    const nextProfile = profiles[0] ?? createProfile();
     if (profiles.length === 0) {
-      await putInStore(profileStore, nextProfile, profileKey(nextProfile.handle));
+      await deleteFromStore(profileStore, activeHandleKey);
+      await deleteFromStore(profileStore, activeProfileKey);
+      return createProfile();
     }
+    const nextProfile = profiles[0];
     await putInStore(profileStore, nextProfile.handle, activeHandleKey);
     await putInStore(profileStore, nextProfile, activeProfileKey);
     return nextProfile;

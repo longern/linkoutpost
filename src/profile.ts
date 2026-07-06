@@ -328,17 +328,11 @@ export const defaultTheme: ProfileTheme = {
 };
 
 export const defaultProfile: LinkProfile = {
-  handle: "your_handle",
+  handle: "",
   title: "",
   bio: "",
   avatarAssetId: null,
-  links: [
-    {
-      id: "website",
-      label: "Website",
-      url: "https://example.com",
-    },
-  ],
+  links: [],
   socialLinks: [],
   theme: defaultTheme,
   updatedAt: new Date(0).toISOString(),
