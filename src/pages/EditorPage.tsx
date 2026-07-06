@@ -4,8 +4,8 @@ import {
   FaBars,
   FaCircleUser,
   FaDownload,
+  FaEllipsisVertical,
   FaEye,
-  FaGear,
 } from "react-icons/fa6";
 import {
   loadMyProfile,
@@ -50,6 +50,7 @@ import {
   ProfilePreview,
 } from "./editor/ProfilePreview";
 import { ProfilePanel } from "./editor/ProfilePanel";
+import { useAnimatedMenu } from "./editor/useAnimatedMenu";
 
 const maxBannerMediaBytes = 10 * 1024 * 1024;
 
@@ -83,6 +84,8 @@ export function EditorPage({
   const [importError, setImportError] = useState<string | null>(null);
   const [importSaving, setImportSaving] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [toolbarMenuOpen, setToolbarMenuOpen] = useState(false);
+  const toolbarMenuAnimation = useAnimatedMenu(toolbarMenuOpen);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const zipInputRef = useRef<HTMLInputElement | null>(null);
   const [fullPreviewOpen, setFullPreviewOpen] = useState(
@@ -1006,14 +1009,6 @@ export function EditorPage({
                   : "Links"}
           </h1>
           <div className="toolbar-actions">
-            <button
-              aria-label="Settings"
-              className="circle-icon-button"
-              title="Settings"
-              type="button"
-            >
-              <FaGear aria-hidden="true" size={18} />
-            </button>
             {mode === "offline" && (
               <button
                 aria-label="Preview page"
@@ -1025,25 +1020,71 @@ export function EditorPage({
                 <FaEye aria-hidden="true" size={18} />
               </button>
             )}
-            <button
-              className="button-secondary"
-              onClick={onExport}
-              type="button"
-            >
-              <FaDownload aria-hidden="true" size={16} />
-              Export ZIP
-            </button>
+            {mode === "offline" && (
+              <button
+                className="button-secondary"
+                onClick={onExport}
+                type="button"
+              >
+                <FaDownload aria-hidden="true" size={16} />
+                Export ZIP
+              </button>
+            )}
             {mode === "backend" && (
-              <>
-                <a
-                  className="button-secondary"
-                  href={profileUrl}
-                  target="_blank"
+              <a
+                aria-label="View page"
+                className="circle-icon-button"
+                href={profileUrl}
+                target="_blank"
+                title="View page"
+              >
+                <FaArrowUpRightFromSquare aria-hidden="true" size={18} />
+              </a>
+            )}
+            {mode === "backend" && (
+              <div className="toolbar-menu-wrap">
+                <button
+                  aria-expanded={toolbarMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label="More actions"
+                  className="circle-icon-button"
+                  onClick={() => setToolbarMenuOpen((open) => !open)}
+                  title="More actions"
+                  type="button"
                 >
-                  <FaArrowUpRightFromSquare aria-hidden="true" size={16} />
-                  View page
-                </a>
-              </>
+                  <FaEllipsisVertical aria-hidden="true" size={18} />
+                </button>
+                {toolbarMenuAnimation.mounted && (
+                  <>
+                    <button
+                      aria-hidden="true"
+                      className="toolbar-menu-backdrop"
+                      onClick={() => setToolbarMenuOpen(false)}
+                      tabIndex={-1}
+                      type="button"
+                    />
+                    <ul
+                      className={`toolbar-menu animated-menu${toolbarMenuAnimation.visible ? " is-open" : " is-closing"}`}
+                      role="menu"
+                    >
+                      <li role="none">
+                        <button
+                          className="account-menu-item"
+                          onClick={() => {
+                            setToolbarMenuOpen(false);
+                            void onExport();
+                          }}
+                          role="menuitem"
+                          type="button"
+                        >
+                          <FaDownload aria-hidden="true" size={15} />
+                          Export ZIP
+                        </button>
+                      </li>
+                    </ul>
+                  </>
+                )}
+              </div>
             )}
           </div>
         </section>

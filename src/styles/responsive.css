@@ -184,12 +184,14 @@
   }
 
   .editor-toolbar {
-    align-items: stretch;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
   }
 
   .toolbar-actions {
-    justify-content: flex-start;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
   }
 
   .full-preview-back {
@@ -292,7 +294,6 @@
   }
 
   .toolbar-actions > * {
-    flex: 1 1 auto;
-    text-align: center;
+    flex: 0 0 auto;
   }
 }

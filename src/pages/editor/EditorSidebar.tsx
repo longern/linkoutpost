@@ -11,6 +11,7 @@ import {
 import type { LinkProfile } from "../../profile";
 import type { ProfileSummary } from "../../types";
 import { AccountHandleMenu } from "./AccountHandleMenu";
+import { useAnimatedMenu } from "./useAnimatedMenu";
 
 export type EditorPanel = "links" | "layout" | "design" | "profile";
 
@@ -48,6 +49,7 @@ export function EditorSidebar({
   profileSummaries,
 }: EditorSidebarProps) {
   const accountTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const accountMenuAnimation = useAnimatedMenu(accountMenuOpen);
   const [accountMenuPosition, setAccountMenuPosition] = useState<{
     left: number;
     top: number;
@@ -55,7 +57,7 @@ export function EditorSidebar({
   } | null>(null);
 
   useLayoutEffect(() => {
-    if (!accountMenuOpen) {
+    if (!accountMenuAnimation.mounted) {
       setAccountMenuPosition(null);
       return;
     }
@@ -86,7 +88,7 @@ export function EditorSidebar({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [accountMenuOpen]);
+  }, [accountMenuAnimation.mounted]);
 
   function selectPanel(panel: EditorPanel): void {
     onPanelChange(panel);
@@ -94,7 +96,7 @@ export function EditorSidebar({
   }
 
   const accountMenuPortal =
-    accountMenuOpen && accountMenuPosition
+    accountMenuAnimation.mounted && accountMenuPosition
       ? createPortal(
           <>
             <button
@@ -113,6 +115,7 @@ export function EditorSidebar({
               }}
             >
               <AccountHandleMenu
+                className={`animated-menu${accountMenuAnimation.visible ? " is-open" : " is-closing"}`}
                 mode={mode}
                 onClose={() => onAccountMenuOpenChange(false)}
                 onCreateHandle={onCreateHandle}

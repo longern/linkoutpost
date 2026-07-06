@@ -2,6 +2,7 @@ import type { LinkProfile } from "../../profile";
 import type { ProfileSummary } from "../../types";
 
 type AccountHandleMenuProps = {
+  className?: string;
   mode: "loading" | "offline" | "backend";
   onClose(): void;
   onCreateHandle(): void;
@@ -13,6 +14,7 @@ type AccountHandleMenuProps = {
 };
 
 export function AccountHandleMenu({
+  className,
   mode,
   onClose,
   onCreateHandle,
@@ -34,7 +36,7 @@ export function AccountHandleMenu({
       : profileSummaries;
 
   return (
-    <ul className="account-menu" role="menu">
+    <ul className={`account-menu${className ? ` ${className}` : ""}`} role="menu">
       {mode !== "loading" && (
         <>
           {summaries.map((summary) => (
