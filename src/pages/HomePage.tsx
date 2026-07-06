@@ -61,11 +61,10 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
             </div>
           </div>
           <div className="home-hero-copy">
-            <p className="home-kicker">{siteTitle}</p>
-            <h1>Link pages you can take with you.</h1>
+            <h1>Your own free, portable link page.</h1>
             <p>
-              Build personal link pages locally, export them as static sites, or publish them
-              with hosted handles when you are ready.
+              Create a hosted handle page online, then use the local editor and static export
+              when you want your own domain or static file hosting.
             </p>
             <form className="home-handle-form" onSubmit={onGetStarted}>
               <div className="home-handle-field">
@@ -92,19 +91,18 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
 
         <section className="home-section" aria-labelledby="home-difference-title">
           <div className="home-section-heading">
-            <p className="home-kicker">Why it is different</p>
-            <h2 id="home-difference-title">Built for ownership, not just a hosted profile.</h2>
+            <h2 id="home-difference-title">Hosted by default, portable when you need it.</h2>
           </div>
           <div className="home-feature-grid">
             <article className="home-feature">
-              <FaLock aria-hidden="true" size={20} />
-              <h3>Works before login</h3>
-              <p>Edit with browser-local data when the backend is unavailable or you do not want an account yet.</p>
+              <FaServer aria-hidden="true" size={20} />
+              <h3>Free hosted pages</h3>
+              <p>Publish a public handle page online without setting up a server, storage, or deployment pipeline.</p>
             </article>
             <article className="home-feature">
               <FaDownload aria-hidden="true" size={20} />
-              <h3>Exports a real site</h3>
-              <p>Download a static ZIP that renders the same public page without depending on {siteTitle}.</p>
+              <h3>Self-host when needed</h3>
+              <p>Export a static ZIP for your own domain, object storage, CDN, or any static file host.</p>
             </article>
             <article className="home-feature">
               <FaLayerGroup aria-hidden="true" size={20} />
@@ -112,9 +110,9 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
               <p>Use one account to manage separate pages for projects, profiles, launches, or clients.</p>
             </article>
             <article className="home-feature">
-              <FaServer aria-hidden="true" size={20} />
-              <h3>SSR when published</h3>
-              <p>Signed-in pages are stored in D1 and rendered by handle for fast, shareable public URLs.</p>
+              <FaLock aria-hidden="true" size={20} />
+              <h3>Works before login</h3>
+              <p>Try the editor with browser-local data first, then sign in when you are ready to publish online.</p>
             </article>
           </div>
         </section>
@@ -122,25 +120,25 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
         <section className="home-workflow" aria-label="Publishing workflow">
           <div>
             <span>1</span>
-            <h3>Edit locally</h3>
-            <p>Start with a private browser draft.</p>
+            <h3>Claim a handle</h3>
+            <p>Start with a free hosted public page.</p>
           </div>
           <div>
             <span>2</span>
-            <h3>Choose a path</h3>
-            <p>Export a ZIP or sign in to sync.</p>
+            <h3>Edit online</h3>
+            <p>Keep your page synced to your account.</p>
           </div>
           <div>
             <span>3</span>
-            <h3>Publish handles</h3>
-            <p>Manage every public page from one account.</p>
+            <h3>Export if needed</h3>
+            <p>Move to your own static hosting anytime.</p>
           </div>
         </section>
 
         <footer className="home-footer">
           <div>
             <a className="site-brand" href="/">{siteTitle}</a>
-            <p>Portable link pages for local drafts, static exports, and hosted publishing.</p>
+            <p>Free hosted link pages with a static export path for self-hosting.</p>
           </div>
           <nav aria-label="Footer">
             <a href="/admin">Editor</a>

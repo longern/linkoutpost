@@ -8,14 +8,30 @@ export type LinkItem = {
 
 export type SocialPlatform =
   | "bilibili"
+  | "bluesky"
   | "discord"
   | "facebook"
   | "instagram"
   | "github"
+  | "linkedin"
+  | "mastodon"
+  | "medium"
+  | "pinterest"
+  | "qq"
+  | "reddit"
+  | "snapchat"
+  | "spotify"
+  | "substack"
+  | "telegram"
+  | "threads"
+  | "twitch"
   | "youtube"
   | "tiktok"
   | "wechat"
+  | "weibo"
+  | "whatsapp"
   | "x"
+  | "xiaohongshu"
   | "email"
   | "website";
 
@@ -106,28 +122,10 @@ export const fontOptions = [
 
 export const socialPlatformDefinitions: SocialPlatformDefinition[] = [
   {
-    id: "wechat",
-    label: "WeChat",
-    placeholder: "WeChat ID",
-    urlPrefix: "",
-  },
-  {
-    id: "bilibili",
-    label: "Bilibili",
-    placeholder: "space UID",
-    urlPrefix: "https://space.bilibili.com/",
-  },
-  {
     id: "instagram",
     label: "Instagram",
     placeholder: "username",
     urlPrefix: "https://instagram.com/",
-  },
-  {
-    id: "github",
-    label: "GitHub",
-    placeholder: "username",
-    urlPrefix: "https://github.com/",
   },
   {
     id: "youtube",
@@ -154,22 +152,136 @@ export const socialPlatformDefinitions: SocialPlatformDefinition[] = [
     urlPrefix: "https://facebook.com/",
   },
   {
+    id: "linkedin",
+    label: "LinkedIn",
+    placeholder: "username",
+    urlPrefix: "https://linkedin.com/in/",
+  },
+  {
+    id: "github",
+    label: "GitHub",
+    placeholder: "username",
+    urlPrefix: "https://github.com/",
+  },
+  {
+    id: "wechat",
+    label: "WeChat",
+    placeholder: "WeChat ID",
+    urlPrefix: "",
+  },
+  {
+    id: "xiaohongshu",
+    label: "Xiaohongshu",
+    placeholder: "user ID",
+    urlPrefix: "https://www.xiaohongshu.com/user/profile/",
+  },
+  {
+    id: "bilibili",
+    label: "Bilibili",
+    placeholder: "space UID",
+    urlPrefix: "https://space.bilibili.com/",
+  },
+  {
+    id: "weibo",
+    label: "Weibo",
+    placeholder: "profile ID",
+    urlPrefix: "https://weibo.com/u/",
+  },
+  {
+    id: "qq",
+    label: "QQ",
+    placeholder: "QQ number",
+    urlPrefix: "https://qm.qq.com/q/",
+  },
+  {
+    id: "reddit",
+    label: "Reddit",
+    placeholder: "username",
+    urlPrefix: "https://reddit.com/user/",
+  },
+  {
+    id: "threads",
+    label: "Threads",
+    placeholder: "username",
+    urlPrefix: "https://threads.net/@",
+  },
+  {
+    id: "telegram",
+    label: "Telegram",
+    placeholder: "username",
+    urlPrefix: "https://t.me/",
+  },
+  {
+    id: "whatsapp",
+    label: "WhatsApp",
+    placeholder: "phone number",
+    urlPrefix: "https://wa.me/",
+  },
+  {
     id: "discord",
     label: "Discord",
     placeholder: "username",
     urlPrefix: "https://discord.com/users/",
   },
   {
-    id: "email",
-    label: "Email",
-    placeholder: "name@example.com",
-    urlPrefix: "mailto:",
+    id: "pinterest",
+    label: "Pinterest",
+    placeholder: "username",
+    urlPrefix: "https://pinterest.com/",
+  },
+  {
+    id: "snapchat",
+    label: "Snapchat",
+    placeholder: "username",
+    urlPrefix: "https://snapchat.com/add/",
+  },
+  {
+    id: "spotify",
+    label: "Spotify",
+    placeholder: "artist/user ID",
+    urlPrefix: "https://open.spotify.com/user/",
+  },
+  {
+    id: "twitch",
+    label: "Twitch",
+    placeholder: "username",
+    urlPrefix: "https://twitch.tv/",
+  },
+  {
+    id: "bluesky",
+    label: "Bluesky",
+    placeholder: "handle.bsky.social",
+    urlPrefix: "https://bsky.app/profile/",
+  },
+  {
+    id: "medium",
+    label: "Medium",
+    placeholder: "username",
+    urlPrefix: "https://medium.com/@",
+  },
+  {
+    id: "substack",
+    label: "Substack",
+    placeholder: "subdomain",
+    urlPrefix: "https://",
+  },
+  {
+    id: "mastodon",
+    label: "Mastodon",
+    placeholder: "instance/@username",
+    urlPrefix: "https://",
   },
   {
     id: "website",
     label: "Website",
     placeholder: "example.com",
     urlPrefix: "https://",
+  },
+  {
+    id: "email",
+    label: "Email",
+    placeholder: "name@example.com",
+    urlPrefix: "mailto:",
   },
 ];
 

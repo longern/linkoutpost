@@ -9,6 +9,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     selector: ".public-page",
     rule: {
       alignItems: "stretch",
+      containerType: "inline-size",
       display: "flex",
       justifyContent: "center",
       minHeight: "100vh",
@@ -26,11 +27,18 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       background: "var(--profile-background-color, #ffffff)",
       border: 0,
       borderRadius: 0,
+      display: "flex",
+      flexDirection: "column",
       fontFamily: "var(--profile-font-family)",
-      minHeight: "auto",
-      padding: "80px 20px 32px",
+      minHeight: "100vh",
+      padding: "80px 20px 16px",
       position: "relative",
       width: "100%",
+      "@supports": {
+        "(min-height: 100dvh)": {
+          minHeight: "100dvh",
+        },
+      },
     },
   },
   {
@@ -93,7 +101,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       margin: "0 -20px",
       overflow: "hidden",
       position: "relative",
-      "@media": {
+      "@container": {
         "(min-width: 520px)": {
           margin: "0 -28px",
         },
@@ -465,7 +473,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".public-profile-classic, .public-profile-card",
     rule: {
-      "@media": {
+      "@container": {
         "(min-width: 520px)": {
           borderRadius: "22px 22px 0 0",
           boxShadow: "0 24px 70px rgb(16 24 39 / 14%)",
@@ -490,7 +498,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
           minHeight: "100dvh",
         },
       },
-      "@media": {
+      "@container": {
         "(min-width: 520px)": {
           padding: "64px 28px 28px",
         },
@@ -529,7 +537,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       padding: "24px 22px",
       position: "relative",
       width: "100%",
-      "@media": {
+      "@container": {
         "(min-width: 520px)": {
           width: "min(100%, 340px)",
         },
@@ -712,6 +720,39 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       "@media": {
         "(hover: hover) and (pointer: fine)": {
           backgroundColor: "color-mix(in srgb, currentColor, transparent 88%)",
+        },
+      },
+    },
+  },
+  {
+    selector: ".profile-footer",
+    rule: {
+      color: "var(--profile-text-color, #172033)",
+      fontSize: "0.75rem",
+      lineHeight: 1.4,
+      marginTop: "auto",
+      opacity: 0.64,
+      paddingTop: 28,
+      position: "relative",
+      textAlign: "center",
+      zIndex: 1,
+    },
+  },
+  {
+    selector: ".profile-footer a",
+    rule: {
+      color: "inherit",
+      textDecoration: "underline",
+      textDecorationThickness: "1px",
+      textUnderlineOffset: "3px",
+    },
+  },
+  {
+    selector: ".profile-footer a:hover",
+    rule: {
+      "@media": {
+        "(hover: hover) and (pointer: fine)": {
+          opacity: 0.8,
         },
       },
     },

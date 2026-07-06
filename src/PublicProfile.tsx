@@ -164,6 +164,14 @@ function ProfileAvatar({ avatarUrl }: { avatarUrl?: string | null }) {
   );
 }
 
+function ProfileFooter() {
+  return (
+    <footer className="profile-footer">
+      Powered by <a href="/">{siteTitle}</a>
+    </footer>
+  );
+}
+
 function ShareDialog({
   canCopy,
   canShare,
@@ -269,6 +277,7 @@ export function ProfilePage({
             <h1 className="profile-title">Profile not found</h1>
             <p>This handle does not have a published page yet.</p>
           </div>
+          <ProfileFooter />
         </section>
       </main>
     );
@@ -377,6 +386,7 @@ export function ProfilePage({
               <PublicLinks links={currentProfile.links} />
             </div>
           </div>
+          <ProfileFooter />
           {shareDialog}
         </section>
       </main>
@@ -416,6 +426,7 @@ export function ProfilePage({
           <ProfileSocialLinks links={currentProfile.socialLinks} />
           <PublicLinks links={currentProfile.links} />
         </div>
+        <ProfileFooter />
         {shareDialog}
       </section>
     </main>

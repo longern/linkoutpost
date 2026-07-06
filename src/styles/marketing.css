@@ -122,14 +122,6 @@
   order: 1;
 }
 
-.home-kicker {
-  margin: 0 0 14px;
-  color: var(--brand-accent);
-  font-size: 0.78rem;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
 .home-hero h1 {
   max-width: 11ch;
   margin: 0;
@@ -137,7 +129,7 @@
   line-height: 0.96;
 }
 
-.home-hero-copy > p:not(.home-kicker) {
+.home-hero-copy > p {
   max-width: 58ch;
   margin: 24px 0 32px;
   color: #526070;

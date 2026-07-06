@@ -189,7 +189,7 @@ export function ProfilePanel({
           <section
             aria-labelledby="social-dialog-title"
             aria-modal="true"
-            className="modal-card"
+            className="modal-card social-platform-dialog"
             role="dialog"
           >
             <div className="profile-social-dialog-header">
@@ -203,22 +203,25 @@ export function ProfilePanel({
                 <FaXmark aria-hidden="true" size={18} />
               </button>
             </div>
-            <div className="social-platform-grid">
-              {socialPlatformDefinitions.map((platform) => {
-                const Icon = getSocialPlatformIcon(platform.id);
+            <hr className="social-platform-divider" />
+            <div className="social-platform-scroll">
+              <div className="social-platform-grid">
+                {socialPlatformDefinitions.map((platform) => {
+                  const Icon = getSocialPlatformIcon(platform.id);
 
-                return (
-                  <button
-                    className="social-platform-option"
-                    key={platform.id}
-                    onClick={() => addSocialLink(platform.id)}
-                    type="button"
-                  >
-                    <Icon aria-hidden="true" size={20} />
-                    {platform.label}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      className="social-platform-option"
+                      key={platform.id}
+                      onClick={() => addSocialLink(platform.id)}
+                      type="button"
+                    >
+                      <Icon aria-hidden="true" size={20} />
+                      {platform.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </section>
         </div>

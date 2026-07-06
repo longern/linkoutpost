@@ -1,10 +1,30 @@
 @media (max-width: 860px) {
   .site-topbar {
-    display: none;
+    position: sticky;
+    top: 0;
+    z-index: var(--z-app-bar);
+    height: 60px;
+    padding: 0 16px;
+  }
+
+  .site-nav {
+    min-width: 0;
+    gap: 12px;
+  }
+
+  .site-nav a {
+    white-space: nowrap;
+  }
+
+  .site-nav .site-nav-primary {
+    min-height: 34px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 
   .home-page {
-    min-height: 100vh;
+    min-height: calc(100vh - 60px);
+    min-height: calc(100dvh - 60px);
   }
 
   .home-hero {
@@ -43,7 +63,7 @@
     font-size: clamp(3rem, 18vw, 4.8rem);
   }
 
-  .home-hero-copy > p:not(.home-kicker) {
+  .home-hero-copy > p {
     margin-left: 0;
     margin-right: 0;
   }
@@ -182,6 +202,28 @@
 }
 
 @media (max-width: 620px) {
+  .site-topbar {
+    padding: 0 12px;
+  }
+
+  .site-brand {
+    font-size: 0.95rem;
+  }
+
+  .site-nav {
+    gap: 10px;
+  }
+
+  .site-nav a:not(.button-primary, .button-secondary) {
+    font-size: 0.84rem;
+  }
+
+  .site-nav .site-nav-primary {
+    min-height: 32px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
   .preview {
     padding: 20px;
   }
@@ -228,7 +270,25 @@
   }
 
   .social-platform-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 6px;
+  }
+
+  .social-platform-dialog {
+    max-height: calc(100dvh - 24px);
+  }
+
+  .social-platform-dialog .profile-social-dialog-header {
+    padding: 0 12px 0 16px;
+  }
+
+  .social-platform-scroll {
+    padding: 14px 16px 18px;
+  }
+
+  .social-platform-option {
+    min-height: 78px;
+    padding: 8px 4px;
   }
 
   .toolbar-actions > * {

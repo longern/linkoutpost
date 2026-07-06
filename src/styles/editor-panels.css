@@ -154,6 +154,37 @@
   gap: 12px;
 }
 
+.social-platform-dialog {
+  display: flex;
+  flex-direction: column;
+  max-height: min(720px, calc(100dvh - 40px));
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+  width: min(100%, 640px);
+}
+
+.social-platform-dialog .profile-social-dialog-header {
+  flex: 0 0 60px;
+  min-height: 60px;
+  padding: 0 20px 0 24px;
+}
+
+.social-platform-divider {
+  flex: 0 0 auto;
+  width: 100%;
+  height: 1px;
+  border: 0;
+  background: var(--brand-border);
+  margin: 0;
+}
+
+.social-platform-scroll {
+  min-height: 0;
+  overflow: auto;
+  padding: 18px 24px 24px;
+}
+
 .social-editor-list {
   display: flex;
   flex-direction: column;
@@ -179,28 +210,52 @@
 
 .social-platform-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 16px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px 8px;
 }
 
 .social-platform-option {
-  min-height: 44px;
+  min-height: 86px;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  border: 1px solid var(--brand-border-strong);
+  justify-content: center;
+  gap: 8px;
+  border: 0;
   border-radius: 8px;
-  background: var(--brand-raised-background);
+  background: transparent;
   color: #233044;
-  padding: 0 12px;
-  text-align: left;
+  padding: 10px 6px;
+  text-align: center;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 120ms ease;
 }
 
-.social-platform-option:hover {
-  border-color: var(--brand-accent);
-  color: var(--brand-accent-hover);
+.social-platform-option svg {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .social-platform-option:hover {
+    background: rgb(var(--brand-accent-rgb) / 8%);
+    color: var(--brand-accent-hover);
+  }
+
+  .social-platform-option:active {
+    background: rgb(var(--brand-accent-rgb) / 14%);
+    color: var(--brand-accent-hover);
+    transform: translateY(1px);
+  }
+}
+
+@media (min-width: 621px) {
+  .social-platform-dialog .profile-social-dialog-header .circle-icon-button {
+    margin-right: -10px;
+  }
 }
 
 label {
