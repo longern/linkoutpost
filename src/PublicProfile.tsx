@@ -47,7 +47,11 @@ function parseHexColor(value: string): [number, number, number] | null {
   return null;
 }
 
-function getRelativeLuminance([red, green, blue]: [number, number, number]): number {
+function getRelativeLuminance([red, green, blue]: [
+  number,
+  number,
+  number,
+]): number {
   const [r, g, b] = [red, green, blue].map((value) => {
     const channel = value / 255;
     return channel <= 0.03928
@@ -66,7 +70,10 @@ function getProfileControlColor(backgroundColor: string): string {
 }
 
 function isVideoMedia(url: string): boolean {
-  return /^data:video\//i.test(url) || /\.(mp4|webm|ogv|ogg|mov)(?:[?#].*)?$/i.test(url);
+  return (
+    /^data:video\//i.test(url) ||
+    /\.(mp4|webm|ogv|ogg|mov)(?:[?#].*)?$/i.test(url)
+  );
 }
 
 function themeStyle(theme: ProfileTheme): CSSProperties {
@@ -110,9 +117,17 @@ function ProfileSocialLinks({ links }: { links: SocialLink[] }) {
               type="button"
             >
               {copied ? (
-                <LuCopyCheck aria-hidden="true" data-wechat-success-icon="" size={20} />
+                <LuCopyCheck
+                  aria-hidden="true"
+                  data-wechat-success-icon=""
+                  size={20}
+                />
               ) : (
-                <Icon aria-hidden="true" data-wechat-default-icon="" size={20} />
+                <Icon
+                  aria-hidden="true"
+                  data-wechat-default-icon=""
+                  size={20}
+                />
               )}
             </button>
           );
@@ -162,7 +177,11 @@ function PublicLinks({
                   src={imageUrl}
                 />
               ) : imageUrl ? (
-                <img alt="" className="public-image-card-media" src={imageUrl} />
+                <img
+                  alt=""
+                  className="public-image-card-media"
+                  src={imageUrl}
+                />
               ) : (
                 <span className="public-image-card-placeholder">
                   {link.label || "Image"}
@@ -458,9 +477,6 @@ export function ProfilePage({
               }
             >
               <ProfileAvatar avatarUrl={avatarUrl} />
-              {currentProfile.title.trim() && (
-                <h1 className="profile-card-name">{currentProfile.title}</h1>
-              )}
               {filledFields.length > 0 && (
                 <dl className="profile-card-fields">
                   {filledFields.map((field) => (
@@ -473,6 +489,7 @@ export function ProfilePage({
               )}
             </article>
             <div className="profile-card-meta">
+              <h1 className="profile-title">{currentProfile.title}</h1>
               <p className="handle">@{currentProfile.handle}</p>
               {currentProfile.bio.trim() && (
                 <p className="bio">{currentProfile.bio}</p>

@@ -240,8 +240,21 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     rule: {
       "@media": {
         "(hover: hover) and (pointer: fine)": {
+          backgroundColor:
+            "color-mix(in srgb, var(--profile-button-background-color, #ffffff), var(--profile-button-text-color, #172033) 6%)",
           boxShadow:
             "0 20px 25px -5px rgb(0 0 0 / 10%), 0 8px 10px -6px rgb(0 0 0 / 10%)",
+        },
+      },
+    },
+  },
+  {
+    selector: ".public-link:active",
+    rule: {
+      "@media": {
+        "(hover: hover) and (pointer: fine)": {
+          backgroundColor:
+            "color-mix(in srgb, var(--profile-button-background-color, #ffffff), var(--profile-button-text-color, #172033) 10%)",
         },
       },
     },
@@ -270,7 +283,8 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     rule: {
       alignItems: "center",
       aspectRatio: "16 / 9",
-      color: "color-mix(in srgb, var(--profile-button-text-color, #172033), transparent 42%)",
+      color:
+        "color-mix(in srgb, var(--profile-button-text-color, #172033), transparent 42%)",
       display: "flex",
       justifyContent: "center",
       padding: 16,
@@ -550,11 +564,10 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     rule: {
       alignItems: "center",
       display: "flex",
-      flex: "1 1 auto",
+      flex: "1 0 auto",
       flexDirection: "column",
       gap: 22,
       justifyContent: "flex-start",
-      minHeight: 0,
       width: "100%",
     },
   },
@@ -611,25 +624,6 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     rule: {
       background: "rgb(16 24 39 / 12%)",
       color: "var(--profile-accent-color, #2563eb)",
-    },
-  },
-  {
-    selector: ".profile-card-name",
-    rule: {
-      color: "inherit",
-      fontSize: "1.45rem",
-      fontWeight: 800,
-      left: "45%",
-      letterSpacing: 0,
-      lineHeight: 1.05,
-      margin: 0,
-      overflow: "hidden",
-      overflowWrap: "anywhere",
-      position: "absolute",
-      right: "10%",
-      textAlign: "left",
-      top: "61%",
-      zIndex: 1,
     },
   },
   {

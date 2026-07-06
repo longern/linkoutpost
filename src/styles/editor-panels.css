@@ -399,6 +399,7 @@ input[type="color"] {
   z-index: calc(var(--z-popover) - 1);
   border: 0;
   background: transparent;
+  cursor: default;
   padding: 0;
 }
 
