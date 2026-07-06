@@ -154,6 +154,34 @@ function PublicLinks({ links }: { links: LinkItem[] }) {
   );
 }
 
+function ProfileActions({
+  links,
+  socialLinks,
+  socialLinksPosition,
+}: {
+  links: LinkItem[];
+  socialLinks: SocialLink[];
+  socialLinksPosition: ProfileTheme["socialLinksPosition"];
+}) {
+  const className = `profile-actions is-${socialLinksPosition}`;
+
+  if (socialLinksPosition === "bottom") {
+    return (
+      <div className={className}>
+        <PublicLinks links={links} />
+        <ProfileSocialLinks links={socialLinks} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={className}>
+      <ProfileSocialLinks links={socialLinks} />
+      <PublicLinks links={links} />
+    </div>
+  );
+}
+
 function ProfileAvatar({ avatarUrl }: { avatarUrl?: string | null }) {
   return avatarUrl ? (
     <img alt="" className="profile-avatar" src={avatarUrl} />
@@ -382,8 +410,11 @@ export function ProfilePage({
               {currentProfile.bio.trim() && (
                 <p className="bio">{currentProfile.bio}</p>
               )}
-              <ProfileSocialLinks links={currentProfile.socialLinks} />
-              <PublicLinks links={currentProfile.links} />
+              <ProfileActions
+                links={currentProfile.links}
+                socialLinks={currentProfile.socialLinks}
+                socialLinksPosition={currentProfile.theme.socialLinksPosition}
+              />
             </div>
           </div>
           <ProfileFooter />
@@ -422,9 +453,14 @@ export function ProfilePage({
           <ProfileAvatar avatarUrl={avatarUrl} />
           <h1 className="profile-title">{currentProfile.title}</h1>
           <p className="handle">@{currentProfile.handle}</p>
-          <p className="bio">{currentProfile.bio}</p>
-          <ProfileSocialLinks links={currentProfile.socialLinks} />
-          <PublicLinks links={currentProfile.links} />
+          {currentProfile.bio.trim() && (
+            <p className="bio">{currentProfile.bio}</p>
+          )}
+          <ProfileActions
+            links={currentProfile.links}
+            socialLinks={currentProfile.socialLinks}
+            socialLinksPosition={currentProfile.theme.socialLinksPosition}
+          />
         </div>
         <ProfileFooter />
         {shareDialog}

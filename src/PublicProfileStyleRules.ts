@@ -214,6 +214,7 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
       display: "flex",
       flexDirection: "column",
       gap: 14,
+      width: "100%",
     },
   },
   {
@@ -663,19 +664,35 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
+    selector: ".profile-actions",
+    rule: {
+      alignItems: "stretch",
+      display: "flex",
+      flexDirection: "column",
+      width: "100%",
+    },
+  },
+  {
+    selector: ".profile-actions.is-top",
+    rule: {
+      gap: 14,
+    },
+  },
+  {
+    selector: ".profile-actions.is-bottom",
+    rule: {
+      gap: 18,
+    },
+  },
+  {
     selector: ".profile-social-links",
     rule: {
       display: "flex",
       flexWrap: "wrap",
       gap: 4,
       justifyContent: "center",
+      margin: "0 auto",
       width: "min(100%, 360px)",
-    },
-  },
-  {
-    selector: ".public-profile-content .profile-social-links",
-    rule: {
-      margin: "-10px auto 24px",
     },
   },
   {

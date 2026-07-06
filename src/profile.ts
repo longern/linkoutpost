@@ -49,6 +49,7 @@ export type SocialPlatformDefinition = {
 };
 
 export type ProfileLayout = "classic" | "card";
+export type SocialLinksPosition = "top" | "bottom";
 
 export type ProfileCardField = {
   id: string;
@@ -66,6 +67,7 @@ export type ProfileTheme = {
   fontFamily: string;
   layout: ProfileLayout;
   bannerImageAssetId: string | null;
+  socialLinksPosition: SocialLinksPosition;
   textColor: string;
 };
 
@@ -324,6 +326,7 @@ export const defaultTheme: ProfileTheme = {
   fontFamily: fontOptions[0].value,
   layout: "classic",
   bannerImageAssetId: null,
+  socialLinksPosition: "top",
   textColor: "#172033",
 };
 

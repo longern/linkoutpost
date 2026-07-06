@@ -108,9 +108,10 @@ export function ProfilePanel({
         </label>
       </div>
 
-      <section className="social-editor" aria-label="Social media links">
+      <hr className="panel-section-divider" />
+      <section className="design-section social-editor" aria-labelledby="social-editor-title">
         <div className="social-editor-header">
-          <strong>Social icons</strong>
+          <h2 id="social-editor-title">Social icons</h2>
           <button
             aria-label="Add social icon"
             className="circle-icon-button"
@@ -161,6 +162,43 @@ export function ProfilePanel({
             })}
           </div>
         )}
+        <div className="social-position-field">
+          <span className="design-field-label">Position</span>
+          <div className="radio-options" role="radiogroup" aria-label="Social icons position">
+            <label className="radio-option">
+              <input
+                checked={profile.theme.socialLinksPosition === "top"}
+                name="social-links-position"
+                onChange={() =>
+                  onCommit({
+                    theme: {
+                      ...profile.theme,
+                      socialLinksPosition: "top",
+                    },
+                  })
+                }
+                type="radio"
+              />
+              Top
+            </label>
+            <label className="radio-option">
+              <input
+                checked={profile.theme.socialLinksPosition === "bottom"}
+                name="social-links-position"
+                onChange={() =>
+                  onCommit({
+                    theme: {
+                      ...profile.theme,
+                      socialLinksPosition: "bottom",
+                    },
+                  })
+                }
+                type="radio"
+              />
+              Bottom
+            </label>
+          </div>
+        </div>
       </section>
 
       {socialDialogOpen && (
