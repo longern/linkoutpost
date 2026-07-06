@@ -107,6 +107,45 @@ function useBannerImageUrl(
   return bannerImageUrl;
 }
 
+function useLinkImageUrls(
+  profile: LinkProfile,
+  allowLocalAssets: boolean,
+): Record<string, string | null> {
+  const [linkImageUrls, setLinkImageUrls] = useState<Record<string, string | null>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    const objectUrls: string[] = [];
+
+    Promise.all(
+      profile.links
+        .filter((link) => link.type === "image" && link.imageAssetId)
+        .map(async (link) => {
+          const url = await resolveProfileAssetUrl(link.imageAssetId ?? null, allowLocalAssets);
+          if (url?.startsWith("blob:")) objectUrls.push(url);
+          return [link.id, url] as const;
+        }),
+    )
+      .then((entries) => {
+        if (cancelled) {
+          objectUrls.forEach(revokeObjectUrl);
+          return;
+        }
+        setLinkImageUrls(Object.fromEntries(entries));
+      })
+      .catch(() => {
+        if (!cancelled) setLinkImageUrls({});
+      });
+
+    return () => {
+      cancelled = true;
+      objectUrls.forEach(revokeObjectUrl);
+    };
+  }, [allowLocalAssets, profile.links]);
+
+  return linkImageUrls;
+}
+
 export function ProfilePreview({
   allowLocalAssets,
   profile,
@@ -117,6 +156,7 @@ export function ProfilePreview({
   const avatarUrl = useProfileAvatarUrl(profile, allowLocalAssets);
   const backgroundUrl = useProfileBackgroundUrl(profile, allowLocalAssets);
   const bannerImageUrl = useBannerImageUrl(profile, allowLocalAssets);
+  const linkImageUrls = useLinkImageUrls(profile, allowLocalAssets);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const previousLinkRects = useRef(new Map<string, DOMRect>());
 
@@ -163,6 +203,7 @@ export function ProfilePreview({
           avatarUrl={avatarUrl}
           backgroundUrl={backgroundUrl}
           bannerImageUrl={bannerImageUrl}
+          linkImageUrls={linkImageUrls}
           profile={profile}
           shareEnabled={false}
         />
@@ -183,6 +224,7 @@ export function FullscreenProfilePreview({
   const avatarUrl = useProfileAvatarUrl(profile, allowLocalAssets);
   const backgroundUrl = useProfileBackgroundUrl(profile, allowLocalAssets);
   const bannerImageUrl = useBannerImageUrl(profile, allowLocalAssets);
+  const linkImageUrls = useLinkImageUrls(profile, allowLocalAssets);
 
   return (
     <div className="editor-full-preview">
@@ -199,6 +241,7 @@ export function FullscreenProfilePreview({
         avatarUrl={avatarUrl}
         backgroundUrl={backgroundUrl}
         bannerImageUrl={bannerImageUrl}
+        linkImageUrls={linkImageUrls}
         profile={profile}
       />
     </div>

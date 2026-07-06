@@ -7,6 +7,7 @@ type ExportManifest = {
     avatar?: string | null;
     background?: string | null;
     bannerImage?: string | null;
+    linkImages?: Record<string, string | null>;
   };
   profile?: Partial<LinkProfile>;
   version?: number;
@@ -24,6 +25,7 @@ export type ImportedStaticProfile = {
   avatar: ImportedStaticAsset | null;
   background: ImportedStaticAsset | null;
   bannerImage: ImportedStaticAsset | null;
+  linkImages: Record<string, ImportedStaticAsset>;
   profile: LinkProfile;
 };
 
@@ -83,11 +85,17 @@ export async function readProfileFromStaticZip(file: File): Promise<ImportedStat
   const avatarPath = manifest.assets?.avatar;
   const backgroundPath = manifest.assets?.background;
   const bannerImagePath = manifest.assets?.bannerImage;
+  const linkImagePaths = manifest.assets?.linkImages ?? {};
 
   return {
     avatar: readAsset(files, avatarPath),
     background: readAsset(files, backgroundPath),
     bannerImage: readAsset(files, bannerImagePath),
+    linkImages: Object.fromEntries(
+      Object.entries(linkImagePaths)
+        .map(([id, path]) => [id, readAsset(files, path)])
+        .filter((entry): entry is [string, ImportedStaticAsset] => Boolean(entry[1])),
+    ),
     profile: createProfile({
       ...profile,
       updatedAt: new Date().toISOString(),

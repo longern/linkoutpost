@@ -31,6 +31,7 @@ async function renderProfileMarkup(
   avatarHref: string | null,
   backgroundHref: string | null,
   bannerImageHref: string | null,
+  linkImageHrefs: Record<string, string | null>,
 ): Promise<string> {
   const container = document.createElement("div");
   let root: Root | null = null;
@@ -45,6 +46,7 @@ async function renderProfileMarkup(
           avatarUrl={avatarHref}
           backgroundUrl={backgroundHref}
           bannerImageUrl={bannerImageHref}
+          linkImageUrls={linkImageHrefs}
           profile={profile}
         />,
       );
@@ -61,12 +63,14 @@ export async function renderStaticHtml(
   avatarHref: string | null,
   backgroundHref: string | null,
   bannerImageHref: string | null,
+  linkImageHrefs: Record<string, string | null> = {},
 ): Promise<string> {
   const profileMarkup = await renderProfileMarkup(
     profile,
     avatarHref,
     backgroundHref,
     bannerImageHref,
+    linkImageHrefs,
   );
 
   return [
@@ -200,6 +204,24 @@ export async function buildStaticZip(
     "banner",
     assetSource,
   );
+  const linkImages = Object.fromEntries(
+    await Promise.all(
+      profile.links
+        .filter((link) => link.type === "image" && link.imageAssetId)
+        .map(async (link) => {
+          const asset = await addStaticExportAsset(
+            files,
+            link.imageAssetId ?? null,
+            `link-${link.id}`,
+            assetSource,
+          );
+          return [link.id, asset] as const;
+        }),
+    ),
+  );
+  const linkImageHrefs = Object.fromEntries(
+    Object.entries(linkImages).map(([id, asset]) => [id, asset.href]),
+  );
 
   files["linkoutpost-export.json"] = strToU8(
     JSON.stringify(
@@ -211,6 +233,9 @@ export async function buildStaticZip(
           avatar: avatar.path,
           background: background.path,
           bannerImage: bannerImage.path,
+          linkImages: Object.fromEntries(
+            Object.entries(linkImages).map(([id, asset]) => [id, asset.path]),
+          ),
         },
       },
       null,
@@ -224,6 +249,7 @@ export async function buildStaticZip(
       avatar.href,
       background.href,
       bannerImage.href,
+      linkImageHrefs,
     ),
   );
 

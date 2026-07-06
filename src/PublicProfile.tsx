@@ -10,6 +10,7 @@ import { LuCopyCheck } from "react-icons/lu";
 import { RxShare2 } from "react-icons/rx";
 import {
   getSocialLinkUrl,
+  getProfileAssetUrl,
   type LinkItem,
   type LinkProfile,
   type ProfileTheme,
@@ -64,7 +65,7 @@ function getProfileControlColor(backgroundColor: string): string {
   return getRelativeLuminance(rgb) < 0.45 ? "#ffffff" : "#111827";
 }
 
-function isVideoBannerMedia(url: string): boolean {
+function isVideoMedia(url: string): boolean {
   return /^data:video\//i.test(url) || /\.(mp4|webm|ogv|ogg|mov)(?:[?#].*)?$/i.test(url);
 }
 
@@ -135,30 +136,94 @@ function ProfileSocialLinks({ links }: { links: SocialLink[] }) {
   );
 }
 
-function PublicLinks({ links }: { links: LinkItem[] }) {
+function PublicLinks({
+  linkImageUrls = {},
+  links,
+}: {
+  linkImageUrls?: Record<string, string | null>;
+  links: LinkItem[];
+}) {
   return (
     <div className="public-links">
-      {links.map((link) => (
-        <a
-          className="public-link"
-          data-profile-link-id={link.id}
-          href={link.url}
-          key={link.id}
-          rel="noreferrer"
-          target="_blank"
-        >
-          {link.label}
-        </a>
-      ))}
+      {links.map((link) => {
+        if (link.type === "image") {
+          const imageUrl =
+            linkImageUrls[link.id] ??
+            getProfileAssetUrl(link.imageAssetId ?? null);
+          const imageCard = (
+            <>
+              {imageUrl && isVideoMedia(imageUrl) ? (
+                <video
+                  autoPlay
+                  className="public-image-card-media"
+                  loop
+                  muted
+                  playsInline
+                  src={imageUrl}
+                />
+              ) : imageUrl ? (
+                <img alt="" className="public-image-card-media" src={imageUrl} />
+              ) : (
+                <span className="public-image-card-placeholder">
+                  {link.label || "Image"}
+                </span>
+              )}
+              {link.label.trim() && (
+                <span className="public-image-card-title">{link.label}</span>
+              )}
+            </>
+          );
+
+          if (link.url.trim()) {
+            return (
+              <a
+                className="public-link public-image-card"
+                data-profile-link-id={link.id}
+                href={link.url}
+                key={link.id}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {imageCard}
+              </a>
+            );
+          }
+
+          return (
+            <div
+              className="public-link public-image-card"
+              data-profile-link-id={link.id}
+              key={link.id}
+            >
+              {imageCard}
+            </div>
+          );
+        }
+
+        return (
+          <a
+            className="public-link"
+            data-profile-link-id={link.id}
+            href={link.url}
+            key={link.id}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {link.label}
+          </a>
+        );
+      })}
     </div>
   );
 }
 
 function ProfileActions({
   links,
+  linkImageUrls,
   socialLinks,
   socialLinksPosition,
 }: {
+  linkImageUrls?: Record<string, string | null>;
   links: LinkItem[];
   socialLinks: SocialLink[];
   socialLinksPosition: ProfileTheme["socialLinksPosition"];
@@ -168,7 +233,7 @@ function ProfileActions({
   if (socialLinksPosition === "bottom") {
     return (
       <div className={className}>
-        <PublicLinks links={links} />
+        <PublicLinks linkImageUrls={linkImageUrls} links={links} />
         <ProfileSocialLinks links={socialLinks} />
       </div>
     );
@@ -177,7 +242,7 @@ function ProfileActions({
   return (
     <div className={className}>
       <ProfileSocialLinks links={socialLinks} />
-      <PublicLinks links={links} />
+      <PublicLinks linkImageUrls={linkImageUrls} links={links} />
     </div>
   );
 }
@@ -289,10 +354,12 @@ export function ProfilePage({
   bannerImageUrl,
   profile,
   shareEnabled = true,
+  linkImageUrls,
 }: {
   avatarUrl?: string | null;
   backgroundUrl?: string | null;
   bannerImageUrl?: string | null;
+  linkImageUrls?: Record<string, string | null>;
   profile: LinkProfile | null;
   shareEnabled?: boolean;
 }) {
@@ -411,6 +478,7 @@ export function ProfilePage({
                 <p className="bio">{currentProfile.bio}</p>
               )}
               <ProfileActions
+                linkImageUrls={linkImageUrls}
                 links={currentProfile.links}
                 socialLinks={currentProfile.socialLinks}
                 socialLinksPosition={currentProfile.theme.socialLinksPosition}
@@ -435,7 +503,7 @@ export function ProfilePage({
         {shareButton}
         {bannerImageUrl && (
           <div className="banner-hero-image-wrap">
-            {isVideoBannerMedia(bannerImageUrl) ? (
+            {isVideoMedia(bannerImageUrl) ? (
               <video
                 autoPlay
                 className="banner-hero-image"
@@ -457,6 +525,7 @@ export function ProfilePage({
             <p className="bio">{currentProfile.bio}</p>
           )}
           <ProfileActions
+            linkImageUrls={linkImageUrls}
             links={currentProfile.links}
             socialLinks={currentProfile.socialLinks}
             socialLinksPosition={currentProfile.theme.socialLinksPosition}

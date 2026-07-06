@@ -433,26 +433,28 @@ async function writeProfileAssetUpload(request: Request, env: Env, userId: strin
       ? "backgrounds"
       : kind === "banner"
         ? "profiles"
-        : "avatars";
+        : kind === "link"
+          ? "links"
+          : "avatars";
 
   if (!(image instanceof File)) {
     throw new Error("Image file is required");
   }
 
-  const isBannerMedia = kind === "banner";
-  const validType = isBannerMedia
+  const isProfileMedia = kind === "banner" || kind === "link";
+  const validType = isProfileMedia
     ? image.type.startsWith("image/") || image.type.startsWith("video/")
     : image.type.startsWith("image/");
 
   if (!validType) {
-    throw new Error(isBannerMedia ? "File must be an image or video" : "File must be an image");
+    throw new Error(isProfileMedia ? "File must be an image or video" : "File must be an image");
   }
 
-  const maxBytes = isBannerMedia ? maxBannerMediaBytes : maxAvatarBytes;
+  const maxBytes = isProfileMedia ? maxBannerMediaBytes : maxAvatarBytes;
   if (image.size > maxBytes) {
     throw new Error(
-      isBannerMedia
-        ? "Banner media must be 10 MB or smaller"
+      isProfileMedia
+        ? "Media must be 10 MB or smaller"
         : "Image must be 2 MB or smaller"
     );
   }
@@ -472,6 +474,7 @@ async function readUserFile(env: Env, key: string): Promise<Response> {
     !env.BUCKET ||
     (!key.startsWith("avatars/") &&
       !key.startsWith("backgrounds/") &&
+      !key.startsWith("links/") &&
       !key.startsWith("profiles/"))
   ) {
     return new Response("Not found", { status: 404 });

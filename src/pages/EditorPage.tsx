@@ -73,6 +73,7 @@ export function EditorPage({
   const [editorAvatarUrl, setEditorAvatarUrl] = useState<string | null>(null);
   const [editorBackgroundUrl, setEditorBackgroundUrl] = useState<string | null>(null);
   const [editorBannerImageUrl, setEditorBannerImageUrl] = useState<string | null>(null);
+  const [editorLinkImageUrls, setEditorLinkImageUrls] = useState<Record<string, string | null>>({});
   const [dragLinks, setDragLinks] = useState<LinkItem[] | null>(null);
   const [handleSetupOpen, setHandleSetupOpen] = useState(false);
   const [handleSetupRequired, setHandleSetupRequired] = useState(false);
@@ -288,6 +289,40 @@ export function EditorPage({
     profile.theme.bannerImageAssetId,
   ]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const objectUrls: string[] = [];
+
+    async function resolveLinkImages(): Promise<void> {
+      const allowLocalAssets = mode !== "backend";
+      const entries = await Promise.all(
+        profile.links
+          .filter((link) => link.type === "image" && link.imageAssetId)
+          .map(async (link) => {
+            const url = await resolveProfileAssetUrl(link.imageAssetId ?? null, allowLocalAssets);
+            if (url?.startsWith("blob:")) objectUrls.push(url);
+            return [link.id, url] as const;
+          }),
+      );
+
+      if (cancelled) {
+        objectUrls.forEach((url) => URL.revokeObjectURL(url));
+        return;
+      }
+
+      setEditorLinkImageUrls(Object.fromEntries(entries));
+    }
+
+    void resolveLinkImages().catch(() => {
+      if (!cancelled) setEditorLinkImageUrls({});
+    });
+
+    return () => {
+      cancelled = true;
+      objectUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [mode, profile.links]);
+
   const profileUrl = useMemo(
     () => (profile.handle ? `/${profile.handle}` : "/"),
     [profile.handle],
@@ -397,6 +432,60 @@ export function EditorPage({
     };
     setProfile(nextProfile);
     void autosaveProfile(nextProfile);
+  }
+
+  function addImageCard(): void {
+    const nextProfile = {
+      ...profile,
+      links: [
+        ...profile.links,
+        {
+          id: crypto.randomUUID(),
+          imageAssetId: null,
+          label: "",
+          type: "image" as const,
+          url: "",
+        },
+      ],
+      updatedAt: new Date().toISOString(),
+    };
+    setProfile(nextProfile);
+    void autosaveProfile(nextProfile);
+  }
+
+  async function onLinkImageChange(id: string, file: File | null): Promise<void> {
+    if (!file) return;
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+      setStatus("Choose an image or video file");
+      return;
+    }
+    if (file.size > maxBannerMediaBytes) {
+      setStatus("Media card must be 10 MB or smaller");
+      return;
+    }
+
+    try {
+      const imageAssetId =
+        mode === "backend"
+          ? await uploadProfileAsset(file, "link")
+          : (await saveLocalAsset(file)).id;
+      const nextProfile = {
+        ...profile,
+        links: profile.links.map((link) =>
+          link.id === id ? { ...link, imageAssetId } : link,
+        ),
+        updatedAt: new Date().toISOString(),
+      };
+      setProfile(nextProfile);
+      void autosaveProfile(nextProfile);
+      setStatus(mode === "backend" ? "Media uploaded" : "Media saved locally");
+    } catch {
+      setStatus(
+        mode === "backend"
+          ? "Media upload failed"
+          : "This browser cannot save local media",
+      );
+    }
   }
 
   function removeLink(id: string): void {
@@ -813,6 +902,35 @@ export function EditorPage({
       }
     }
 
+    const importedLinkImages = Object.entries(imported.linkImages);
+    if (importedLinkImages.length > 0) {
+      const linkImageAssetIds = new Map<string, string>();
+
+      for (const [linkId, asset] of importedLinkImages) {
+        if (mode === "backend") {
+          const file = new File([asset.blob], asset.name, {
+            type: asset.type,
+          });
+          linkImageAssetIds.set(linkId, await uploadProfileAsset(file, "link"));
+        } else {
+          const stored = await saveLocalAssetBlob(
+            asset.blob,
+            asset.name,
+            asset.type,
+          );
+          linkImageAssetIds.set(linkId, stored.id);
+        }
+      }
+
+      nextProfile = {
+        ...nextProfile,
+        links: nextProfile.links.map((link) => {
+          const imageAssetId = linkImageAssetIds.get(link.id);
+          return imageAssetId ? { ...link, imageAssetId } : link;
+        }),
+      };
+    }
+
     return nextProfile;
   }
 
@@ -1132,9 +1250,14 @@ export function EditorPage({
 
             {activeEditorPanel === "links" && (
               <LinksPanel
+                linkImageUrls={editorLinkImageUrls}
                 links={profile.links}
-                onAdd={addLink}
+                onAddImage={addImageCard}
+                onAddLink={addLink}
                 onCommitLinks={commitLinks}
+                onImageChange={(id, file) => {
+                  void onLinkImageChange(id, file);
+                }}
                 onPreviewLinksChange={setDragLinks}
                 onRemove={removeLink}
                 onSave={saveCurrentProfile}

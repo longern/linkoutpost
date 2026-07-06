@@ -76,6 +76,7 @@ select {
 a,
 button,
 input,
+label,
 textarea,
 select {
   -webkit-tap-highlight-color: transparent;

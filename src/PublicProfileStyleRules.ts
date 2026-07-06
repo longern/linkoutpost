@@ -247,6 +247,45 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
+    selector: ".public-image-card",
+    rule: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 10,
+      overflow: "hidden",
+      padding: 0,
+    },
+  },
+  {
+    selector: ".public-image-card-media",
+    rule: {
+      display: "block",
+      height: "auto",
+      maxWidth: "100%",
+      width: "100%",
+    },
+  },
+  {
+    selector: ".public-image-card-placeholder",
+    rule: {
+      alignItems: "center",
+      aspectRatio: "16 / 9",
+      color: "color-mix(in srgb, var(--profile-button-text-color, #172033), transparent 42%)",
+      display: "flex",
+      justifyContent: "center",
+      padding: 16,
+    },
+  },
+  {
+    selector: ".public-image-card-title",
+    rule: {
+      color: "var(--profile-button-text-color, #172033)",
+      overflowWrap: "anywhere",
+      padding: "0 16px 14px",
+      textAlign: "center",
+    },
+  },
+  {
     selector: ".public-profile .circle-icon-button:hover",
     rule: {
       "@media": {

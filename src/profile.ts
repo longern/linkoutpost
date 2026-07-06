@@ -2,7 +2,9 @@ import { siteTitle } from "./siteConfig";
 
 export type LinkItem = {
   id: string;
+  imageAssetId?: string | null;
   label: string;
+  type?: "link" | "image";
   url: string;
 };
 
