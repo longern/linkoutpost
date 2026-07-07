@@ -2,6 +2,7 @@ import { renderToReadableStream } from "react-dom/server.browser";
 import { App, type InitialState, type ProfileSummary, type SessionState } from "./App";
 import {
   createProfile,
+  getProfileDocumentDescription,
   getProfileDocumentTitle,
   isReservedPath,
   normalizeHandle,
@@ -52,6 +53,9 @@ function isClientAppRoute(pathname: string): boolean {
     pathname === "/" ||
     pathname === "/signin" ||
     pathname.startsWith("/signin/") ||
+    pathname === "/privacy" ||
+    pathname === "/terms" ||
+    pathname === "/license" ||
     pathname === "/admin" ||
     pathname.startsWith("/admin/")
   );
@@ -797,12 +801,17 @@ async function renderHandlePage(request: Request, env: Env): Promise<Response> {
   const html = await shell.text();
 
   const documentTitle = escapeHtml(getProfileDocumentTitle(initialState.profile));
+  const documentDescription = escapeHtml(getProfileDocumentDescription(initialState.profile));
   const isPublicProfileRoute = !isClientAppRoute(url.pathname);
   const profileRuntimeScript = isPublicProfileRoute
     ? `<script>${escapeScript(await readProfileRuntimeScript(env, request))}</script>`
     : "";
   const renderedHtml = (isPublicProfileRoute ? removeClientEntrypoints(html) : html)
     .replace(/<title>.*?<\/title>/, `<title>${documentTitle}</title>`)
+    .replace(
+      /<meta\s+name=["']description["']\s+content=["'][^"']*["']\s*\/?>/,
+      `<meta name="description" content="${documentDescription}" />`
+    )
     .replace(
       '<div id="app"></div>',
       isPublicProfileRoute

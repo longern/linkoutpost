@@ -86,9 +86,16 @@ export type LinkProfile = {
 
 export { siteTitle } from "./siteConfig";
 
+export const defaultDocumentDescription =
+  "Create a free hosted link page, export your profile data and page files, or deploy a rendered static page anywhere.";
+
 export function getProfileDocumentTitle(profile: LinkProfile | null): string {
   const name = profile?.title.trim();
   return name ? `${name} | ${siteTitle}` : siteTitle;
+}
+
+export function getProfileDocumentDescription(profile: LinkProfile | null): string {
+  return profile?.bio.trim() || defaultDocumentDescription;
 }
 
 export function getProfileAvatarUrl(
@@ -369,5 +376,5 @@ export function normalizeHandle(value: string): string {
 }
 
 export function isReservedPath(value: string): boolean {
-  return ["admin", "api", "assets", "favicon.ico"].includes(value);
+  return ["admin", "api", "assets", "favicon.ico", "license", "privacy", "terms"].includes(value);
 }

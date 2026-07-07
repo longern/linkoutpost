@@ -1,5 +1,6 @@
 import { EditorPage } from "./pages/EditorPage";
 import { HomePage } from "./pages/HomePage";
+import { LegalPage } from "./pages/LegalPage";
 import { SignInPage } from "./pages/SignInPage";
 import { useEffect } from "react";
 import {
@@ -33,6 +34,18 @@ export function App({ initialState }: AppProps) {
 
   if (pathname === "/signin" || pathname.startsWith("/signin/")) {
     return <SignInPage initialSession={initialState.session} />;
+  }
+
+  if (pathname === "/privacy") {
+    return <LegalPage initialSession={initialState.session} kind="privacy" />;
+  }
+
+  if (pathname === "/terms") {
+    return <LegalPage initialSession={initialState.session} kind="terms" />;
+  }
+
+  if (pathname === "/license") {
+    return <LegalPage initialSession={initialState.session} kind="license" />;
   }
 
   const handle = normalizeHandle(pathname.split("/").filter(Boolean)[0] ?? "");
