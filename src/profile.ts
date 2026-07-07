@@ -1,4 +1,4 @@
-import { siteTitle } from "./siteConfig";
+import { hostedHandleMinLength, siteTitle } from "./siteConfig";
 
 export type LinkItem = {
   id: string;
@@ -84,7 +84,7 @@ export type LinkProfile = {
   updatedAt: string;
 };
 
-export { siteTitle } from "./siteConfig";
+export { hostedHandleMinLength, siteTitle } from "./siteConfig";
 
 export const defaultDocumentDescription =
   "Create a free hosted link page, export your profile data and page files, or deploy a rendered static page anywhere.";
@@ -94,7 +94,9 @@ export function getProfileDocumentTitle(profile: LinkProfile | null): string {
   return name ? `${name} | ${siteTitle}` : siteTitle;
 }
 
-export function getProfileDocumentDescription(profile: LinkProfile | null): string {
+export function getProfileDocumentDescription(
+  profile: LinkProfile | null,
+): string {
   return profile?.bio.trim() || defaultDocumentDescription;
 }
 
@@ -106,7 +108,8 @@ export function getProfileAvatarUrl(
 
 export function getProfileAssetUrl(assetId: string | null): string | null {
   if (!assetId) return null;
-  if (assetId.startsWith("data:image/") || assetId.startsWith("data:video/")) return assetId;
+  if (assetId.startsWith("data:image/") || assetId.startsWith("data:video/"))
+    return assetId;
   if (assetId.includes("/")) return `/api/files/${encodeURIComponent(assetId)}`;
   return null;
 }
@@ -375,6 +378,18 @@ export function normalizeHandle(value: string): string {
     .slice(0, 40);
 }
 
+export function isHostedHandleTooShort(handle: string): boolean {
+  return handle.length > 0 && handle.length < hostedHandleMinLength;
+}
+
 export function isReservedPath(value: string): boolean {
-  return ["admin", "api", "assets", "favicon.ico", "license", "privacy", "terms"].includes(value);
+  return [
+    "admin",
+    "api",
+    "assets",
+    "favicon.ico",
+    "license",
+    "privacy",
+    "terms",
+  ].includes(value);
 }

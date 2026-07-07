@@ -104,6 +104,11 @@ Add the binding to `wrangler.jsonc`:
 
 ## Development
 
+Optional build-time environment variables:
+
+- `VITE_SITE_TITLE`: site name shown in the UI. Defaults to `LinkOutpost`.
+- `VITE_HOSTED_HANDLE_MIN_LENGTH`: minimum handle length for hosted/backend publishing. Defaults to `5`.
+
 ```bash
 npm install
 npm run build

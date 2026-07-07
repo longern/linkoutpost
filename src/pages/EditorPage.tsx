@@ -26,6 +26,8 @@ import {
 } from "../localEditorStore";
 import {
   createProfile,
+  hostedHandleMinLength,
+  isHostedHandleTooShort,
   isReservedPath,
   normalizeHandle,
   type LinkItem,
@@ -71,9 +73,15 @@ export function EditorPage({
   const [activeEditorPanel, setActiveEditorPanel] =
     useState<EditorPanel>("profile");
   const [editorAvatarUrl, setEditorAvatarUrl] = useState<string | null>(null);
-  const [editorBackgroundUrl, setEditorBackgroundUrl] = useState<string | null>(null);
-  const [editorBannerImageUrl, setEditorBannerImageUrl] = useState<string | null>(null);
-  const [editorLinkImageUrls, setEditorLinkImageUrls] = useState<Record<string, string | null>>({});
+  const [editorBackgroundUrl, setEditorBackgroundUrl] = useState<string | null>(
+    null,
+  );
+  const [editorBannerImageUrl, setEditorBannerImageUrl] = useState<
+    string | null
+  >(null);
+  const [editorLinkImageUrls, setEditorLinkImageUrls] = useState<
+    Record<string, string | null>
+  >({});
   const [dragLinks, setDragLinks] = useState<LinkItem[] | null>(null);
   const [handleSetupOpen, setHandleSetupOpen] = useState(false);
   const [handleSetupRequired, setHandleSetupRequired] = useState(false);
@@ -113,11 +121,15 @@ export function EditorPage({
             summaries.length === 0 && !normalizeHandle(offlineProfile.handle);
           setProfile(offlineProfile);
           setProfileSummaries(
-            summaries.length > 0 || needsLocalHandle ? summaries : [{
-              handle: offlineProfile.handle,
-              title: offlineProfile.title,
-              updatedAt: offlineProfile.updatedAt,
-            }],
+            summaries.length > 0 || needsLocalHandle
+              ? summaries
+              : [
+                  {
+                    handle: offlineProfile.handle,
+                    title: offlineProfile.title,
+                    updatedAt: offlineProfile.updatedAt,
+                  },
+                ],
           );
           setHandleDraft(needsLocalHandle ? "" : offlineProfile.handle);
           setHandleSetupRequired(needsLocalHandle);
@@ -147,8 +159,7 @@ export function EditorPage({
           setHandleDraft(firstHandle);
         } else {
           const initialHandle =
-            requestedHandle ||
-            normalizeHandle(nextSession.name ?? "");
+            requestedHandle || normalizeHandle(nextSession.name ?? "");
           const initialProfile = createProfile({
             handle: initialHandle,
           });
@@ -158,11 +169,13 @@ export function EditorPage({
               await saveProfile(initialProfile);
               if (cancelled) return;
               setProfile(initialProfile);
-              setProfileSummaries([{
-                handle: initialProfile.handle,
-                title: initialProfile.title,
-                updatedAt: initialProfile.updatedAt,
-              }]);
+              setProfileSummaries([
+                {
+                  handle: initialProfile.handle,
+                  title: initialProfile.title,
+                  updatedAt: initialProfile.updatedAt,
+                },
+              ]);
               setHandleDraft(initialProfile.handle);
             } catch (error) {
               if (cancelled) return;
@@ -192,11 +205,15 @@ export function EditorPage({
           summaries.length === 0 && !normalizeHandle(offlineProfile.handle);
         setProfile(offlineProfile);
         setProfileSummaries(
-          summaries.length > 0 || needsLocalHandle ? summaries : [{
-            handle: offlineProfile.handle,
-            title: offlineProfile.title,
-            updatedAt: offlineProfile.updatedAt,
-          }],
+          summaries.length > 0 || needsLocalHandle
+            ? summaries
+            : [
+                {
+                  handle: offlineProfile.handle,
+                  title: offlineProfile.title,
+                  updatedAt: offlineProfile.updatedAt,
+                },
+              ],
         );
         setHandleDraft(needsLocalHandle ? "" : offlineProfile.handle);
         setHandleSetupRequired(needsLocalHandle);
@@ -255,13 +272,21 @@ export function EditorPage({
     async function resolveEditorMedia(): Promise<void> {
       const allowLocalAssets = mode !== "backend";
       const [backgroundUrl, bannerImageUrl] = await Promise.all([
-        resolveProfileAssetUrl(profile.theme.backgroundAssetId, allowLocalAssets),
-        resolveProfileAssetUrl(profile.theme.bannerImageAssetId, allowLocalAssets),
+        resolveProfileAssetUrl(
+          profile.theme.backgroundAssetId,
+          allowLocalAssets,
+        ),
+        resolveProfileAssetUrl(
+          profile.theme.bannerImageAssetId,
+          allowLocalAssets,
+        ),
       ]);
 
       if (cancelled) {
-        if (backgroundUrl?.startsWith("blob:")) URL.revokeObjectURL(backgroundUrl);
-        if (bannerImageUrl?.startsWith("blob:")) URL.revokeObjectURL(bannerImageUrl);
+        if (backgroundUrl?.startsWith("blob:"))
+          URL.revokeObjectURL(backgroundUrl);
+        if (bannerImageUrl?.startsWith("blob:"))
+          URL.revokeObjectURL(bannerImageUrl);
         return;
       }
 
@@ -280,14 +305,12 @@ export function EditorPage({
 
     return () => {
       cancelled = true;
-      if (backgroundObjectUrl?.startsWith("blob:")) URL.revokeObjectURL(backgroundObjectUrl);
-      if (bannerObjectUrl?.startsWith("blob:")) URL.revokeObjectURL(bannerObjectUrl);
+      if (backgroundObjectUrl?.startsWith("blob:"))
+        URL.revokeObjectURL(backgroundObjectUrl);
+      if (bannerObjectUrl?.startsWith("blob:"))
+        URL.revokeObjectURL(bannerObjectUrl);
     };
-  }, [
-    mode,
-    profile.theme.backgroundAssetId,
-    profile.theme.bannerImageAssetId,
-  ]);
+  }, [mode, profile.theme.backgroundAssetId, profile.theme.bannerImageAssetId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -299,7 +322,10 @@ export function EditorPage({
         profile.links
           .filter((link) => link.type === "image" && link.imageAssetId)
           .map(async (link) => {
-            const url = await resolveProfileAssetUrl(link.imageAssetId ?? null, allowLocalAssets);
+            const url = await resolveProfileAssetUrl(
+              link.imageAssetId ?? null,
+              allowLocalAssets,
+            );
             if (url?.startsWith("blob:")) objectUrls.push(url);
             return [link.id, url] as const;
           }),
@@ -453,7 +479,10 @@ export function EditorPage({
     void autosaveProfile(nextProfile);
   }
 
-  async function onLinkImageChange(id: string, file: File | null): Promise<void> {
+  async function onLinkImageChange(
+    id: string,
+    file: File | null,
+  ): Promise<void> {
     if (!file) return;
     if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
       setStatus("Choose an image or video file");
@@ -581,11 +610,15 @@ export function EditorPage({
         setHandleDraft(nextProfile.handle);
       }
       setProfileSummaries(
-        summaries.length > 0 || needsLocalHandle ? summaries : [{
-          handle: nextProfile.handle,
-          title: nextProfile.title,
-          updatedAt: nextProfile.updatedAt,
-        }],
+        summaries.length > 0 || needsLocalHandle
+          ? summaries
+          : [
+              {
+                handle: nextProfile.handle,
+                title: nextProfile.title,
+                updatedAt: nextProfile.updatedAt,
+              },
+            ],
       );
       setActiveEditorPanel("profile");
       setStatus("Profile deleted");
@@ -777,7 +810,10 @@ export function EditorPage({
   }
 
   function createAvailableHandle(baseHandle: string): string {
-    const normalizedBase = (normalizeHandle(baseHandle) || "imported").slice(0, 34);
+    const normalizedBase = (normalizeHandle(baseHandle) || "imported").slice(
+      0,
+      34,
+    );
     let candidate = normalizedBase;
     let index = 2;
 
@@ -800,18 +836,20 @@ export function EditorPage({
     imported: ImportedStaticProfile,
     handle: string,
   ): Promise<LinkProfile> {
-    const fallbackAvatarAssetId = imported.profile.avatarAssetId?.startsWith("data:image/")
+    const fallbackAvatarAssetId = imported.profile.avatarAssetId?.startsWith(
+      "data:image/",
+    )
       ? imported.profile.avatarAssetId
       : null;
-    const fallbackBackgroundAssetId = imported.profile.theme.backgroundAssetId?.startsWith("data:image/")
-      ? imported.profile.theme.backgroundAssetId
-      : null;
-    const fallbackBannerImageAssetId = (
+    const fallbackBackgroundAssetId =
+      imported.profile.theme.backgroundAssetId?.startsWith("data:image/")
+        ? imported.profile.theme.backgroundAssetId
+        : null;
+    const fallbackBannerImageAssetId =
       imported.profile.theme.bannerImageAssetId?.startsWith("data:image/") ||
       imported.profile.theme.bannerImageAssetId?.startsWith("data:video/")
-    )
-      ? imported.profile.theme.bannerImageAssetId
-      : null;
+        ? imported.profile.theme.bannerImageAssetId
+        : null;
     let nextProfile = createProfile({
       ...imported.profile,
       handle,
@@ -848,9 +886,13 @@ export function EditorPage({
 
     if (imported.background) {
       if (mode === "backend") {
-        const file = new File([imported.background.blob], imported.background.name, {
-          type: imported.background.type,
-        });
+        const file = new File(
+          [imported.background.blob],
+          imported.background.name,
+          {
+            type: imported.background.type,
+          },
+        );
         nextProfile = {
           ...nextProfile,
           theme: {
@@ -876,9 +918,13 @@ export function EditorPage({
 
     if (imported.bannerImage) {
       if (mode === "backend") {
-        const file = new File([imported.bannerImage.blob], imported.bannerImage.name, {
-          type: imported.bannerImage.type,
-        });
+        const file = new File(
+          [imported.bannerImage.blob],
+          imported.bannerImage.name,
+          {
+            type: imported.bannerImage.type,
+          },
+        );
         nextProfile = {
           ...nextProfile,
           theme: {
@@ -945,12 +991,20 @@ export function EditorPage({
       return;
     }
 
+    if (mode === "backend" && isHostedHandleTooShort(normalizedHandle)) {
+      setImportError(`Use at least ${hostedHandleMinLength} characters.`);
+      return;
+    }
+
     setImportSaving(true);
     setImportError(null);
 
     try {
       setStatus("Importing ZIP");
-      const nextProfile = await prepareImportedProfile(imported, normalizedHandle);
+      const nextProfile = await prepareImportedProfile(
+        imported,
+        normalizedHandle,
+      );
 
       if (mode === "backend") {
         await saveProfile(nextProfile);
@@ -965,7 +1019,9 @@ export function EditorPage({
       setActiveEditorPanel("profile");
       setStatus("ZIP imported");
     } catch (error) {
-      setImportError(error instanceof Error ? error.message : "ZIP import failed");
+      setImportError(
+        error instanceof Error ? error.message : "ZIP import failed",
+      );
       setStatus("ZIP import failed");
       setImportSaving(false);
     }
@@ -986,7 +1042,9 @@ export function EditorPage({
 
       if (!importedHandle || isReservedPath(importedHandle)) {
         setImportCandidate(imported);
-        setImportHandleDraft(createAvailableHandle(importedHandle || "imported"));
+        setImportHandleDraft(
+          createAvailableHandle(importedHandle || "imported"),
+        );
         setImportError("Choose a valid handle.");
         return;
       }
@@ -1037,6 +1095,11 @@ export function EditorPage({
 
     if (!handle || isReservedPath(handle)) {
       setHandleSetupError("Choose a valid handle.");
+      return;
+    }
+
+    if (mode === "backend" && isHostedHandleTooShort(handle)) {
+      setHandleSetupError(`Use at least ${hostedHandleMinLength} characters.`);
       return;
     }
 

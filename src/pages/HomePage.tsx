@@ -2,7 +2,13 @@ import { useEffect, useState, type FormEvent } from "react";
 import { FaBolt, FaDownload, FaFileExport, FaServer } from "react-icons/fa6";
 import { loadSession } from "../apiClient";
 import { SiteTopbar } from "../components/SiteTopbar";
-import { isReservedPath, normalizeHandle, type SocialPlatform } from "../profile";
+import {
+  hostedHandleMinLength,
+  isHostedHandleTooShort,
+  isReservedPath,
+  normalizeHandle,
+  type SocialPlatform,
+} from "../profile";
 import { siteTitle } from "../siteConfig";
 import { getSocialPlatformIcon } from "../socialIcons";
 import type { SessionState } from "../types";
@@ -17,7 +23,12 @@ const previewCards = [
     handle: "@mira",
     links: ["Field journal", "Image archive", "Studio contact"],
     name: "Mira Chen",
-    socials: ["instagram", "medium", "pinterest", "email"] satisfies SocialPlatform[],
+    socials: [
+      "instagram",
+      "medium",
+      "pinterest",
+      "email",
+    ] satisfies SocialPlatform[],
   },
   {
     avatarUrl:
@@ -70,6 +81,11 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
       return;
     }
 
+    if (isHostedHandleTooShort(handle)) {
+      setHandleError(`Use at least ${hostedHandleMinLength} characters.`);
+      return;
+    }
+
     window.location.href = session.authenticated
       ? `/admin?setup=handle&handle=${encodeURIComponent(handle)}`
       : `/signin?handle=${encodeURIComponent(handle)}`;
@@ -111,7 +127,9 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
                       })}
                     </div>
                     {card.links.map((link) => (
-                      <div className="home-preview-link" key={link}>{link}</div>
+                      <div className="home-preview-link" key={link}>
+                        {link}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -121,8 +139,9 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
           <div className="home-hero-copy">
             <h1>Your own free, portable link page.</h1>
             <p>
-              Create a hosted handle page online, then use the local editor and static export
-              when you want your own domain or static file hosting.
+              Create a hosted handle page online, then use the local editor and
+              static export when you want your own domain or static file
+              hosting.
             </p>
             <form className="home-handle-form" onSubmit={onGetStarted}>
               <div className="home-handle-field">
@@ -141,38 +160,60 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
                   value={handleDraft}
                 />
               </div>
-              <button className="button-primary" type="submit">Get Started</button>
-              <p className="home-handle-error" role={handleError ? "alert" : undefined}>
+              <button className="button-primary" type="submit">
+                Get Started
+              </button>
+              <p
+                className="home-handle-error"
+                role={handleError ? "alert" : undefined}
+              >
                 {handleError ?? ""}
               </p>
             </form>
           </div>
         </section>
 
-        <section className="home-section" aria-labelledby="home-difference-title">
+        <section
+          className="home-section"
+          aria-labelledby="home-difference-title"
+        >
           <div className="home-section-heading">
-            <h2 id="home-difference-title">Create quickly, host free, stay portable.</h2>
+            <h2 id="home-difference-title">
+              Create quickly, host free, stay portable.
+            </h2>
           </div>
           <div className="home-feature-grid">
             <article className="home-feature">
               <FaBolt aria-hidden="true" size={20} />
               <h3>Quick to create</h3>
-              <p>Start from a simple editor, add your links and profile details, and get a clean page ready fast.</p>
+              <p>
+                Start from a simple editor, add your links and profile details,
+                and get a clean page ready fast.
+              </p>
             </article>
             <article className="home-feature">
               <FaServer aria-hidden="true" size={20} />
               <h3>Free hosted pages</h3>
-              <p>Sign up when you want LinkOutpost to host and publish your public handle page for free.</p>
+              <p>
+                Sign up when you want LinkOutpost to host and publish your
+                public handle page for free.
+              </p>
             </article>
             <article className="home-feature">
               <FaDownload aria-hidden="true" size={20} />
               <h3>Exportable by design</h3>
-              <p>Create locally without logging in, then download your profile data, images, and page files.</p>
+              <p>
+                Create locally without logging in, then download your profile
+                data, images, and page files.
+              </p>
             </article>
             <article className="home-feature">
               <FaFileExport aria-hidden="true" size={20} />
               <h3>Ready for self-hosting</h3>
-              <p>Deploy the rendered static page to your own domain, CDN, object storage, or static host.</p>
+              <p>
+                Deploy the rendered static page to your own domain, CDN, object
+                storage, or static host.
+              </p>
             </article>
           </div>
         </section>
@@ -197,11 +238,21 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
 
         <footer className="home-footer">
           <div>
-            <a className="site-brand" href="/">{siteTitle}</a>
-            <p>Free hosted link pages with a static export path for self-hosting.</p>
+            <a className="site-brand" href="/">
+              {siteTitle}
+            </a>
+            <p>
+              Free hosted link pages with a static export path for self-hosting.
+            </p>
           </div>
           <nav aria-label="Footer">
-            <a href="https://github.com/longern/linkoutpost" rel="noreferrer noopener" target="_blank">Source</a>
+            <a
+              href="https://github.com/longern/linkoutpost"
+              rel="noreferrer noopener"
+              target="_blank"
+            >
+              Source
+            </a>
             <a href="/privacy">Privacy</a>
             <a href="/terms">Terms</a>
             <a href="/license">License</a>
