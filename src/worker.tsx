@@ -5,10 +5,9 @@ import {
   type ProfileSummary,
   type SessionState,
 } from "./App";
+import { renderDocumentMeta, replaceDocumentMeta } from "./documentMeta";
 import {
   createProfile,
-  getProfileDocumentDescription,
-  getProfileDocumentTitle,
   hostedHandleMinLength,
   isHostedHandleTooShort,
   isReservedPath,
@@ -920,24 +919,19 @@ async function renderHandlePage(request: Request, env: Env): Promise<Response> {
 
   const html = await shell.text();
 
-  const documentTitle = escapeHtml(
-    getProfileDocumentTitle(initialState.profile),
-  );
-  const documentDescription = escapeHtml(
-    getProfileDocumentDescription(initialState.profile),
-  );
   const isPublicProfileRoute = !isClientAppRoute(url.pathname);
+  const documentMeta = renderDocumentMeta({
+    profile: initialState.profile,
+    type: isPublicProfileRoute ? "profile" : "website",
+    url: `${url.origin}${url.pathname}`,
+  });
   const profileRuntimeScript = isPublicProfileRoute
     ? `<script>${escapeScript(await readProfileRuntimeScript(env, request))}</script>`
     : "";
-  const renderedHtml = (
-    isPublicProfileRoute ? removeClientEntrypoints(html) : html
+  const renderedHtml = replaceDocumentMeta(
+    isPublicProfileRoute ? removeClientEntrypoints(html) : html,
+    documentMeta,
   )
-    .replace(/<title>.*?<\/title>/, `<title>${documentTitle}</title>`)
-    .replace(
-      /<meta\s+name=["']description["']\s+content=["'][^"']*["']\s*\/?>/,
-      `<meta name="description" content="${documentDescription}" />`,
-    )
     .replace(
       '<div id="app"></div>',
       isPublicProfileRoute

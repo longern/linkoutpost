@@ -1,15 +1,11 @@
 import { strToU8, zipSync } from "fflate";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
+import { renderDocumentMeta } from "./documentMeta";
 import { readLocalAsset } from "./localEditorStore";
 import { getPublicProfileCssText } from "./PublicProfileCssText";
 import { ProfilePage } from "./PublicProfile";
-import {
-  getProfileAssetUrl,
-  getProfileDocumentDescription,
-  getProfileDocumentTitle,
-  type LinkProfile,
-} from "./profile";
+import { getProfileAssetUrl, type LinkProfile } from "./profile";
 import authAndOverlaysCss from "./styles/auth-and-overlays.css?inline";
 import editorPanelsCss from "./styles/editor-panels.css?inline";
 import editorPreviewCss from "./styles/editor-preview.css?inline";
@@ -73,19 +69,17 @@ export async function renderStaticHtml(
     bannerImageHref,
     linkImageHrefs,
   );
-
   return [
     "<!doctype html>",
     '<html lang="en">',
     "<head>",
     '<meta charset="UTF-8">',
     '<meta content="width=device-width, initial-scale=1.0" name="viewport">',
-    `<meta content="${escapeHtml(getProfileDocumentDescription(profile))}" name="description">`,
-    `<title>${escapeHtml(getProfileDocumentTitle(profile))}</title>`,
+    renderDocumentMeta({ profile, type: "profile" }),
     '<link href="./styles.css" rel="stylesheet">',
     "</head>",
     `<body>${profileMarkup}<script src="./profile.js" type="module"></script></body>`,
-    "</html>"
+    "</html>",
   ].join("");
 }
 
@@ -186,7 +180,7 @@ export async function buildStaticZip(
 ): Promise<Blob> {
   const files: Record<string, Uint8Array> = {
     "profile.js": strToU8(await readProfileRuntimeScript()),
-    "styles.css": strToU8(collectStaticCss())
+    "styles.css": strToU8(collectStaticCss()),
   };
   const avatar = await addStaticExportAsset(
     files,
@@ -256,7 +250,7 @@ export async function buildStaticZip(
   );
 
   const bytes = zipSync({
-    ...files
+    ...files,
   });
 
   return new Blob([bytes], { type: "application/zip" });
