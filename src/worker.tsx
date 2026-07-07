@@ -883,7 +883,7 @@ async function completeOAuth(
   const headers = new Headers({
     Location:
       oauthState.redirectTo ??
-      (user.created ? "/admin?setup=handle" : "/admin"),
+      "/admin",
   });
   headers.append(
     "Set-Cookie",

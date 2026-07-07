@@ -56,6 +56,13 @@ import { useAnimatedMenu } from "./editor/useAnimatedMenu";
 
 const maxBannerMediaBytes = 10 * 1024 * 1024;
 
+function handleCreateErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : "";
+  return message === "Handle is already taken"
+    ? "That handle is already taken."
+    : message || "Handle create failed";
+}
+
 export function EditorPage({
   initialSession,
 }: {
@@ -146,7 +153,7 @@ export function EditorPage({
         const requestedHandle =
           typeof window !== "undefined"
             ? normalizeHandle(
-                new URLSearchParams(window.location.search).get("handle") ?? "",
+                new URLSearchParams(window.location.search).get("create") ?? "",
               )
             : "";
 
@@ -181,9 +188,7 @@ export function EditorPage({
               if (cancelled) return;
               setProfile(initialProfile);
               setHandleDraft(initialHandle);
-              setHandleSetupError(
-                error instanceof Error ? error.message : "Handle create failed",
-              );
+              setHandleSetupError(handleCreateErrorMessage(error));
               setHandleSetupRequired(true);
               setHandleSetupOpen(true);
             }
@@ -1128,9 +1133,7 @@ export function EditorPage({
         window.history.replaceState(null, "", "/admin");
       }
     } catch (error) {
-      setHandleSetupError(
-        error instanceof Error ? error.message : "Handle create failed",
-      );
+      setHandleSetupError(handleCreateErrorMessage(error));
     } finally {
       setHandleSetupSaving(false);
     }

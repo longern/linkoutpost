@@ -48,6 +48,7 @@ export function HandleSetupDialog({
             Handle
             <input
               autoFocus
+              name="handle"
               value={handleDraft}
               onChange={(event) => {
                 onDraftChange(normalizeHandle(event.target.value));

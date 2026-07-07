@@ -11,13 +11,13 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
   const [requestedHandle, setRequestedHandle] = useState(() =>
     typeof window === "undefined"
       ? ""
-      : normalizeHandle(new URLSearchParams(window.location.search).get("handle") ?? ""),
+      : normalizeHandle(new URLSearchParams(window.location.search).get("create") ?? ""),
   );
 
   useEffect(() => {
     let cancelled = false;
     setRequestedHandle(
-      normalizeHandle(new URLSearchParams(window.location.search).get("handle") ?? ""),
+      normalizeHandle(new URLSearchParams(window.location.search).get("create") ?? ""),
     );
 
     loadSession()
@@ -35,7 +35,7 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
 
   function authStartHref(provider: "google" | "twitter"): string {
     const redirectTo = requestedHandle
-      ? `/admin?setup=handle&handle=${encodeURIComponent(requestedHandle)}`
+      ? `/admin?create=${encodeURIComponent(requestedHandle)}`
       : "/admin";
     return `/api/auth/${provider}/start?redirect_to=${encodeURIComponent(redirectTo)}`;
   }

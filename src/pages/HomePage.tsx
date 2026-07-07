@@ -87,8 +87,8 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
     }
 
     window.location.href = session.authenticated
-      ? `/admin?setup=handle&handle=${encodeURIComponent(handle)}`
-      : `/signin?handle=${encodeURIComponent(handle)}`;
+      ? `/admin?create=${encodeURIComponent(handle)}`
+      : `/signin?create=${encodeURIComponent(handle)}`;
   }
 
   return (
