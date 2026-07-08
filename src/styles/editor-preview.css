@@ -29,9 +29,13 @@
   overflow: auto;
   border-radius: 30px;
   padding: 0;
-  transform: scale(var(--preview-scale));
-  transform-origin: top left;
+  scrollbar-width: none;
+  zoom: var(--preview-scale);
   box-shadow: 0 28px 80px rgb(24 32 47 / 18%);
+}
+
+.preview-frame > main::-webkit-scrollbar {
+  display: none;
 }
 
 .preview-frame .public-profile {

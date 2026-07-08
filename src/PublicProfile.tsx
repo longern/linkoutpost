@@ -16,6 +16,8 @@ import {
   type ProfileTheme,
   type SocialLink,
 } from "./profile";
+import { ProfileCardLayout } from "./layouts/ProfileCardLayout";
+import { ProfileClassicLayout } from "./layouts/ProfileClassicLayout";
 import {
   copyProfileUrl,
   getProfileShareCapabilities,
@@ -237,14 +239,12 @@ function PublicLinks({
 }
 
 function ProfileActions({
-  links,
-  linkImageUrls,
-  socialLinks,
+  linksSlot,
+  socialLinksSlot,
   socialLinksPosition,
 }: {
-  linkImageUrls?: Record<string, string | null>;
-  links: LinkItem[];
-  socialLinks: SocialLink[];
+  linksSlot: React.ReactNode;
+  socialLinksSlot: React.ReactNode;
   socialLinksPosition: ProfileTheme["socialLinksPosition"];
 }) {
   const className = `profile-actions is-${socialLinksPosition}`;
@@ -252,16 +252,16 @@ function ProfileActions({
   if (socialLinksPosition === "bottom") {
     return (
       <div className={className}>
-        <PublicLinks linkImageUrls={linkImageUrls} links={links} />
-        <ProfileSocialLinks links={socialLinks} />
+        {linksSlot}
+        {socialLinksSlot}
       </div>
     );
   }
 
   return (
     <div className={className}>
-      <ProfileSocialLinks links={socialLinks} />
-      <PublicLinks linkImageUrls={linkImageUrls} links={links} />
+      {socialLinksSlot}
+      {linksSlot}
     </div>
   );
 }
@@ -281,6 +281,35 @@ function ProfileFooter() {
     <footer className="profile-footer">
       Powered by <a href="/">{siteTitle}</a>
     </footer>
+  );
+}
+
+function ProfileIntro({ profile }: { profile: LinkProfile }) {
+  return (
+    <>
+      <h1 className="profile-title">{profile.title}</h1>
+      <p className="handle">@{profile.handle}</p>
+      {profile.bio.trim() && <p className="bio">{profile.bio}</p>}
+    </>
+  );
+}
+
+function ProfileCardFields({ profile }: { profile: LinkProfile }) {
+  const filledFields = profile.theme.cardFields.filter(
+    (field) => field.label.trim() || field.value.trim(),
+  );
+
+  if (filledFields.length === 0) return null;
+
+  return (
+    <dl className="profile-card-fields">
+      {filledFields.map((field) => (
+        <div className="profile-card-field" key={field.id}>
+          {field.label.trim() && <dt>{field.label}</dt>}
+          {field.value.trim() && <dd>{field.value}</dd>}
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -454,103 +483,66 @@ export function ProfilePage({
       shareUrl={shareUrl}
     />
   ) : null;
+  const profileAvatar = <ProfileAvatar avatarUrl={avatarUrl} />;
+  const profileIntro = <ProfileIntro profile={currentProfile} />;
+  const profileLinks = (
+    <PublicLinks linkImageUrls={linkImageUrls} links={currentProfile.links} />
+  );
+  const profileSocialLinks = (
+    <ProfileSocialLinks links={currentProfile.socialLinks} />
+  );
+  const profileActions = (
+    <ProfileActions
+      linksSlot={profileLinks}
+      socialLinksSlot={profileSocialLinks}
+      socialLinksPosition={currentProfile.theme.socialLinksPosition}
+    />
+  );
+  const profileFooter = <ProfileFooter />;
 
   if (currentProfile.theme.layout === "card") {
-    const filledFields = currentProfile.theme.cardFields.filter(
-      (field) => field.label.trim() || field.value.trim(),
-    );
-
     return (
-      <main
-        className="public-page public-page-card"
+      <ProfileCardLayout
+        avatar={profileAvatar}
+        backgroundUrl={backgroundUrl}
+        cardFields={<ProfileCardFields profile={currentProfile} />}
+        footer={profileFooter}
+        profileActions={profileActions}
+        profileIntro={profileIntro}
+        shareButton={shareButton}
+        shareDialog={shareDialog}
         style={themeStyle(currentProfile.theme)}
-      >
-        <section className="public-profile public-profile-card profile-card-page">
-          {shareButton}
-          <div className="profile-card-layout">
-            <article
-              className="profile-structured-card"
-              style={
-                backgroundUrl
-                  ? { backgroundImage: `url(${backgroundUrl})` }
-                  : undefined
-              }
-            >
-              <ProfileAvatar avatarUrl={avatarUrl} />
-              {filledFields.length > 0 && (
-                <dl className="profile-card-fields">
-                  {filledFields.map((field) => (
-                    <div className="profile-card-field" key={field.id}>
-                      {field.label.trim() && <dt>{field.label}</dt>}
-                      {field.value.trim() && <dd>{field.value}</dd>}
-                    </div>
-                  ))}
-                </dl>
-              )}
-            </article>
-            <div className="profile-card-meta">
-              <h1 className="profile-title">{currentProfile.title}</h1>
-              <p className="handle">@{currentProfile.handle}</p>
-              {currentProfile.bio.trim() && (
-                <p className="bio">{currentProfile.bio}</p>
-              )}
-              <ProfileActions
-                linkImageUrls={linkImageUrls}
-                links={currentProfile.links}
-                socialLinks={currentProfile.socialLinks}
-                socialLinksPosition={currentProfile.theme.socialLinksPosition}
-              />
-            </div>
-          </div>
-          <ProfileFooter />
-          {shareDialog}
-        </section>
-      </main>
+      />
     );
   }
 
+  const bannerMedia = bannerImageUrl ? (
+    <div className="banner-hero-image-wrap">
+      {isVideoMedia(bannerImageUrl) ? (
+        <video
+          autoPlay
+          className="banner-hero-image"
+          loop
+          muted
+          playsInline
+          src={bannerImageUrl}
+        />
+      ) : (
+        <img alt="" className="banner-hero-image" src={bannerImageUrl} />
+      )}
+    </div>
+  ) : null;
+
   return (
-    <main
-      className="public-page public-page-classic"
+    <ProfileClassicLayout
+      avatar={profileAvatar}
+      bannerMedia={bannerMedia}
+      footer={profileFooter}
+      profileActions={profileActions}
+      profileIntro={profileIntro}
+      shareButton={shareButton}
+      shareDialog={shareDialog}
       style={themeStyle(currentProfile.theme)}
-    >
-      <section
-        className={`public-profile public-profile-classic${bannerImageUrl ? " has-banner-image" : ""}`}
-      >
-        {shareButton}
-        {bannerImageUrl && (
-          <div className="banner-hero-image-wrap">
-            {isVideoMedia(bannerImageUrl) ? (
-              <video
-                autoPlay
-                className="banner-hero-image"
-                loop
-                muted
-                playsInline
-                src={bannerImageUrl}
-              />
-            ) : (
-              <img alt="" className="banner-hero-image" src={bannerImageUrl} />
-            )}
-          </div>
-        )}
-        <div className="public-profile-content">
-          <ProfileAvatar avatarUrl={avatarUrl} />
-          <h1 className="profile-title">{currentProfile.title}</h1>
-          <p className="handle">@{currentProfile.handle}</p>
-          {currentProfile.bio.trim() && (
-            <p className="bio">{currentProfile.bio}</p>
-          )}
-          <ProfileActions
-            linkImageUrls={linkImageUrls}
-            links={currentProfile.links}
-            socialLinks={currentProfile.socialLinks}
-            socialLinksPosition={currentProfile.theme.socialLinksPosition}
-          />
-        </div>
-        <ProfileFooter />
-        {shareDialog}
-      </section>
-    </main>
+    />
   );
 }
