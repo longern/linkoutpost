@@ -263,6 +263,10 @@
     gap: 8px;
   }
 
+  .layout-option-grid {
+    grid-template-columns: 1fr;
+  }
+
   .design-field {
     grid-template-columns: 1fr;
     gap: 10px;

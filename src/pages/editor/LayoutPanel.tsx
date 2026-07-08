@@ -21,6 +21,22 @@ import { FaGripVertical, FaPlus, FaTrash } from "react-icons/fa6";
 import type { LinkProfile, ProfileTheme } from "../../profile";
 
 type CardField = ProfileTheme["cardFields"][number];
+const layoutOptions: Array<{
+  description: string;
+  label: string;
+  value: ProfileTheme["layout"];
+}> = [
+  {
+    description: "Avatar, bio, social icons, and stacked links.",
+    label: "Classic links",
+    value: "classic",
+  },
+  {
+    description: "Structured visual card with profile details below.",
+    label: "Structured card",
+    value: "card",
+  },
+];
 
 function moveCardFieldsById(
   fields: CardField[],
@@ -185,22 +201,68 @@ export function LayoutPanel({
 
   return (
     <section className="layout-panel" aria-label="Layout form">
-      <label>
-        Layout
-        <select
-          value={profile.theme.layout}
-          onChange={(event) =>
-            onUpdateTheme({ layout: event.target.value as ProfileTheme["layout"] })
-          }
-          onBlur={onSave}
-        >
-          <option value="classic">Classic links</option>
-          <option value="card">Structured card</option>
-        </select>
-      </label>
+      <fieldset className="layout-options" aria-label="Layout">
+        <div className="layout-option-grid">
+          {layoutOptions.map((option) => (
+            <label
+              className={`layout-option${profile.theme.layout === option.value ? " is-selected" : ""}`}
+              key={option.value}
+            >
+              <input
+                checked={profile.theme.layout === option.value}
+                name="profile-layout"
+                onChange={() => onCommitTheme({ layout: option.value })}
+                type="radio"
+                value={option.value}
+              />
+              <span
+                aria-hidden="true"
+                className={`layout-option-preview is-${option.value}`}
+              >
+                <span className="layout-preview-phone">
+                  {option.value === "classic" ? (
+                    <>
+                      <span className="layout-preview-avatar" />
+                      <span className="layout-preview-title" />
+                      <span className="layout-preview-socials">
+                        <span />
+                        <span />
+                        <span />
+                      </span>
+                      <span className="layout-preview-link" />
+                      <span className="layout-preview-link" />
+                      <span className="layout-preview-link" />
+                    </>
+                  ) : (
+                    <>
+                      <span className="layout-preview-card">
+                        <span className="layout-preview-card-avatar" />
+                        <span className="layout-preview-card-line" />
+                        <span className="layout-preview-card-line" />
+                      </span>
+                      <span className="layout-preview-title" />
+                      <span className="layout-preview-link" />
+                      <span className="layout-preview-link" />
+                    </>
+                  )}
+                </span>
+              </span>
+              <span className="layout-option-copy">
+                <span className="layout-option-title">{option.label}</span>
+                <span className="layout-option-description">
+                  {option.description}
+                </span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       {profile.theme.layout === "card" && (
-        <section className="card-layout-editor" aria-label="Card layout options">
+        <section
+          className="card-layout-editor"
+          aria-label="Card layout options"
+        >
           <div className="card-field-editor-header">
             <strong>Card fields</strong>
             <button
