@@ -62,6 +62,17 @@
   line-height: 1.45;
 }
 
+.auth-card > .auth-error {
+  max-width: none;
+  border: 1px solid rgb(185 28 28 / 20%);
+  border-radius: 8px;
+  background: rgb(254 242 242);
+  margin: -10px 0 18px;
+  padding: 10px 12px;
+  color: #991b1b;
+  font-size: 0.95rem;
+}
+
 .legal-card > p:not(.auth-kicker) {
   max-width: 62ch;
   margin: 18px 0 0;

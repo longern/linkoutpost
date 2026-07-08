@@ -104,6 +104,12 @@ async function readProfileRuntimeScript(
 }
 
 type Provider = "google" | "twitter";
+type OAuthErrorCode =
+  | "oauth_callback"
+  | "oauth_failed"
+  | "oauth_provider"
+  | "oauth_state"
+  | "oauth_unavailable";
 
 type SessionPayload = {
   exp: number;
@@ -261,6 +267,39 @@ function clearCookie(request: Request, name: string): string {
   const url = new URL(request.url);
   const secure = url.protocol === "https:" ? "; Secure" : "";
   return `${name}=; HttpOnly${secure}; SameSite=Lax; Path=/; Max-Age=0`;
+}
+
+function signInErrorRedirect(
+  request: Request,
+  error: OAuthErrorCode,
+  clearOAuthCookie = true,
+): Response {
+  const requestUrl = new URL(request.url);
+  const redirectTo = safeLocalRedirect(requestUrl.searchParams.get("redirect_to"));
+  const signinUrl = new URL("/signin", requestUrl.origin);
+
+  signinUrl.searchParams.set("error", error);
+
+  if (redirectTo) {
+    const redirectUrl = new URL(redirectTo, requestUrl.origin);
+    const requestedHandle = normalizeHandle(redirectUrl.searchParams.get("create") ?? "");
+    if (redirectUrl.pathname === "/admin" && requestedHandle) {
+      signinUrl.searchParams.set("create", requestedHandle);
+    }
+  }
+
+  const headers = new Headers({
+    Location: `${signinUrl.pathname}${signinUrl.search}`,
+  });
+
+  if (clearOAuthCookie) {
+    headers.append("Set-Cookie", clearCookie(request, "linkoutpost_oauth"));
+  }
+
+  return new Response(null, {
+    headers,
+    status: 302,
+  });
 }
 
 async function getSession(request: Request, env: Env): Promise<SessionState> {
@@ -843,9 +882,8 @@ async function completeOAuth(
   const state = url.searchParams.get("state");
   const error = url.searchParams.get("error");
 
-  if (error) return jsonError(`OAuth provider returned: ${error}`, 400);
-  if (!code || !state)
-    return jsonError("Missing OAuth callback parameters", 400);
+  if (error) return signInErrorRedirect(request, "oauth_provider");
+  if (!code || !state) return signInErrorRedirect(request, "oauth_callback");
 
   const oauthState = await verifyCookieValue<OAuthState>(
     env.AUTH_SECRET ?? "",
@@ -857,7 +895,7 @@ async function completeOAuth(
     oauthState.provider !== provider ||
     oauthState.state !== state
   ) {
-    return jsonError("Invalid OAuth state", 400);
+    return signInErrorRedirect(request, "oauth_state");
   }
 
   const token = await exchangeOAuthCode(
@@ -956,44 +994,32 @@ export default {
     if (url.pathname === "/api/auth/google/start") {
       try {
         return await startOAuth(request, env, "google");
-      } catch (error) {
-        return jsonError(
-          error instanceof Error ? error.message : "OAuth is not configured",
-          500,
-        );
+      } catch {
+        return signInErrorRedirect(request, "oauth_unavailable", false);
       }
     }
 
     if (url.pathname === "/api/auth/twitter/start") {
       try {
         return await startOAuth(request, env, "twitter");
-      } catch (error) {
-        return jsonError(
-          error instanceof Error ? error.message : "OAuth is not configured",
-          500,
-        );
+      } catch {
+        return signInErrorRedirect(request, "oauth_unavailable", false);
       }
     }
 
     if (url.pathname === "/api/auth/google/callback") {
       try {
         return await completeOAuth(request, env, "google");
-      } catch (error) {
-        return jsonError(
-          error instanceof Error ? error.message : "OAuth callback failed",
-          500,
-        );
+      } catch {
+        return signInErrorRedirect(request, "oauth_failed");
       }
     }
 
     if (url.pathname === "/api/auth/twitter/callback") {
       try {
         return await completeOAuth(request, env, "twitter");
-      } catch (error) {
-        return jsonError(
-          error instanceof Error ? error.message : "OAuth callback failed",
-          500,
-        );
+      } catch {
+        return signInErrorRedirect(request, "oauth_failed");
       }
     }
 
