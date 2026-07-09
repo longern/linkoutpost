@@ -768,7 +768,7 @@ input[type="color"] {
 }
 
 .link-row.has-link-actions {
-  grid-template-columns: 32px minmax(0, 1fr) auto 40px;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
   gap: 8px;
 }
 
@@ -868,6 +868,11 @@ input[type="color"] {
 
 .link-edit-button {
   color: #667085;
+}
+
+.link-open-button {
+  color: #667085;
+  text-decoration: none;
 }
 
 .link-row-actions {

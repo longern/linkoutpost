@@ -26,6 +26,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  FaArrowUpRightFromSquare,
   FaChevronDown,
   FaEye,
   FaEyeSlash,
@@ -196,6 +197,41 @@ function LinkEditButton({
     >
       <FaPen aria-hidden="true" size={15} />
     </button>
+  );
+}
+
+function LinkOpenButton({
+  link,
+  readOnly = false,
+}: {
+  link: LinkItem;
+  readOnly?: boolean;
+}) {
+  const href = link.url.trim();
+  if (!href) return null;
+
+  const displayTitle = getLinkDisplayTitle(link);
+  const label = `Open ${displayTitle} in a new window`;
+
+  if (readOnly) {
+    return (
+      <span className="circle-icon-button link-open-button" aria-hidden="true">
+        <FaArrowUpRightFromSquare aria-hidden="true" size={15} />
+      </span>
+    );
+  }
+
+  return (
+    <a
+      aria-label={label}
+      className="circle-icon-button link-open-button"
+      href={href}
+      rel="noreferrer"
+      target="_blank"
+      title="Open link"
+    >
+      <FaArrowUpRightFromSquare aria-hidden="true" size={15} />
+    </a>
   );
 }
 
@@ -423,9 +459,13 @@ const LinkRowFrame = forwardRef<HTMLDivElement, LinkRowFrameProps>(
         {dragHandle}
         {children}
         {linkActions ? (
-          <div className="link-row-actions">{linkActions}</div>
-        ) : null}
-        {removeButton}
+          <div className="link-row-actions">
+            {linkActions}
+            {removeButton}
+          </div>
+        ) : (
+          removeButton
+        )}
       </div>
     );
   },
@@ -464,6 +504,7 @@ function LinkRowOverlay({
       linkActions={
         <>
           <LinkVisibilityButton link={link} readOnly />
+          <LinkOpenButton link={link} readOnly />
           <LinkEditButton link={link} readOnly />
         </>
       }
@@ -555,6 +596,7 @@ function SortableLinkRow({
             link={link}
             onToggle={() => onToggleVisibility(link.id)}
           />
+          <LinkOpenButton link={link} />
           <LinkEditButton link={link} onEdit={() => setEditing(true)} />
         </>
       }

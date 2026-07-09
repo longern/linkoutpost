@@ -419,6 +419,17 @@
   padding: 26px 16px 44px;
 }
 
+@media (min-width: 861px) and (max-width: 1200px) {
+  .editor-shell {
+    grid-template-columns: 252px minmax(0, 1fr);
+  }
+
+  .editor-divider,
+  .preview {
+    display: none;
+  }
+}
+
 @media (max-width: 620px) {
   .editor-toolbar {
     padding: 0 8px 12px;

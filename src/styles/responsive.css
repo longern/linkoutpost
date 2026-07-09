@@ -257,7 +257,7 @@
   }
 
   .link-row.has-link-actions {
-    grid-template-columns: 28px minmax(0, 1fr) 36px 36px 36px;
+    grid-template-columns: 28px minmax(0, 1fr);
     grid-template-rows: auto 36px;
     gap: 6px 4px;
     padding-right: 10px;
@@ -285,13 +285,9 @@
   }
 
   .link-row.has-link-actions .link-row-actions {
-    grid-column: 3 / 5;
+    grid-column: 2;
     grid-row: 2;
-  }
-
-  .link-row.has-link-actions .circle-icon-button.danger {
-    grid-column: 5;
-    grid-row: 2;
+    justify-self: end;
   }
 
   .link-row-fields {
