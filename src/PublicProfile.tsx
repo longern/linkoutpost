@@ -1,4 +1,5 @@
 import {
+  memo,
   useEffect,
   useRef,
   useState,
@@ -16,6 +17,7 @@ import {
   type ProfileTheme,
   type SocialLink,
 } from "./profile";
+import { getOEmbedRenderData } from "./oembed";
 import { ProfileCardLayout } from "./layouts/ProfileCardLayout";
 import { ProfileClassicLayout } from "./layouts/ProfileClassicLayout";
 import {
@@ -27,6 +29,8 @@ import {
 } from "./profileShare";
 import { siteTitle } from "./siteConfig";
 import { getSocialPlatformIcon } from "./socialIcons";
+
+const emptyEmbedScripts: readonly string[] = [];
 
 function parseHexColor(value: string): [number, number, number] | null {
   const hex = value.trim().replace(/^#/, "");
@@ -153,6 +157,73 @@ function ProfileSocialLinks({ links }: { links: SocialLink[] }) {
   );
 }
 
+function useEmbedScripts(scripts: readonly string[]): void {
+  useEffect(() => {
+    if (!scripts.length || typeof document === "undefined") return;
+
+    const elements = scripts.map((src) => {
+      const script = document.createElement("script");
+      script.async = true;
+      script.charset = "utf-8";
+      script.src = src;
+      document.body.appendChild(script);
+      return script;
+    });
+
+    return () => {
+      elements.forEach((script) => script.remove());
+    };
+  }, [scripts]);
+}
+
+const PublicEmbedHost = memo(
+  function PublicEmbedHost({
+    html,
+    id,
+    scripts,
+  }: {
+    html: string;
+    id: string;
+    scripts: readonly string[];
+  }) {
+    useEmbedScripts(scripts);
+
+    return (
+      <div
+        className="public-link public-embed-link"
+        data-profile-link-id={id}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
+  },
+  (previous, next) =>
+    previous.id === next.id &&
+    previous.html === next.html &&
+    previous.scripts.length === next.scripts.length &&
+    previous.scripts.every((script, index) => script === next.scripts[index]),
+);
+
+function PublicEmbeddedLink({ link }: { link: LinkItem }) {
+  const embed = getOEmbedRenderData(link);
+  const scripts = embed?.scripts ?? emptyEmbedScripts;
+
+  if (!embed) {
+    return (
+      <a
+        className="public-link"
+        data-profile-link-id={link.id}
+        href={link.url}
+        rel="noreferrer"
+        target="_blank"
+      >
+        {link.label}
+      </a>
+    );
+  }
+
+  return <PublicEmbedHost html={embed.html} id={link.id} scripts={scripts} />;
+}
+
 function PublicLinks({
   linkImageUrls = {},
   links,
@@ -160,9 +231,11 @@ function PublicLinks({
   linkImageUrls?: Record<string, string | null>;
   links: LinkItem[];
 }) {
+  const visibleLinks = links.filter((link) => !link.hidden);
+
   return (
     <div className="public-links">
-      {links.map((link) => {
+      {visibleLinks.map((link) => {
         if (link.type === "image") {
           const imageUrl =
             linkImageUrls[link.id] ??
@@ -221,18 +294,7 @@ function PublicLinks({
           );
         }
 
-        return (
-          <a
-            className="public-link"
-            data-profile-link-id={link.id}
-            href={link.url}
-            key={link.id}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {link.label}
-          </a>
-        );
+        return <PublicEmbeddedLink key={link.id} link={link} />;
       })}
     </div>
   );

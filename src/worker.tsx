@@ -7,6 +7,10 @@ import {
 } from "./App";
 import { renderDocumentMeta, replaceDocumentMeta } from "./documentMeta";
 import {
+  findOEmbedJsonEndpoint,
+  sanitizeGenericOEmbedHtml,
+} from "./oembed/generic";
+import {
   createProfile,
   hostedHandleMinLength,
   isHostedHandleTooShort,
@@ -83,6 +87,72 @@ function removeClientEntrypoints(html: string): string {
   return html
     .replace(/<script\b[^>]*\btype=["']module["'][^>]*><\/script>\s*/gi, "")
     .replace(/<link\b[^>]*\brel=["']modulepreload["'][^>]*>\s*/gi, "");
+}
+
+function isSupportedOEmbedUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+async function resolveGenericOEmbed(url: string): Promise<Response> {
+  if (!isSupportedOEmbedUrl(url)) {
+    return jsonError("Unsupported URL", 400);
+  }
+
+  const pageResponse = await fetch(url, {
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "User-Agent": "LinkOutpost oEmbed resolver",
+    },
+  });
+
+  if (!pageResponse.ok) {
+    return jsonError("Unable to fetch URL", 404);
+  }
+
+  const endpoint = findOEmbedJsonEndpoint(await pageResponse.text(), url);
+  if (!endpoint) {
+    return jsonError("No oEmbed endpoint found", 404);
+  }
+
+  const oembedResponse = await fetch(endpoint, {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "LinkOutpost oEmbed resolver",
+    },
+  });
+
+  if (!oembedResponse.ok) {
+    return jsonError("oEmbed fetch failed", 404);
+  }
+
+  const payload = (await oembedResponse.json()) as {
+    html?: unknown;
+    title?: unknown;
+  };
+  const html =
+    typeof payload.html === "string"
+      ? sanitizeGenericOEmbedHtml(payload.html)
+      : null;
+
+  if (!html) {
+    return jsonError("Unsupported oEmbed HTML", 422);
+  }
+
+  return Response.json(
+    {
+      html,
+      provider: "generic",
+      title: typeof payload.title === "string" ? payload.title : "",
+    },
+    {
+      headers: apiHeaders,
+    },
+  );
 }
 
 async function readProfileRuntimeScript(
@@ -1050,6 +1120,11 @@ export default {
       return Response.json(await getSession(request, env), {
         headers: apiHeaders,
       });
+    }
+
+    if (url.pathname === "/api/oembed") {
+      if (request.method !== "GET") return jsonError("Method not allowed", 405);
+      return resolveGenericOEmbed(url.searchParams.get("url") ?? "");
     }
 
     if (url.pathname.startsWith("/api/files/")) {

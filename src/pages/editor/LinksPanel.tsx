@@ -27,113 +27,369 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   FaChevronDown,
-  FaGripVertical,
+  FaEye,
+  FaEyeSlash,
   FaImage,
+  FaPen,
   FaPlus,
   FaTrash,
+  FaXmark,
 } from "react-icons/fa6";
+import { RiDraggable } from "react-icons/ri";
 import type { LinkItem } from "../../profile";
 import { useAnimatedMenu } from "./useAnimatedMenu";
 
 const maxLinkItems = 50;
 const maxMediaCards = 10;
 
-function isVideoMediaUrl(url: string): boolean {
-  return /^data:video\//i.test(url) || /\.(mp4|webm|ogv|ogg|mov)(?:[?#].*)?$/i.test(url);
+function getLinkDisplayTitle(link: LinkItem): string {
+  return link.label.trim() || "Untitled link";
 }
 
-function LinkRowFields({
+function getLinkDisplayUrl(link: LinkItem): string {
+  return link.url.trim() || "No URL";
+}
+
+function isVideoMediaUrl(url: string): boolean {
+  return (
+    /^data:video\//i.test(url) ||
+    /\.(mp4|webm|ogv|ogg|mov)(?:[?#].*)?$/i.test(url)
+  );
+}
+
+function ImageCardPreview({
+  linkImageUrl,
+  variant = "upload",
+}: {
+  linkImageUrl?: string | null;
+  variant?: "thumbnail" | "upload";
+}) {
+  return (
+    <span className={`image-card-preview is-${variant}`}>
+      {linkImageUrl && isVideoMediaUrl(linkImageUrl) ? (
+        <video
+          autoPlay={variant === "thumbnail"}
+          controls={variant === "upload"}
+          loop={variant === "thumbnail"}
+          muted
+          playsInline
+          src={linkImageUrl}
+        />
+      ) : linkImageUrl ? (
+        <img alt="" src={linkImageUrl} />
+      ) : (
+        <span className="media-upload-placeholder">
+          <FaImage aria-hidden="true" size={18} />
+        </span>
+      )}
+    </span>
+  );
+}
+
+function ImageCardSummary({
   link,
   linkImageUrl,
-  onImageChange,
-  onSave,
-  onUpdate,
+  onEdit,
   readOnly = false,
 }: {
   link: LinkItem;
   linkImageUrl?: string | null;
-  onImageChange?: (id: string, file: File | null) => void;
-  onSave?: () => void;
-  onUpdate?: (id: string, patch: Partial<LinkItem>) => void;
+  onEdit?: () => void;
   readOnly?: boolean;
 }) {
-  const inputProps = readOnly
-    ? { readOnly: true, tabIndex: -1 }
-    : {};
-
-  if (link.type === "image") {
-    const mediaPreview = (
-      <span className="image-card-upload-preview">
-        {linkImageUrl && isVideoMediaUrl(linkImageUrl) ? (
-          <video controls muted playsInline src={linkImageUrl} />
-        ) : linkImageUrl ? (
-          <img alt="" src={linkImageUrl} />
-        ) : (
-          <span className="media-upload-placeholder">
-            <FaImage aria-hidden="true" size={18} />
-          </span>
-        )}
+  const displayTitle = link.label.trim() || "Untitled media";
+  const displayUrl = getLinkDisplayUrl(link);
+  const content = (
+    <>
+      <span className="image-card-summary-preview">
+        <ImageCardPreview linkImageUrl={linkImageUrl} variant="thumbnail" />
       </span>
-    );
+      <span className="image-card-summary-copy">
+        <span className="link-row-primary">{displayTitle}</span>
+        <span className="link-row-secondary">{displayUrl}</span>
+      </span>
+    </>
+  );
 
+  return (
+    <div className="link-row-summary-text-wrap image-card-summary-wrap">
+      {readOnly ? (
+        <span className="link-row-summary-text image-card-summary">
+          {content}
+        </span>
+      ) : (
+        <button
+          aria-label={`Edit ${displayTitle}`}
+          className="link-row-summary-text image-card-summary"
+          onClick={onEdit}
+          type="button"
+        >
+          {content}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function LinkSummary({
+  link,
+  onEdit,
+  readOnly = false,
+}: {
+  link: LinkItem;
+  onEdit?: () => void;
+  readOnly?: boolean;
+}) {
+  const displayTitle = getLinkDisplayTitle(link);
+  const displayUrl = getLinkDisplayUrl(link);
+  const content = (
+    <>
+      <span className="link-row-primary">{displayTitle}</span>
+      <span className="link-row-secondary">{displayUrl}</span>
+    </>
+  );
+
+  return (
+    <div className="link-row-summary-text-wrap">
+      {readOnly ? (
+        <span className="link-row-summary-text">{content}</span>
+      ) : (
+        <button
+          aria-label={`Edit ${displayTitle}`}
+          className="link-row-summary-text"
+          onClick={onEdit}
+          type="button"
+        >
+          {content}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function LinkEditButton({
+  link,
+  onEdit,
+  readOnly = false,
+}: {
+  link: LinkItem;
+  onEdit?: () => void;
+  readOnly?: boolean;
+}) {
+  const displayTitle = getLinkDisplayTitle(link);
+
+  if (readOnly) {
     return (
-      <div className="link-row-fields image-card-fields">
-        {readOnly ? (
-          <span className={`image-card-upload${linkImageUrl ? " has-image" : ""}`}>
-            {mediaPreview}
-          </span>
-        ) : (
-          <label className={`image-card-upload${linkImageUrl ? " has-image" : ""}`}>
-            {mediaPreview}
-            <input
-              accept="image/*,video/*"
-              onChange={(event) => {
-                onImageChange?.(link.id, event.currentTarget.files?.[0] ?? null);
-                event.currentTarget.value = "";
-              }}
-              type="file"
-            />
-          </label>
-        )}
-        <input
-          aria-label="Image card title"
-          placeholder="Image title"
-          value={link.label}
-          onChange={(event) => onUpdate?.(link.id, { label: event.target.value })}
-          onBlur={onSave}
-          {...inputProps}
-        />
-        <input
-          aria-label="Image card URL"
-          placeholder="Optional link URL"
-          value={link.url}
-          onChange={(event) => onUpdate?.(link.id, { url: event.target.value })}
-          onBlur={onSave}
-          {...inputProps}
-        />
-      </div>
+      <span className="circle-icon-button link-edit-button" aria-hidden="true">
+        <FaPen aria-hidden="true" size={15} />
+      </span>
     );
   }
 
   return (
-    <div className="link-row-fields">
-      <input
-        aria-label="Link label"
-        placeholder="Link title"
-        value={link.label}
-        onChange={(event) => onUpdate?.(link.id, { label: event.target.value })}
-        onBlur={onSave}
-        {...inputProps}
+    <button
+      aria-label={`Edit ${displayTitle}`}
+      className="circle-icon-button link-edit-button"
+      onClick={onEdit}
+      title="Edit link"
+      type="button"
+    >
+      <FaPen aria-hidden="true" size={15} />
+    </button>
+  );
+}
+
+function LinkVisibilityButton({
+  link,
+  onToggle,
+  readOnly = false,
+}: {
+  link: LinkItem;
+  onToggle?: () => void;
+  readOnly?: boolean;
+}) {
+  const displayTitle = getLinkDisplayTitle(link);
+  const hidden = Boolean(link.hidden);
+  const Icon = hidden ? FaEyeSlash : FaEye;
+  const label = hidden ? `Show ${displayTitle}` : `Hide ${displayTitle}`;
+
+  if (readOnly) {
+    return (
+      <span
+        aria-hidden="true"
+        className={`circle-icon-button link-visibility-button${hidden ? " is-hidden" : ""}`}
+      >
+        <Icon aria-hidden="true" size={16} />
+      </span>
+    );
+  }
+
+  return (
+    <button
+      aria-label={label}
+      aria-pressed={hidden}
+      className={`circle-icon-button link-visibility-button${hidden ? " is-hidden" : ""}`}
+      onClick={onToggle}
+      title={hidden ? "Show link" : "Hide link"}
+      type="button"
+    >
+      <Icon aria-hidden="true" size={16} />
+    </button>
+  );
+}
+
+function LinkEditDialog({
+  link,
+  linkImageUrl,
+  onImageChange,
+  visible,
+  onRequestClose,
+  onSaveLink,
+  onUpdate,
+}: {
+  link: LinkItem;
+  linkImageUrl?: string | null;
+  onImageChange(id: string, file: File | null): void;
+  visible: boolean;
+  onRequestClose(): void;
+  onSaveLink(id: string): void;
+  onUpdate(id: string, patch: Partial<LinkItem>): void;
+}) {
+  function closeAndSave(): void {
+    onSaveLink(link.id);
+    onRequestClose();
+  }
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      className={`modal-backdrop link-edit-backdrop${visible ? " is-open" : " is-closing"}`}
+      role="presentation"
+    >
+      <button
+        aria-label="Close link editor"
+        className="link-edit-scrim"
+        onClick={closeAndSave}
+        type="button"
       />
-      <input
-        aria-label="Link URL"
-        placeholder="https://example.com"
-        value={link.url}
-        onChange={(event) => onUpdate?.(link.id, { url: event.target.value })}
-        onBlur={onSave}
-        {...inputProps}
-      />
-    </div>
+      <section
+        aria-labelledby={`link-edit-title-${link.id}`}
+        aria-modal="true"
+        className={`modal-card link-edit-dialog link-edit-mobile-sheet${visible ? " is-open" : " is-closing"}`}
+        role="dialog"
+      >
+        <header className="link-edit-header">
+          <h2 id={`link-edit-title-${link.id}`}>
+            {link.type === "image" ? "Edit media" : "Edit link"}
+          </h2>
+          <button
+            aria-label="Close link editor"
+            className="circle-icon-button"
+            onClick={closeAndSave}
+            title="Close"
+            type="button"
+          >
+            <FaXmark aria-hidden="true" size={18} />
+          </button>
+        </header>
+        <hr className="link-edit-divider" />
+        <form
+          className="link-edit-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            closeAndSave();
+          }}
+        >
+          {link.type === "image" ? (
+            <div className="link-edit-field">
+              <span>Media</span>
+              <label
+                className={`image-card-upload link-edit-image-upload${linkImageUrl ? " has-image" : ""}`}
+              >
+                <ImageCardPreview linkImageUrl={linkImageUrl} />
+                <input
+                  accept="image/*,video/*"
+                  onChange={(event) => {
+                    onImageChange(
+                      link.id,
+                      event.currentTarget.files?.[0] ?? null,
+                    );
+                    event.currentTarget.value = "";
+                  }}
+                  type="file"
+                />
+              </label>
+            </div>
+          ) : null}
+          <label className="link-edit-field">
+            <span>Title</span>
+            <input
+              aria-label={
+                link.type === "image" ? "Media card title" : "Link title"
+              }
+              autoFocus
+              placeholder={link.type === "image" ? "Media title" : "Link title"}
+              value={link.label}
+              onChange={(event) =>
+                onUpdate(link.id, { label: event.target.value })
+              }
+            />
+          </label>
+          <label className="link-edit-field">
+            <span>URL</span>
+            <input
+              aria-label={link.type === "image" ? "Media card URL" : "Link URL"}
+              placeholder={
+                link.type === "image"
+                  ? "Optional link URL"
+                  : "https://example.com"
+              }
+              value={link.url}
+              onChange={(event) =>
+                onUpdate(link.id, { url: event.target.value })
+              }
+            />
+          </label>
+          {link.type === "image" ? null : (
+            <div className="link-edit-field">
+              <span id={`link-display-title-${link.id}`}>Display</span>
+              <div
+                aria-labelledby={`link-display-title-${link.id}`}
+                className="link-edit-segmented"
+                role="radiogroup"
+              >
+                {(["auto", "embed", "link"] as const).map((mode) => (
+                  <label
+                    className={`link-edit-segment${(link.embedMode ?? "auto") === mode ? " is-selected" : ""}`}
+                    key={mode}
+                  >
+                    <input
+                      checked={(link.embedMode ?? "auto") === mode}
+                      name={`link-display-mode-${link.id}`}
+                      onChange={() => onUpdate(link.id, { embedMode: mode })}
+                      type="radio"
+                      value={mode}
+                    />
+                    <span>
+                      {mode === "auto"
+                        ? "Auto"
+                        : mode === "embed"
+                          ? "Embed"
+                          : "Link"}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+          <button className="button-primary link-edit-save" type="submit">
+            Save
+          </button>
+        </form>
+      </section>
+    </div>,
+    document.body,
   );
 }
 
@@ -141,28 +397,39 @@ type LinkRowFrameProps = {
   children: ReactNode;
   className?: string;
   dragHandle: ReactNode;
+  linkActions?: ReactNode;
   removeButton: ReactNode;
   style?: CSSProperties;
 };
 
-const LinkRowFrame = forwardRef<HTMLDivElement, LinkRowFrameProps>(function LinkRowFrame(
-  {
-    children,
-    className = "",
-    dragHandle,
-    removeButton,
-    style,
+const LinkRowFrame = forwardRef<HTMLDivElement, LinkRowFrameProps>(
+  function LinkRowFrame(
+    {
+      children,
+      className = "",
+      dragHandle,
+      linkActions = null,
+      removeButton,
+      style,
+    },
+    ref,
+  ) {
+    return (
+      <div
+        className={`link-row${linkActions ? " has-link-actions" : ""}${className}`}
+        ref={ref}
+        style={style}
+      >
+        {dragHandle}
+        {children}
+        {linkActions ? (
+          <div className="link-row-actions">{linkActions}</div>
+        ) : null}
+        {removeButton}
+      </div>
+    );
   },
-  ref,
-) {
-  return (
-    <div className={`link-row${className}`} ref={ref} style={style}>
-      {dragHandle}
-      {children}
-      {removeButton}
-    </div>
-  );
-});
+);
 
 function LinkRowOverlay({
   link,
@@ -173,7 +440,7 @@ function LinkRowOverlay({
 }) {
   return (
     <LinkRowFrame
-      className=" link-row-overlay"
+      className={` link-row-overlay${link.hidden ? " is-hidden" : ""}`}
       dragHandle={
         <button
           aria-hidden="true"
@@ -181,21 +448,31 @@ function LinkRowOverlay({
           tabIndex={-1}
           type="button"
         >
-          <FaGripVertical aria-hidden="true" size={18} />
+          <RiDraggable aria-hidden="true" size={18} />
         </button>
       }
       removeButton={
-      <button
-        aria-hidden="true"
-        className="circle-icon-button danger"
-        tabIndex={-1}
-        type="button"
-      >
-        <FaTrash aria-hidden="true" size={18} />
-      </button>
+        <button
+          aria-hidden="true"
+          className="circle-icon-button danger"
+          tabIndex={-1}
+          type="button"
+        >
+          <FaTrash aria-hidden="true" size={18} />
+        </button>
+      }
+      linkActions={
+        <>
+          <LinkVisibilityButton link={link} readOnly />
+          <LinkEditButton link={link} readOnly />
+        </>
       }
     >
-      <LinkRowFields link={link} linkImageUrl={linkImageUrl} readOnly />
+      {link.type === "image" ? (
+        <ImageCardSummary link={link} linkImageUrl={linkImageUrl} readOnly />
+      ) : (
+        <LinkSummary link={link} readOnly />
+      )}
     </LinkRowFrame>
   );
 }
@@ -221,7 +498,8 @@ function SortableLinkRow({
   linkImageUrl,
   onImageChange,
   onRemove,
-  onSave,
+  onSaveLink,
+  onToggleVisibility,
   onUpdate,
 }: {
   active: boolean;
@@ -229,9 +507,12 @@ function SortableLinkRow({
   linkImageUrl?: string | null;
   onImageChange(id: string, file: File | null): void;
   onRemove(id: string): void;
-  onSave(): void;
+  onSaveLink(id: string): void;
+  onToggleVisibility(id: string): void;
   onUpdate(id: string, patch: Partial<LinkItem>): void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const editAnimation = useAnimatedMenu(editing, 220);
   const { attributes, isDragging, listeners, setNodeRef, transform } =
     useSortable({ id: link.id });
   const style: CSSProperties = {
@@ -243,7 +524,7 @@ function SortableLinkRow({
 
   return (
     <LinkRowFrame
-      className={active || isDragging ? " is-dragging" : ""}
+      className={`${link.hidden ? " is-hidden" : ""}${active || isDragging ? " is-dragging" : ""}`}
       dragHandle={
         <button
           aria-label={`Drag ${link.label}`}
@@ -253,7 +534,7 @@ function SortableLinkRow({
           {...attributes}
           {...listeners}
         >
-          <FaGripVertical aria-hidden="true" size={18} />
+          <RiDraggable aria-hidden="true" size={18} />
         </button>
       }
       ref={setNodeRef}
@@ -268,15 +549,52 @@ function SortableLinkRow({
           <FaTrash aria-hidden="true" size={18} />
         </button>
       }
+      linkActions={
+        <>
+          <LinkVisibilityButton
+            link={link}
+            onToggle={() => onToggleVisibility(link.id)}
+          />
+          <LinkEditButton link={link} onEdit={() => setEditing(true)} />
+        </>
+      }
       style={style}
     >
-      <LinkRowFields
-        link={link}
-        linkImageUrl={linkImageUrl}
-        onImageChange={onImageChange}
-        onSave={onSave}
-        onUpdate={onUpdate}
-      />
+      {link.type === "image" ? (
+        <>
+          <ImageCardSummary
+            link={link}
+            linkImageUrl={linkImageUrl}
+            onEdit={() => setEditing(true)}
+          />
+          {editAnimation.mounted ? (
+            <LinkEditDialog
+              link={link}
+              linkImageUrl={linkImageUrl}
+              visible={editAnimation.visible}
+              onImageChange={onImageChange}
+              onRequestClose={() => setEditing(false)}
+              onSaveLink={onSaveLink}
+              onUpdate={onUpdate}
+            />
+          ) : null}
+        </>
+      ) : (
+        <>
+          <LinkSummary link={link} onEdit={() => setEditing(true)} />
+          {editAnimation.mounted ? (
+            <LinkEditDialog
+              link={link}
+              linkImageUrl={linkImageUrl}
+              visible={editAnimation.visible}
+              onImageChange={onImageChange}
+              onRequestClose={() => setEditing(false)}
+              onSaveLink={onSaveLink}
+              onUpdate={onUpdate}
+            />
+          ) : null}
+        </>
+      )}
     </LinkRowFrame>
   );
 }
@@ -290,7 +608,8 @@ type LinksPanelProps = {
   onImageChange(id: string, file: File | null): void;
   onPreviewLinksChange(links: LinkItem[] | null): void;
   onRemove(id: string): void;
-  onSave(): void;
+  onSaveLink(id: string): void;
+  onToggleVisibility(id: string): void;
   onUpdate(id: string, patch: Partial<LinkItem>): void;
 };
 
@@ -303,7 +622,8 @@ export function LinksPanel({
   onImageChange,
   onPreviewLinksChange,
   onRemove,
-  onSave,
+  onSaveLink,
+  onToggleVisibility,
   onUpdate,
 }: LinksPanelProps) {
   const [activeDragLinkId, setActiveDragLinkId] = useState<string | null>(null);
@@ -314,7 +634,7 @@ export function LinksPanel({
     links.filter((link) => link.type === "image").length >= maxMediaCards;
   const addMediaDisabled = linkLimitReached || mediaCardLimitReached;
   const activeDragLink = activeDragLinkId
-    ? links.find((link) => link.id === activeDragLinkId) ?? null
+    ? (links.find((link) => link.id === activeDragLinkId) ?? null)
     : null;
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -428,7 +748,7 @@ export function LinksPanel({
                     type="button"
                   >
                     <FaImage aria-hidden="true" size={15} />
-                    Image card
+                    Media card
                   </button>
                 </li>
               </ul>
@@ -457,8 +777,9 @@ export function LinksPanel({
                 link={link}
                 linkImageUrl={linkImageUrls[link.id]}
                 onImageChange={onImageChange}
-                onSave={onSave}
+                onSaveLink={onSaveLink}
                 onRemove={onRemove}
+                onToggleVisibility={onToggleVisibility}
                 onUpdate={onUpdate}
               />
             ))}

@@ -218,6 +218,30 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
+    selector: ".public-embed-link",
+    rule: {
+      display: "block",
+      overflow: "hidden",
+      padding: 0,
+    },
+  },
+  {
+    selector: ".public-embed-link a",
+    rule: {
+      display: "block",
+    },
+  },
+  {
+    selector: ".public-embed-link img, .public-embed-link iframe",
+    rule: {
+      border: 0,
+      display: "block",
+      height: "auto",
+      maxWidth: "100%",
+      width: "100%",
+    },
+  },
+  {
     selector: ".public-image-card-media",
     rule: {
       display: "block",

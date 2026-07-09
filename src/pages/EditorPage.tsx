@@ -25,6 +25,9 @@ import {
   writeLocalProfile,
 } from "../localEditorStore";
 import {
+  resolveOEmbed,
+} from "../oembed";
+import {
   createProfile,
   hostedHandleMinLength,
   isHostedHandleTooShort,
@@ -530,6 +533,79 @@ export function EditorPage({
     };
     setProfile(nextProfile);
     void autosaveProfile(nextProfile);
+  }
+
+  function toggleLinkVisibility(id: string): void {
+    const nextProfile = {
+      ...profile,
+      links: profile.links.map((link) =>
+        link.id === id ? { ...link, hidden: !link.hidden } : link,
+      ),
+      updatedAt: new Date().toISOString(),
+    };
+    setProfile(nextProfile);
+    void autosaveProfile(nextProfile);
+  }
+
+  function saveLink(id: string): void {
+    const link = profile.links.find((item) => item.id === id);
+    if (!link || link.type === "image") {
+      saveCurrentProfile();
+      return;
+    }
+
+    const sourceUrl = link.url;
+    if (link.embedMode === "link") {
+      const nextProfile = {
+        ...profile,
+        links: profile.links.map((item) =>
+          item.id === id
+            ? { ...item, embedHtml: null, embedProvider: null }
+            : item,
+        ),
+        updatedAt: new Date().toISOString(),
+      };
+      setProfile(nextProfile);
+      void autosaveProfile(nextProfile);
+      return;
+    }
+
+    void resolveOEmbed(sourceUrl, {
+      allowDiscovery: link.embedMode === "embed",
+      useBackend: mode === "backend",
+    }).then((embed) => {
+      if (!embed) {
+        const nextProfile = {
+          ...profile,
+          links: profile.links.map((item) =>
+            item.id === id
+              ? { ...item, embedHtml: null, embedProvider: null }
+              : item,
+          ),
+          updatedAt: new Date().toISOString(),
+        };
+        setProfile(nextProfile);
+        void autosaveProfile(nextProfile);
+        return;
+      }
+
+      const nextProfile = {
+        ...profile,
+        links: profile.links.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                embedHtml: embed.html,
+                embedProvider: embed.provider,
+                label: item.label.trim() || embed.title,
+              }
+            : item,
+        ),
+        updatedAt: new Date().toISOString(),
+      };
+      setProfile(nextProfile);
+      void autosaveProfile(nextProfile);
+    });
   }
 
   function commitLinks(finalLinks: LinkItem[]): void {
@@ -1326,7 +1402,8 @@ export function EditorPage({
                 }}
                 onPreviewLinksChange={setDragLinks}
                 onRemove={removeLink}
-                onSave={saveCurrentProfile}
+                onSaveLink={saveLink}
+                onToggleVisibility={toggleLinkVisibility}
                 onUpdate={updateLink}
               />
             )}

@@ -1,6 +1,10 @@
 import { hostedHandleMinLength, siteTitle } from "./siteConfig";
 
 export type LinkItem = {
+  embedMode?: "auto" | "embed" | "link";
+  embedHtml?: string | null;
+  embedProvider?: "flickr" | "generic" | "youtube" | null;
+  hidden?: boolean;
   id: string;
   imageAssetId?: string | null;
   label: string;

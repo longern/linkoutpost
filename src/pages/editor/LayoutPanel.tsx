@@ -17,7 +17,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { FaGripVertical, FaPlus, FaTrash } from "react-icons/fa6";
+import { FaPlus, FaTrash } from "react-icons/fa6";
+import { RiDraggable } from "react-icons/ri";
 import type { LinkProfile, ProfileTheme } from "../../profile";
 
 type CardField = ProfileTheme["cardFields"][number];
@@ -89,7 +90,7 @@ function SortableCardFieldRow({
         {...attributes}
         {...listeners}
       >
-        <FaGripVertical aria-hidden="true" size={18} />
+        <RiDraggable aria-hidden="true" size={18} />
       </button>
       <div className="card-field-editor-inputs">
         <input
