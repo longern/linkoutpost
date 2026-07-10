@@ -4,6 +4,7 @@ import type { ProfileAssetKind } from "../../media/config";
 import {
   prepareAvatarFile,
   prepareProfileImageFile,
+  prepareThumbnailFile,
 } from "../../media/imageProcessing";
 import { createProfile, type LinkProfile } from "../../profile";
 import type {
@@ -22,7 +23,9 @@ async function storeImportedAsset(
     file =
       kind === "avatar"
         ? await prepareAvatarFile(file)
-        : await prepareProfileImageFile(file);
+        : kind === "thumbnail"
+          ? await prepareThumbnailFile(file)
+          : await prepareProfileImageFile(file);
   }
 
   return mode === "backend"
@@ -104,12 +107,27 @@ export async function prepareImportedProfile(
     );
   }
 
-  if (linkImageAssetIds.size > 0) {
+  const linkThumbnailAssetIds = new Map<string, string>();
+  for (const [linkId, asset] of Object.entries(imported.linkThumbnails)) {
+    linkThumbnailAssetIds.set(
+      linkId,
+      await storeImportedAsset(asset, "thumbnail", mode),
+    );
+  }
+
+  if (linkImageAssetIds.size > 0 || linkThumbnailAssetIds.size > 0) {
     nextProfile = {
       ...nextProfile,
       links: nextProfile.links.map((link) => {
         const imageAssetId = linkImageAssetIds.get(link.id);
-        return imageAssetId ? { ...link, imageAssetId } : link;
+        const thumbnailAssetId = linkThumbnailAssetIds.get(link.id);
+        return imageAssetId || thumbnailAssetId
+          ? {
+              ...link,
+              imageAssetId: imageAssetId ?? link.imageAssetId,
+              thumbnailAssetId: thumbnailAssetId ?? link.thumbnailAssetId,
+            }
+          : link;
       }),
     };
   }

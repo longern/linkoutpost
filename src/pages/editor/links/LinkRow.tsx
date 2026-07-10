@@ -64,29 +64,42 @@ function MediaCardSummary({
 
 function LinkSummary({
   link,
+  linkThumbnailUrl,
   onEdit,
   readOnly = false,
 }: {
   link: LinkItem;
+  linkThumbnailUrl?: string | null;
   onEdit?: () => void;
   readOnly?: boolean;
 }) {
   const displayTitle = getLinkDisplayTitle(link);
   const content = (
     <>
-      <span className="link-row-primary">{displayTitle}</span>
-      <span className="link-row-secondary">{getLinkDisplayUrl(link)}</span>
+      {linkThumbnailUrl ? (
+        <span className="link-summary-thumbnail">
+          <img alt="" src={linkThumbnailUrl} />
+        </span>
+      ) : null}
+      <span className="link-summary-copy">
+        <span className="link-row-primary">{displayTitle}</span>
+        <span className="link-row-secondary">{getLinkDisplayUrl(link)}</span>
+      </span>
     </>
   );
 
   return (
     <div className="link-row-summary-text-wrap">
       {readOnly ? (
-        <span className="link-row-summary-text">{content}</span>
+        <span
+          className={`link-row-summary-text${linkThumbnailUrl ? " has-thumbnail" : ""}`}
+        >
+          {content}
+        </span>
       ) : (
         <button
           aria-label={`Edit ${displayTitle}`}
-          className="link-row-summary-text"
+          className={`link-row-summary-text${linkThumbnailUrl ? " has-thumbnail" : ""}`}
           onClick={onEdit}
           type="button"
         >
@@ -245,9 +258,11 @@ const LinkRowFrame = forwardRef<HTMLDivElement, LinkRowFrameProps>(
 export function LinkRowOverlay({
   link,
   linkImageUrl,
+  linkThumbnailUrl,
 }: {
   link: LinkItem;
   linkImageUrl?: string | null;
+  linkThumbnailUrl?: string | null;
 }) {
   return (
     <LinkRowFrame
@@ -273,7 +288,7 @@ export function LinkRowOverlay({
       {link.type === "image" ? (
         <MediaCardSummary link={link} linkImageUrl={linkImageUrl} readOnly />
       ) : (
-        <LinkSummary link={link} readOnly />
+        <LinkSummary link={link} linkThumbnailUrl={linkThumbnailUrl} readOnly />
       )}
     </LinkRowFrame>
   );
@@ -283,20 +298,35 @@ export function SortableLinkRow({
   active,
   link,
   linkImageUrl,
+  linkThumbnailUrl,
+  onEmbedModeChange,
   onImageChange,
+  onMetadataRefresh,
   onRemove,
   onSaveLink,
   onToggleVisibility,
+  onThumbnailChange,
+  onThumbnailRemove,
   onUpdate,
+  onUrlChange,
 }: {
   active: boolean;
   link: LinkItem;
   linkImageUrl?: string | null;
+  linkThumbnailUrl?: string | null;
+  onEmbedModeChange(
+    id: string,
+    mode: NonNullable<LinkItem["embedMode"]>,
+  ): void;
   onImageChange(id: string, file: File | null): void;
+  onMetadataRefresh(id: string): void;
   onRemove(id: string): void;
   onSaveLink(id: string): void;
   onToggleVisibility(id: string): void;
+  onThumbnailChange(id: string, file: File | null): void;
+  onThumbnailRemove(id: string): void;
   onUpdate(id: string, patch: Partial<LinkItem>): void;
+  onUrlChange(id: string, url: string): void;
 }) {
   const [editing, setEditing] = useState(false);
   const editAnimation = useAnimatedMenu(editing, 220);
@@ -312,11 +342,17 @@ export function SortableLinkRow({
     <LinkEditDialog
       link={link}
       linkImageUrl={linkImageUrl}
+      linkThumbnailUrl={linkThumbnailUrl}
       visible={editAnimation.visible}
+      onEmbedModeChange={onEmbedModeChange}
       onImageChange={onImageChange}
+      onMetadataRefresh={onMetadataRefresh}
       onRequestClose={() => setEditing(false)}
       onSaveLink={onSaveLink}
+      onThumbnailChange={onThumbnailChange}
+      onThumbnailRemove={onThumbnailRemove}
       onUpdate={onUpdate}
+      onUrlChange={onUrlChange}
     />
   ) : null;
 
@@ -359,7 +395,11 @@ export function SortableLinkRow({
       {link.type === "image" ? (
         <MediaCardSummary link={link} linkImageUrl={linkImageUrl} onEdit={() => setEditing(true)} />
       ) : (
-        <LinkSummary link={link} onEdit={() => setEditing(true)} />
+        <LinkSummary
+          link={link}
+          linkThumbnailUrl={linkThumbnailUrl}
+          onEdit={() => setEditing(true)}
+        />
       )}
       {editDialog}
     </LinkRowFrame>

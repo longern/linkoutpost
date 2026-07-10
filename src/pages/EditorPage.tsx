@@ -56,6 +56,7 @@ import {
   useEditorAssetUrls,
   type EditorMode,
 } from "./editor/useEditorAssetUrls";
+import { useLinkMetadataActions } from "./editor/useLinkMetadataActions";
 
 export function EditorPage({
   initialSession,
@@ -97,6 +98,7 @@ export function EditorPage({
     backgroundUrl: editorBackgroundUrl,
     bannerImageUrl: editorBannerImageUrl,
     linkImageUrls: editorLinkImageUrls,
+    linkThumbnailUrls: editorLinkThumbnailUrls,
   } = useEditorAssetUrls(profile, mode);
 
   useEffect(() => {
@@ -180,6 +182,8 @@ export function EditorPage({
     onBannerImageChange,
     onBannerImageRemove,
     onLinkImageChange,
+    onLinkThumbnailChange,
+    onLinkThumbnailRemove,
   } = createEditorMediaActions({
     autosaveProfile,
     mode,
@@ -203,10 +207,17 @@ export function EditorPage({
     updateTheme,
   } = createEditorProfileActions({
     autosaveProfile,
-    mode,
     profile,
     setProfile,
   });
+  const { refreshLinkMetadata, setLinkEmbedMode, setLinkUrl } =
+    useLinkMetadataActions({
+      autosaveProfile,
+      mode,
+      profile,
+      setProfile,
+      setStatus,
+    });
 
   async function onSelectProfile(handle: string): Promise<void> {
     if (!handle || handle === profile.handle) return;
@@ -675,6 +686,7 @@ export function EditorPage({
                 {activeEditorPanel === "links" && (
                   <LinksPanel
                     linkImageUrls={editorLinkImageUrls}
+                    linkThumbnailUrls={editorLinkThumbnailUrls}
                     links={profile.links}
                     onAddImage={addImageCard}
                     onAddLink={addLink}
@@ -682,11 +694,22 @@ export function EditorPage({
                     onImageChange={(id, file) => {
                       void onLinkImageChange(id, file);
                     }}
+                    onThumbnailChange={(id, file) => {
+                      void onLinkThumbnailChange(id, file);
+                    }}
+                    onThumbnailRemove={onLinkThumbnailRemove}
+                    onEmbedModeChange={(id, embedMode) => {
+                      void setLinkEmbedMode(id, embedMode);
+                    }}
+                    onMetadataRefresh={(id) => {
+                      void refreshLinkMetadata(id);
+                    }}
                     onPreviewLinksChange={setDragLinks}
                     onRemove={removeLink}
                     onSaveLink={saveLink}
                     onToggleVisibility={toggleLinkVisibility}
                     onUpdate={updateLink}
+                    onUrlChange={setLinkUrl}
                   />
                 )}
 

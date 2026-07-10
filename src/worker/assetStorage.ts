@@ -35,7 +35,9 @@ export async function writeProfileAssetUpload(
 
   if (image.size > getProfileAssetMaxBytes(kind)) {
     throw new Error(
-      isProfileMedia
+      kind === "thumbnail"
+        ? "Thumbnail must be 512 KB or smaller"
+        : isProfileMedia
         ? "Media must be 10 MB or smaller"
         : "Image must be 2 MB or smaller",
     );
@@ -54,7 +56,8 @@ export async function readUserFile(env: Env, key: string): Promise<Response> {
     (!key.startsWith("avatars/") &&
       !key.startsWith("backgrounds/") &&
       !key.startsWith("links/") &&
-      !key.startsWith("profiles/"))
+      !key.startsWith("profiles/") &&
+      !key.startsWith("thumbnails/"))
   ) {
     return new Response("Not found", { status: 404 });
   }

@@ -3,11 +3,14 @@ import { uploadProfileAsset } from "../../apiClient";
 import { saveLocalAsset } from "../../localEditorStore";
 import {
   profileMediaUploadMaxBytes,
+  thumbnailUploadMaxBytes,
+  thumbnailSourceMaxBytes,
   type ProfileAssetKind,
 } from "../../media/config";
 import {
   prepareAvatarFile,
   prepareProfileImageFile,
+  prepareThumbnailFile,
 } from "../../media/imageProcessing";
 import type { LinkProfile } from "../../profile";
 import type { EditorMode } from "./useEditorAssetUrls";
@@ -75,6 +78,73 @@ export function createEditorMediaActions({
           : "This browser cannot save local media",
       );
     }
+  }
+
+  async function onLinkThumbnailChange(
+    id: string,
+    file: File | null,
+  ): Promise<void> {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setStatus("Choose an image file");
+      return;
+    }
+    if (file.size > thumbnailSourceMaxBytes) {
+      setStatus("Thumbnail source must be 2 MB or smaller");
+      return;
+    }
+
+    try {
+      const thumbnailFile = await prepareThumbnailFile(file);
+      if (thumbnailFile.size > thumbnailUploadMaxBytes) {
+        setStatus("Thumbnail must be 512 KB or smaller");
+        return;
+      }
+      const thumbnailAssetId = await storeAsset(thumbnailFile, "thumbnail");
+      commit({
+        ...profile,
+        links: profile.links.map((link) =>
+          link.id === id
+            ? {
+                ...link,
+                thumbnailAssetId,
+                thumbnailHidden: false,
+                thumbnailUrl: null,
+              }
+            : link,
+        ),
+        updatedAt: new Date().toISOString(),
+      });
+      setStatus(
+        mode === "backend"
+          ? "Thumbnail uploaded"
+          : "Thumbnail saved locally",
+      );
+    } catch {
+      setStatus(
+        mode === "backend"
+          ? "Thumbnail upload failed"
+          : "This browser cannot save the thumbnail",
+      );
+    }
+  }
+
+  function onLinkThumbnailRemove(id: string): void {
+    commit({
+      ...profile,
+      links: profile.links.map((link) =>
+        link.id === id
+          ? {
+              ...link,
+              thumbnailAssetId: null,
+              thumbnailHidden: true,
+              thumbnailUrl: null,
+            }
+          : link,
+      ),
+      updatedAt: new Date().toISOString(),
+    });
+    setStatus("Thumbnail removed");
   }
 
   async function onAvatarChange(file: File | null): Promise<void> {
@@ -193,5 +263,7 @@ export function createEditorMediaActions({
     onBannerImageChange,
     onBannerImageRemove,
     onLinkImageChange,
+    onLinkThumbnailChange,
+    onLinkThumbnailRemove,
   };
 }

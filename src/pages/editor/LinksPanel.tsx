@@ -28,30 +28,45 @@ const maxMediaCards = 10;
 
 type LinksPanelProps = {
   linkImageUrls?: Record<string, string | null>;
+  linkThumbnailUrls?: Record<string, string | null>;
   links: LinkItem[];
   onAddImage(): void;
   onAddLink(): void;
   onCommitLinks(links: LinkItem[]): void;
   onImageChange(id: string, file: File | null): void;
+  onEmbedModeChange(
+    id: string,
+    mode: NonNullable<LinkItem["embedMode"]>,
+  ): void;
+  onMetadataRefresh(id: string): void;
   onPreviewLinksChange(links: LinkItem[] | null): void;
   onRemove(id: string): void;
   onSaveLink(id: string): void;
   onToggleVisibility(id: string): void;
+  onThumbnailChange(id: string, file: File | null): void;
+  onThumbnailRemove(id: string): void;
   onUpdate(id: string, patch: Partial<LinkItem>): void;
+  onUrlChange(id: string, url: string): void;
 };
 
 export function LinksPanel({
   linkImageUrls = {},
+  linkThumbnailUrls = {},
   links,
   onAddImage,
   onAddLink,
   onCommitLinks,
   onImageChange,
+  onEmbedModeChange,
+  onMetadataRefresh,
   onPreviewLinksChange,
   onRemove,
   onSaveLink,
   onToggleVisibility,
+  onThumbnailChange,
+  onThumbnailRemove,
   onUpdate,
+  onUrlChange,
 }: LinksPanelProps) {
   const [activeDragLinkId, setActiveDragLinkId] = useState<string | null>(null);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
@@ -106,6 +121,7 @@ export function LinksPanel({
               <LinkRowOverlay
                 link={activeDragLink}
                 linkImageUrl={linkImageUrls[activeDragLink.id]}
+                linkThumbnailUrl={linkThumbnailUrls[activeDragLink.id]}
               />
             ) : null}
           </DragOverlay>,
@@ -192,11 +208,17 @@ export function LinksPanel({
                 key={link.id}
                 link={link}
                 linkImageUrl={linkImageUrls[link.id]}
+                linkThumbnailUrl={linkThumbnailUrls[link.id]}
+                onEmbedModeChange={onEmbedModeChange}
                 onImageChange={onImageChange}
+                onMetadataRefresh={onMetadataRefresh}
                 onRemove={onRemove}
                 onSaveLink={onSaveLink}
                 onToggleVisibility={onToggleVisibility}
+                onThumbnailChange={onThumbnailChange}
+                onThumbnailRemove={onThumbnailRemove}
                 onUpdate={onUpdate}
+                onUrlChange={onUrlChange}
               />
             ))}
           </section>

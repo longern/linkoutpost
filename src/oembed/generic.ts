@@ -37,7 +37,9 @@ export function findOEmbedJsonEndpoint(html: string, pageUrl: string): string | 
       getAttribute(candidate, "href")
     );
   });
-  const href = tag ? getAttribute(tag, "href") : "";
+  const href = tag
+    ? getAttribute(tag, "href").replace(/&amp;/gi, "&")
+    : "";
   if (!href) return null;
 
   try {

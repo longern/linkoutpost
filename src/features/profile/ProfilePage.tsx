@@ -203,20 +203,31 @@ const PublicEmbedHost = memo(
     previous.scripts.every((script, index) => script === next.scripts[index]),
 );
 
-function PublicEmbeddedLink({ link }: { link: LinkItem }) {
+function PublicEmbeddedLink({
+  link,
+  thumbnailUrl,
+}: {
+  link: LinkItem;
+  thumbnailUrl?: string | null;
+}) {
   const embed = getOEmbedRenderData(link);
   const scripts = embed?.scripts ?? emptyEmbedScripts;
 
   if (!embed) {
     return (
       <a
-        className="public-link"
+        className={`public-link${thumbnailUrl ? " has-thumbnail" : ""}`}
         data-profile-link-id={link.id}
         href={link.url}
         rel="noreferrer"
         target="_blank"
       >
-        {link.label}
+        {thumbnailUrl ? (
+          <span className="public-link-thumbnail">
+            <img alt="" height={40} src={thumbnailUrl} width={40} />
+          </span>
+        ) : null}
+        <span className="public-link-label">{link.label}</span>
       </a>
     );
   }
@@ -226,9 +237,11 @@ function PublicEmbeddedLink({ link }: { link: LinkItem }) {
 
 function PublicLinks({
   linkImageUrls = {},
+  linkThumbnailUrls = {},
   links,
 }: {
   linkImageUrls?: Record<string, string | null>;
+  linkThumbnailUrls?: Record<string, string | null>;
   links: LinkItem[];
 }) {
   const visibleLinks = links.filter((link) => !link.hidden);
@@ -294,7 +307,19 @@ function PublicLinks({
           );
         }
 
-        return <PublicEmbeddedLink key={link.id} link={link} />;
+        const thumbnailUrl = link.thumbnailHidden
+          ? null
+          : (linkThumbnailUrls[link.id] ??
+            getProfileAssetUrl(link.thumbnailAssetId ?? null) ??
+            link.thumbnailUrl ??
+            null);
+        return (
+          <PublicEmbeddedLink
+            key={link.id}
+            link={link}
+            thumbnailUrl={thumbnailUrl}
+          />
+        );
       })}
     </div>
   );
@@ -465,11 +490,13 @@ export function ProfilePage({
   profile,
   shareEnabled = true,
   linkImageUrls,
+  linkThumbnailUrls,
 }: {
   avatarUrl?: string | null;
   backgroundUrl?: string | null;
   bannerImageUrl?: string | null;
   linkImageUrls?: Record<string, string | null>;
+  linkThumbnailUrls?: Record<string, string | null>;
   profile: LinkProfile | null;
   shareEnabled?: boolean;
 }) {
@@ -548,7 +575,11 @@ export function ProfilePage({
   const profileAvatar = <ProfileAvatar avatarUrl={avatarUrl} />;
   const profileIntro = <ProfileIntro profile={currentProfile} />;
   const profileLinks = (
-    <PublicLinks linkImageUrls={linkImageUrls} links={currentProfile.links} />
+    <PublicLinks
+      linkImageUrls={linkImageUrls}
+      linkThumbnailUrls={linkThumbnailUrls}
+      links={currentProfile.links}
+    />
   );
   const profileSocialLinks = (
     <ProfileSocialLinks links={currentProfile.socialLinks} />

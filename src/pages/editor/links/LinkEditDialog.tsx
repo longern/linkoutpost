@@ -1,26 +1,46 @@
 import { createPortal } from "react-dom";
-import { FaXmark } from "react-icons/fa6";
+import { FaImage, FaTrash, FaXmark } from "react-icons/fa6";
 import type { LinkItem } from "../../../profile";
 import { MediaCardPreview } from "./MediaCardPreview";
 
 export function LinkEditDialog({
   link,
   linkImageUrl,
+  linkThumbnailUrl,
+  onEmbedModeChange,
   onImageChange,
+  onMetadataRefresh,
   visible,
   onRequestClose,
   onSaveLink,
+  onThumbnailChange,
+  onThumbnailRemove,
   onUpdate,
+  onUrlChange,
 }: {
   link: LinkItem;
   linkImageUrl?: string | null;
+  linkThumbnailUrl?: string | null;
+  onEmbedModeChange(
+    id: string,
+    mode: NonNullable<LinkItem["embedMode"]>,
+  ): void;
   onImageChange(id: string, file: File | null): void;
+  onMetadataRefresh(id: string): void;
   visible: boolean;
   onRequestClose(): void;
   onSaveLink(id: string): void;
+  onThumbnailChange(id: string, file: File | null): void;
+  onThumbnailRemove(id: string): void;
   onUpdate(id: string, patch: Partial<LinkItem>): void;
+  onUrlChange(id: string, url: string): void;
 }) {
+  const embedAvailable = Boolean(
+    link.embedAvailable || (link.embedHtml && link.embedProvider),
+  );
+
   function closeAndSave(): void {
+    if (link.type !== "image") onMetadataRefresh(link.id);
     onSaveLink(link.id);
     onRequestClose();
   }
@@ -111,9 +131,16 @@ export function LinkEditDialog({
                   : "https://example.com"
               }
               value={link.url}
-              onChange={(event) =>
-                onUpdate(link.id, { url: event.target.value })
-              }
+              onBlur={() => {
+                if (link.type !== "image") onMetadataRefresh(link.id);
+              }}
+              onChange={(event) => {
+                if (link.type === "image") {
+                  onUpdate(link.id, { url: event.target.value });
+                } else {
+                  onUrlChange(link.id, event.target.value);
+                }
+              }}
             />
           </label>
           {link.type === "image" ? null : (
@@ -124,15 +151,16 @@ export function LinkEditDialog({
                 className="link-edit-segmented"
                 role="radiogroup"
               >
-                {(["auto", "embed", "link"] as const).map((mode) => (
+                {(["auto", "link", "embed"] as const).map((mode) => (
                   <label
-                    className={`link-edit-segment${(link.embedMode ?? "auto") === mode ? " is-selected" : ""}`}
+                    className={`link-edit-segment${(link.embedMode ?? "auto") === mode ? " is-selected" : ""}${mode === "embed" && !embedAvailable ? " is-disabled" : ""}`}
                     key={mode}
                   >
                     <input
                       checked={(link.embedMode ?? "auto") === mode}
+                      disabled={mode === "embed" && !embedAvailable}
                       name={`link-display-mode-${link.id}`}
-                      onChange={() => onUpdate(link.id, { embedMode: mode })}
+                      onChange={() => onEmbedModeChange(link.id, mode)}
                       type="radio"
                       value={mode}
                     />
@@ -145,6 +173,46 @@ export function LinkEditDialog({
                     </span>
                   </label>
                 ))}
+              </div>
+            </div>
+          )}
+          {link.type === "image" ? null : (
+            <div className="link-edit-field">
+              <span>Thumbnail</span>
+              <div className="link-thumbnail-editor">
+                <span className="link-thumbnail-preview">
+                  {linkThumbnailUrl ? (
+                    <img alt="" src={linkThumbnailUrl} />
+                  ) : (
+                    <FaImage aria-hidden="true" size={18} />
+                  )}
+                </span>
+                <label className="button-secondary link-thumbnail-upload">
+                  <FaImage aria-hidden="true" size={15} />
+                  Upload
+                  <input
+                    accept="image/*"
+                    onChange={(event) => {
+                      onThumbnailChange(
+                        link.id,
+                        event.currentTarget.files?.[0] ?? null,
+                      );
+                      event.currentTarget.value = "";
+                    }}
+                    type="file"
+                  />
+                </label>
+                {linkThumbnailUrl ? (
+                  <button
+                    aria-label="Remove thumbnail"
+                    className="circle-icon-button danger"
+                    onClick={() => onThumbnailRemove(link.id)}
+                    title="Remove thumbnail"
+                    type="button"
+                  >
+                    <FaTrash aria-hidden="true" size={16} />
+                  </button>
+                ) : null}
               </div>
             </div>
           )}

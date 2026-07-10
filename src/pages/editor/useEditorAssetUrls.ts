@@ -18,6 +18,9 @@ export function useEditorAssetUrls(profile: LinkProfile, mode: EditorMode) {
   const [linkImageUrls, setLinkImageUrls] = useState<
     Record<string, string | null>
   >({});
+  const [linkThumbnailUrls, setLinkThumbnailUrls] = useState<
+    Record<string, string | null>
+  >({});
   const allowLocalAssets = mode !== "backend";
 
   useEffect(() => {
@@ -120,5 +123,48 @@ export function useEditorAssetUrls(profile: LinkProfile, mode: EditorMode) {
     };
   }, [allowLocalAssets, profile.links]);
 
-  return { avatarUrl, backgroundUrl, bannerImageUrl, linkImageUrls };
+  useEffect(() => {
+    let cancelled = false;
+    const objectUrls: string[] = [];
+
+    void Promise.all(
+      profile.links
+        .filter((link) => link.type !== "image")
+        .map(async (link) => {
+          const url = link.thumbnailHidden
+            ? null
+            : link.thumbnailAssetId
+              ? await resolveProfileAssetUrl(
+                  link.thumbnailAssetId,
+                  allowLocalAssets,
+                )
+              : (link.thumbnailUrl ?? null);
+          if (url?.startsWith("blob:")) objectUrls.push(url);
+          return [link.id, url] as const;
+        }),
+    )
+      .then((entries) => {
+        if (cancelled) {
+          objectUrls.forEach((url) => URL.revokeObjectURL(url));
+          return;
+        }
+        setLinkThumbnailUrls(Object.fromEntries(entries));
+      })
+      .catch(() => {
+        if (!cancelled) setLinkThumbnailUrls({});
+      });
+
+    return () => {
+      cancelled = true;
+      objectUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [allowLocalAssets, profile.links]);
+
+  return {
+    avatarUrl,
+    backgroundUrl,
+    bannerImageUrl,
+    linkImageUrls,
+    linkThumbnailUrls,
+  };
 }

@@ -5,6 +5,10 @@ import {
 } from "./App";
 import { renderDocumentMeta, replaceDocumentMeta } from "./documentMeta";
 import {
+  findDocumentTitle,
+  findFaviconUrl,
+} from "./linkMetadata";
+import {
   findOEmbedJsonEndpoint,
   sanitizeGenericOEmbedHtml,
 } from "./oembed/generic";
@@ -137,6 +141,32 @@ async function resolveGenericOEmbed(url: string): Promise<Response> {
     {
       headers: apiHeaders,
     },
+  );
+}
+
+async function resolveLinkMetadataResponse(url: string): Promise<Response> {
+  if (!isSupportedOEmbedUrl(url)) {
+    return jsonError("Unsupported URL", 400);
+  }
+
+  const pageResponse = await fetch(url, {
+    headers: {
+      Accept: "text/html,application/xhtml+xml",
+      "User-Agent": "LinkOutpost metadata resolver",
+    },
+  });
+  if (!pageResponse.ok) return jsonError("Unable to fetch URL", 404);
+
+  const pageHtml = await pageResponse.text();
+  const endpoint = findOEmbedJsonEndpoint(pageHtml, url);
+
+  return Response.json(
+    {
+      embedAvailable: Boolean(endpoint),
+      faviconUrl: findFaviconUrl(pageHtml, url),
+      title: findDocumentTitle(pageHtml),
+    },
+    { headers: apiHeaders },
   );
 }
 
@@ -278,6 +308,11 @@ export default {
     if (url.pathname === "/api/oembed") {
       if (request.method !== "GET") return jsonError("Method not allowed", 405);
       return resolveGenericOEmbed(url.searchParams.get("url") ?? "");
+    }
+
+    if (url.pathname === "/api/link-metadata") {
+      if (request.method !== "GET") return jsonError("Method not allowed", 405);
+      return resolveLinkMetadataResponse(url.searchParams.get("url") ?? "");
     }
 
     if (url.pathname.startsWith("/api/files/")) {

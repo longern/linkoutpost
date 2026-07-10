@@ -146,6 +146,54 @@ function useLinkImageUrls(
   return linkImageUrls;
 }
 
+function useLinkThumbnailUrls(
+  profile: LinkProfile,
+  allowLocalAssets: boolean,
+): Record<string, string | null> {
+  const [thumbnailUrls, setThumbnailUrls] = useState<
+    Record<string, string | null>
+  >({});
+
+  useEffect(() => {
+    let cancelled = false;
+    const objectUrls: string[] = [];
+
+    void Promise.all(
+      profile.links
+        .filter((link) => link.type !== "image")
+        .map(async (link) => {
+          const url = link.thumbnailHidden
+            ? null
+            : link.thumbnailAssetId
+              ? await resolveProfileAssetUrl(
+                  link.thumbnailAssetId,
+                  allowLocalAssets,
+                )
+              : (link.thumbnailUrl ?? null);
+          if (url?.startsWith("blob:")) objectUrls.push(url);
+          return [link.id, url] as const;
+        }),
+    )
+      .then((entries) => {
+        if (cancelled) {
+          objectUrls.forEach(revokeObjectUrl);
+          return;
+        }
+        setThumbnailUrls(Object.fromEntries(entries));
+      })
+      .catch(() => {
+        if (!cancelled) setThumbnailUrls({});
+      });
+
+    return () => {
+      cancelled = true;
+      objectUrls.forEach(revokeObjectUrl);
+    };
+  }, [allowLocalAssets, profile.links]);
+
+  return thumbnailUrls;
+}
+
 export function ProfilePreview({
   allowLocalAssets,
   profile,
@@ -157,6 +205,7 @@ export function ProfilePreview({
   const backgroundUrl = useProfileBackgroundUrl(profile, allowLocalAssets);
   const bannerImageUrl = useBannerImageUrl(profile, allowLocalAssets);
   const linkImageUrls = useLinkImageUrls(profile, allowLocalAssets);
+  const linkThumbnailUrls = useLinkThumbnailUrls(profile, allowLocalAssets);
   const previewRef = useRef<HTMLDivElement | null>(null);
   const previousLinkRects = useRef(new Map<string, DOMRect>());
 
@@ -204,6 +253,7 @@ export function ProfilePreview({
           backgroundUrl={backgroundUrl}
           bannerImageUrl={bannerImageUrl}
           linkImageUrls={linkImageUrls}
+          linkThumbnailUrls={linkThumbnailUrls}
           profile={profile}
           shareEnabled={false}
         />
@@ -225,6 +275,7 @@ export function FullscreenProfilePreview({
   const backgroundUrl = useProfileBackgroundUrl(profile, allowLocalAssets);
   const bannerImageUrl = useBannerImageUrl(profile, allowLocalAssets);
   const linkImageUrls = useLinkImageUrls(profile, allowLocalAssets);
+  const linkThumbnailUrls = useLinkThumbnailUrls(profile, allowLocalAssets);
 
   return (
     <div className="editor-full-preview">
@@ -242,6 +293,7 @@ export function FullscreenProfilePreview({
         backgroundUrl={backgroundUrl}
         bannerImageUrl={bannerImageUrl}
         linkImageUrls={linkImageUrls}
+        linkThumbnailUrls={linkThumbnailUrls}
         profile={profile}
       />
     </div>

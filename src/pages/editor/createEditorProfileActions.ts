@@ -1,22 +1,18 @@
 import type { Dispatch, SetStateAction } from "react";
-import { resolveOEmbed } from "../../oembed";
 import type {
   LinkItem,
   LinkProfile,
   ProfileTheme,
 } from "../../profile";
-import type { EditorMode } from "./useEditorAssetUrls";
 
 type EditorProfileActionsOptions = {
   autosaveProfile(profile: LinkProfile): Promise<void>;
-  mode: EditorMode;
   profile: LinkProfile;
   setProfile: Dispatch<SetStateAction<LinkProfile>>;
 };
 
 export function createEditorProfileActions({
   autosaveProfile,
-  mode,
   profile,
   setProfile,
 }: EditorProfileActionsOptions) {
@@ -113,48 +109,7 @@ export function createEditorProfileActions({
   }
 
   function saveLink(id: string): void {
-    const link = profile.links.find((item) => item.id === id);
-    if (!link || link.type === "image") {
-      saveCurrentProfile();
-      return;
-    }
-
-    if (link.embedMode === "link") {
-      commit(
-        withUpdatedAt({
-          ...profile,
-          links: profile.links.map((item) =>
-            item.id === id
-              ? { ...item, embedHtml: null, embedProvider: null }
-              : item,
-          ),
-        }),
-      );
-      return;
-    }
-
-    void resolveOEmbed(link.url, {
-      allowDiscovery: link.embedMode === "embed",
-      useBackend: mode === "backend",
-    }).then((embed) => {
-      commit(
-        withUpdatedAt({
-          ...profile,
-          links: profile.links.map((item) => {
-            if (item.id !== id) return item;
-            if (!embed) {
-              return { ...item, embedHtml: null, embedProvider: null };
-            }
-            return {
-              ...item,
-              embedHtml: embed.html,
-              embedProvider: embed.provider,
-              label: item.label.trim() || embed.title,
-            };
-          }),
-        }),
-      );
-    });
+    if (profile.links.some((item) => item.id === id)) saveCurrentProfile();
   }
 
   function commitLinks(links: LinkItem[]): void {

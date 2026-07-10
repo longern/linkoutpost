@@ -197,6 +197,51 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
+    selector: ".public-link.has-thumbnail",
+    rule: {
+      alignItems: "center",
+      display: "flex",
+      justifyContent: "center",
+      minHeight: 68,
+      padding: "14px 68px",
+      position: "relative",
+      textAlign: "center",
+    },
+  },
+  {
+    selector: ".public-link-thumbnail",
+    rule: {
+      alignItems: "center",
+      background: "rgb(255 255 255 / 88%)",
+      borderRadius: 8,
+      display: "flex",
+      height: 40,
+      justifyContent: "center",
+      left: 16,
+      overflow: "hidden",
+      position: "absolute",
+      top: "50%",
+      transform: "translateY(-50%)",
+      width: 40,
+    },
+  },
+  {
+    selector: ".public-link-thumbnail img",
+    rule: {
+      display: "block",
+      height: "100%",
+      objectFit: "contain",
+      width: "100%",
+    },
+  },
+  {
+    selector: ".public-link-label",
+    rule: {
+      minWidth: 0,
+      overflowWrap: "anywhere",
+    },
+  },
+  {
     selector: ".public-link:active",
     rule: {
       "@media": {

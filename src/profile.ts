@@ -3,11 +3,15 @@ import { hostedHandleMinLength, siteTitle } from "./siteConfig";
 export type LinkItem = {
   embedMode?: "auto" | "embed" | "link";
   embedHtml?: string | null;
+  embedAvailable?: boolean;
   embedProvider?: "flickr" | "generic" | "youtube" | null;
   hidden?: boolean;
   id: string;
   imageAssetId?: string | null;
   label: string;
+  thumbnailAssetId?: string | null;
+  thumbnailHidden?: boolean;
+  thumbnailUrl?: string | null;
   type?: "link" | "image";
   url: string;
 };

@@ -1,8 +1,17 @@
-export type ProfileAssetKind = "avatar" | "background" | "banner" | "link";
+export type ProfileAssetKind =
+  | "avatar"
+  | "background"
+  | "banner"
+  | "link"
+  | "thumbnail";
 
 export const avatarMaxDimension = 512;
 export const avatarCompressionThresholdBytes = 256 * 1024;
 export const profileImageMaxDimension = 1920;
+export const thumbnailMaxDimension = 192;
+export const thumbnailCompressionThresholdBytes = 256 * 1024;
+export const thumbnailSourceMaxBytes = 2 * 1024 * 1024;
+export const thumbnailUploadMaxBytes = 512 * 1024;
 export const imageUploadMaxBytes = 2 * 1024 * 1024;
 export const profileMediaUploadMaxBytes = 10 * 1024 * 1024;
 
@@ -11,6 +20,7 @@ const assetFolders: Record<ProfileAssetKind, string> = {
   background: "backgrounds",
   banner: "profiles",
   link: "links",
+  thumbnail: "thumbnails",
 };
 
 export function isProfileAssetKind(value: unknown): value is ProfileAssetKind {
@@ -18,7 +28,8 @@ export function isProfileAssetKind(value: unknown): value is ProfileAssetKind {
     value === "avatar" ||
     value === "background" ||
     value === "banner" ||
-    value === "link"
+    value === "link" ||
+    value === "thumbnail"
   );
 }
 
@@ -31,6 +42,7 @@ export function getProfileAssetFolder(kind: ProfileAssetKind): string {
 }
 
 export function getProfileAssetMaxBytes(kind: ProfileAssetKind): number {
+  if (kind === "thumbnail") return thumbnailUploadMaxBytes;
   return isProfileMediaKind(kind)
     ? profileMediaUploadMaxBytes
     : imageUploadMaxBytes;

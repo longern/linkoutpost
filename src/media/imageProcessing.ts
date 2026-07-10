@@ -2,6 +2,8 @@ import {
   avatarCompressionThresholdBytes,
   avatarMaxDimension,
   profileImageMaxDimension,
+  thumbnailCompressionThresholdBytes,
+  thumbnailMaxDimension,
 } from "./config";
 
 function loadImage(file: File): Promise<HTMLImageElement> {
@@ -88,4 +90,12 @@ export function prepareAvatarFile(file: File): Promise<File> {
 
 export function prepareProfileImageFile(file: File): Promise<File> {
   return prepareImageFile(file, { maxSize: profileImageMaxDimension });
+}
+
+export function prepareThumbnailFile(file: File): Promise<File> {
+  return prepareImageFile(file, {
+    maxSize: thumbnailMaxDimension,
+    maxOriginalBytes: thumbnailCompressionThresholdBytes,
+    outputName: "thumbnail",
+  });
 }

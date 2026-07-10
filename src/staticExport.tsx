@@ -24,6 +24,7 @@ async function renderProfileMarkup(
   backgroundHref: string | null,
   bannerImageHref: string | null,
   linkImageHrefs: Record<string, string | null>,
+  linkThumbnailHrefs: Record<string, string | null>,
 ): Promise<string> {
   const container = document.createElement("div");
   let root: Root | null = null;
@@ -39,6 +40,7 @@ async function renderProfileMarkup(
           backgroundUrl={backgroundHref}
           bannerImageUrl={bannerImageHref}
           linkImageUrls={linkImageHrefs}
+          linkThumbnailUrls={linkThumbnailHrefs}
           profile={profile}
         />,
       );
@@ -56,6 +58,7 @@ export async function renderStaticHtml(
   backgroundHref: string | null,
   bannerImageHref: string | null,
   linkImageHrefs: Record<string, string | null> = {},
+  linkThumbnailHrefs: Record<string, string | null> = {},
 ): Promise<string> {
   const profileMarkup = await renderProfileMarkup(
     profile,
@@ -63,6 +66,7 @@ export async function renderStaticHtml(
     backgroundHref,
     bannerImageHref,
     linkImageHrefs,
+    linkThumbnailHrefs,
   );
   return [
     "<!doctype html>",
@@ -196,6 +200,24 @@ export async function buildStaticZip(
   const linkImageHrefs = Object.fromEntries(
     Object.entries(linkImages).map(([id, asset]) => [id, asset.href]),
   );
+  const linkThumbnails = Object.fromEntries(
+    await Promise.all(
+      profile.links
+        .filter((link) => link.type !== "image" && link.thumbnailAssetId)
+        .map(async (link) => {
+          const asset = await addStaticExportAsset(
+            files,
+            link.thumbnailAssetId ?? null,
+            `thumbnail-${link.id}`,
+            assetSource,
+          );
+          return [link.id, asset] as const;
+        }),
+    ),
+  );
+  const linkThumbnailHrefs = Object.fromEntries(
+    Object.entries(linkThumbnails).map(([id, asset]) => [id, asset.href]),
+  );
 
   files["linkoutpost-export.json"] = strToU8(
     JSON.stringify(
@@ -209,6 +231,9 @@ export async function buildStaticZip(
           bannerImage: bannerImage.path,
           linkImages: Object.fromEntries(
             Object.entries(linkImages).map(([id, asset]) => [id, asset.path]),
+          ),
+          linkThumbnails: Object.fromEntries(
+            Object.entries(linkThumbnails).map(([id, asset]) => [id, asset.path]),
           ),
         },
       },
@@ -224,6 +249,7 @@ export async function buildStaticZip(
       background.href,
       bannerImage.href,
       linkImageHrefs,
+      linkThumbnailHrefs,
     ),
   );
 
