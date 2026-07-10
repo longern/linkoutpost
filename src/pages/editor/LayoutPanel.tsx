@@ -22,6 +22,7 @@ import { RiDraggable } from "react-icons/ri";
 import type { LinkProfile, ProfileTheme } from "../../profile";
 
 type CardField = ProfileTheme["cardFields"][number];
+type InfoDetails = ProfileTheme["infoDetails"];
 const layoutOptions: Array<{
   description: string;
   label: string;
@@ -36,6 +37,11 @@ const layoutOptions: Array<{
     description: "Structured visual card with profile details below.",
     label: "Structured card",
     value: "card",
+  },
+  {
+    description: "Banner identity with personal detail chips.",
+    label: "Info header",
+    value: "info",
   },
 ];
 
@@ -176,6 +182,24 @@ export function LayoutPanel({
     });
   }
 
+  function updateInfoDetails(patch: Partial<InfoDetails>): void {
+    onUpdateTheme({
+      infoDetails: {
+        ...profile.theme.infoDetails,
+        ...patch,
+      },
+    });
+  }
+
+  function commitInfoDetails(patch: Partial<InfoDetails>): void {
+    onCommitTheme({
+      infoDetails: {
+        ...profile.theme.infoDetails,
+        ...patch,
+      },
+    });
+  }
+
   function clearCardFieldDrag(): void {
     setActiveDragFieldId(null);
   }
@@ -231,6 +255,29 @@ export function LayoutPanel({
                         <span />
                       </span>
                       <span className="layout-preview-link" />
+                      <span className="layout-preview-link" />
+                      <span className="layout-preview-link" />
+                    </>
+                  ) : option.value === "info" ? (
+                    <>
+                      <span className="layout-preview-info-banner">
+                        <span className="layout-preview-avatar" />
+                        <span className="layout-preview-info-title">
+                          <span />
+                          <span />
+                        </span>
+                      </span>
+                      <span className="layout-preview-bio" />
+                      <span className="layout-preview-chips">
+                        <span />
+                        <span />
+                        <span />
+                      </span>
+                      <span className="layout-preview-socials">
+                        <span />
+                        <span />
+                        <span />
+                      </span>
                       <span className="layout-preview-link" />
                       <span className="layout-preview-link" />
                     </>
@@ -302,6 +349,55 @@ export function LayoutPanel({
               </div>
             </SortableContext>
           </DndContext>
+        </section>
+      )}
+
+      {profile.theme.layout === "info" && (
+        <section className="info-layout-editor" aria-label="Info layout options">
+          <div className="card-field-editor-header">
+            <strong>Personal info</strong>
+          </div>
+          <div className="info-details-grid">
+            <label className="design-field">
+              <span className="design-field-label">Gender</span>
+              <input
+                placeholder="Gender"
+                value={profile.theme.infoDetails.gender}
+                onChange={(event) =>
+                  updateInfoDetails({ gender: event.target.value })
+                }
+                onBlur={(event) =>
+                  commitInfoDetails({ gender: event.target.value })
+                }
+              />
+            </label>
+            <label className="design-field">
+              <span className="design-field-label">Birth date</span>
+              <input
+                type="date"
+                value={profile.theme.infoDetails.birthDate}
+                onChange={(event) =>
+                  updateInfoDetails({ birthDate: event.target.value })
+                }
+                onBlur={(event) =>
+                  commitInfoDetails({ birthDate: event.target.value })
+                }
+              />
+            </label>
+            <label className="design-field">
+              <span className="design-field-label">Location</span>
+              <input
+                placeholder="Location"
+                value={profile.theme.infoDetails.location}
+                onChange={(event) =>
+                  updateInfoDetails({ location: event.target.value })
+                }
+                onBlur={(event) =>
+                  commitInfoDetails({ location: event.target.value })
+                }
+              />
+            </label>
+          </div>
         </section>
       )}
     </section>

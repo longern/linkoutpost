@@ -170,7 +170,8 @@
   color: #667085;
 }
 
-.card-layout-editor {
+.card-layout-editor,
+.info-layout-editor {
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -215,4 +216,10 @@
 
 .card-field-editor-row input {
   min-width: 0;
+}
+
+.info-details-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }

@@ -328,6 +328,8 @@
   border-radius: 8px;
   background: #ffffff;
   color: #98a2b3;
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .link-thumbnail-preview img {
@@ -337,18 +339,16 @@
   object-fit: contain;
 }
 
-.link-thumbnail-upload {
-  width: auto;
-  min-height: 40px;
-  display: inline-flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
+.link-thumbnail-preview:hover {
+  border-color: #98a2b3;
 }
 
-.link-thumbnail-upload input {
+.link-thumbnail-preview:focus-within {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgb(var(--brand-accent-rgb) / 12%);
+}
+
+.link-thumbnail-preview input {
   position: absolute;
   width: 1px;
   height: 1px;

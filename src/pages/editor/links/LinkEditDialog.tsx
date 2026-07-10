@@ -180,16 +180,16 @@ export function LinkEditDialog({
             <div className="link-edit-field">
               <span>Thumbnail</span>
               <div className="link-thumbnail-editor">
-                <span className="link-thumbnail-preview">
+                <label
+                  className="link-thumbnail-preview"
+                  title="Upload thumbnail"
+                >
+                  <span className="sr-only">Upload thumbnail</span>
                   {linkThumbnailUrl ? (
                     <img alt="" src={linkThumbnailUrl} />
                   ) : (
                     <FaImage aria-hidden="true" size={18} />
                   )}
-                </span>
-                <label className="button-secondary link-thumbnail-upload">
-                  <FaImage aria-hidden="true" size={15} />
-                  Upload
                   <input
                     accept="image/*"
                     onChange={(event) => {

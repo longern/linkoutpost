@@ -1,6 +1,7 @@
 import type { GlobalStyleRule } from "@vanilla-extract/css";
 import { profileCardLayoutStyleRules } from "./layouts/ProfileCardLayout.styles";
 import { profileClassicLayoutStyleRules } from "./layouts/ProfileClassicLayout.styles";
+import { profileInfoLayoutStyleRules } from "./layouts/ProfileInfoLayout.styles";
 import { profileLayoutStyleRules } from "./layouts/ProfileLayout.styles";
 
 export type PublicProfileStyleRule = {
@@ -643,4 +644,5 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   ...profileLayoutStyleRules,
   ...profileClassicLayoutStyleRules,
   ...profileCardLayoutStyleRules,
+  ...profileInfoLayoutStyleRules,
 ];

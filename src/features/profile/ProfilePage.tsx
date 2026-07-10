@@ -20,6 +20,7 @@ import {
 import { getOEmbedRenderData } from "../../oembed";
 import { ProfileCardLayout } from "./layouts/ProfileCardLayout";
 import { ProfileClassicLayout } from "./layouts/ProfileClassicLayout";
+import { ProfileInfoLayout } from "./layouts/ProfileInfoLayout";
 import {
   copyProfileUrl,
   getProfileShareCapabilities,
@@ -381,6 +382,54 @@ function ProfileIntro({ profile }: { profile: LinkProfile }) {
   );
 }
 
+function ProfileTitleBlock({ profile }: { profile: LinkProfile }) {
+  return (
+    <>
+      <h1 className="profile-title">{profile.title}</h1>
+      <p className="handle">@{profile.handle}</p>
+    </>
+  );
+}
+
+function calculateAge(birthDate: string): number | null {
+  if (!birthDate) return null;
+
+  const date = new Date(`${birthDate}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - date.getFullYear();
+  const monthDelta = today.getMonth() - date.getMonth();
+  if (
+    monthDelta < 0 ||
+    (monthDelta === 0 && today.getDate() < date.getDate())
+  ) {
+    age -= 1;
+  }
+
+  return age >= 0 && age < 130 ? age : null;
+}
+
+function ProfileInfoChips({ profile }: { profile: LinkProfile }) {
+  const { birthDate, gender, location } = profile.theme.infoDetails;
+  const age = calculateAge(birthDate);
+  const chips = [
+    gender.trim(),
+    age === null ? "" : `${age}`,
+    location.trim(),
+  ].filter(Boolean);
+
+  return (
+    <div className="profile-info-chips" aria-label="Profile details">
+      {chips.map((chip, index) => (
+        <span className="profile-info-chip" key={`${chip}-${index}`}>
+          {chip}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function ProfileCardFields({ profile }: { profile: LinkProfile }) {
   const filledFields = profile.theme.cardFields.filter(
     (field) => field.label.trim() || field.value.trim(),
@@ -574,6 +623,7 @@ export function ProfilePage({
   ) : null;
   const profileAvatar = <ProfileAvatar avatarUrl={avatarUrl} />;
   const profileIntro = <ProfileIntro profile={currentProfile} />;
+  const profileTitleBlock = <ProfileTitleBlock profile={currentProfile} />;
   const profileLinks = (
     <PublicLinks
       linkImageUrls={linkImageUrls}
@@ -625,6 +675,27 @@ export function ProfilePage({
       )}
     </div>
   ) : null;
+
+  if (currentProfile.theme.layout === "info") {
+    return (
+      <ProfileInfoLayout
+        avatar={profileAvatar}
+        bannerMedia={bannerMedia}
+        bio={
+          currentProfile.bio.trim() ? (
+            <p className="bio">{currentProfile.bio}</p>
+          ) : null
+        }
+        footer={profileFooter}
+        infoChips={<ProfileInfoChips profile={currentProfile} />}
+        profileActions={profileActions}
+        shareButton={shareButton}
+        shareDialog={shareDialog}
+        style={themeStyle(currentProfile.theme)}
+        titleBlock={profileTitleBlock}
+      />
+    );
+  }
 
   return (
     <ProfileClassicLayout

@@ -2,7 +2,7 @@ import type { PublicProfileStyleRule } from "../ProfileStyleRules";
 
 export const profileLayoutStyleRules: PublicProfileStyleRule[] = [
   {
-    selector: ".public-page-classic, .public-page-card",
+    selector: ".public-page-classic, .public-page-card, .public-page-info",
     rule: {
       "@media": {
         "(min-width: 520px)": {
@@ -14,7 +14,7 @@ export const profileLayoutStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".public-profile-classic, .public-profile-card",
+    selector: ".public-profile-classic, .public-profile-card, .public-profile-info",
     rule: {
       "@container": {
         "(min-width: 520px)": {

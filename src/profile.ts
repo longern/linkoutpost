@@ -58,13 +58,19 @@ export type SocialPlatformDefinition = {
   urlPrefix: string;
 };
 
-export type ProfileLayout = "classic" | "card";
+export type ProfileLayout = "classic" | "card" | "info";
 export type SocialLinksPosition = "top" | "bottom";
 
 export type ProfileCardField = {
   id: string;
   label: string;
   value: string;
+};
+
+export type ProfileInfoDetails = {
+  birthDate: string;
+  gender: string;
+  location: string;
 };
 
 export type ProfileTheme = {
@@ -75,6 +81,7 @@ export type ProfileTheme = {
   buttonTextColor: string;
   cardFields: ProfileCardField[];
   fontFamily: string;
+  infoDetails: ProfileInfoDetails;
   layout: ProfileLayout;
   bannerImageAssetId: string | null;
   socialLinksPosition: SocialLinksPosition;
@@ -344,6 +351,11 @@ export const defaultTheme: ProfileTheme = {
     { id: "role", label: "Role", value: "" },
   ],
   fontFamily: fontOptions[0].value,
+  infoDetails: {
+    birthDate: "",
+    gender: "",
+    location: "",
+  },
   layout: "classic",
   bannerImageAssetId: null,
   socialLinksPosition: "top",
@@ -372,6 +384,10 @@ export function createProfile(
     theme: {
       ...defaultTheme,
       ...overrides.theme,
+      infoDetails: {
+        ...defaultTheme.infoDetails,
+        ...overrides.theme?.infoDetails,
+      },
     },
     updatedAt: overrides.updatedAt ?? new Date().toISOString(),
   };
