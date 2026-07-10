@@ -16,8 +16,8 @@ import {
   type LinkProfile,
   type ProfileTheme,
   type SocialLink,
-} from "./profile";
-import { getOEmbedRenderData } from "./oembed";
+} from "../../profile";
+import { getOEmbedRenderData } from "../../oembed";
 import { ProfileCardLayout } from "./layouts/ProfileCardLayout";
 import { ProfileClassicLayout } from "./layouts/ProfileClassicLayout";
 import {
@@ -26,9 +26,9 @@ import {
   profileShareAttributes,
   shareProfile,
   type ProfileShareCapabilities,
-} from "./profileShare";
-import { siteTitle } from "./siteConfig";
-import { getSocialPlatformIcon } from "./socialIcons";
+} from "./share";
+import { siteTitle } from "../../siteConfig";
+import { getSocialPlatformIcon } from "../../socialIcons";
 
 const emptyEmbedScripts: readonly string[] = [];
 

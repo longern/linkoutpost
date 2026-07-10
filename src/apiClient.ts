@@ -1,4 +1,5 @@
 import type { LinkProfile } from "./profile";
+import type { ProfileAssetKind } from "./media/config";
 import type { ProfileSummary, SessionState } from "./types";
 
 export async function loadSession(): Promise<SessionState> {
@@ -45,7 +46,10 @@ export async function uploadAvatar(file: File): Promise<string> {
   return uploadProfileAsset(file, "avatar");
 }
 
-export async function uploadProfileAsset(file: File, kind: "avatar" | "background" | "banner" | "link"): Promise<string> {
+export async function uploadProfileAsset(
+  file: File,
+  kind: ProfileAssetKind,
+): Promise<string> {
   const formData = new FormData();
   formData.set("image", file);
   formData.set("kind", kind);

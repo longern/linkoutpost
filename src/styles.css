@@ -2,6 +2,8 @@
 @import "./styles/marketing.css";
 @import "./styles/auth-and-overlays.css";
 @import "./styles/editor-shell.css";
-@import "./styles/editor-panels.css";
+@import "./styles/editor-forms.css";
+@import "./styles/editor-content.css";
+@import "./styles/editor-links.css";
 @import "./styles/editor-preview.css";
 @import "./styles/responsive.css";

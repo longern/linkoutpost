@@ -10,7 +10,7 @@ import {
   isReservedPath,
   normalizeHandle
 } from "./profile";
-import { ProfilePage } from "./PublicProfile";
+import { ProfilePage } from "./features/profile/ProfilePage";
 import type { InitialState } from "./types";
 
 type AppProps = {

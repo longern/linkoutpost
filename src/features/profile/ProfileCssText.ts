@@ -1,5 +1,5 @@
 import { transformCss } from "@vanilla-extract/css/transformCss";
-import { publicProfileStyleRules } from "./PublicProfileStyleRules";
+import { publicProfileStyleRules } from "./ProfileStyleRules";
 
 export function getPublicProfileCssText(): string {
   return transformCss({

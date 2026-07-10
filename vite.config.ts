@@ -45,7 +45,10 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: {
           app: resolve(__dirname, "index.html"),
-          profileRuntime: resolve(__dirname, "src/profileRuntime.ts"),
+          profileRuntime: resolve(
+            __dirname,
+            "src/features/profile/runtime.ts",
+          ),
         },
         output: {
           entryFileNames(chunk) {

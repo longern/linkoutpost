@@ -3,16 +3,11 @@ import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import { renderDocumentMeta } from "./documentMeta";
 import { readLocalAsset } from "./localEditorStore";
-import { getPublicProfileCssText } from "./PublicProfileCssText";
-import { ProfilePage } from "./PublicProfile";
+import { mediaExtension } from "./media/config";
+import { getPublicProfileCssText } from "./features/profile/ProfileCssText";
+import { ProfilePage } from "./features/profile/ProfilePage";
 import { getProfileAssetUrl, type LinkProfile } from "./profile";
-import authAndOverlaysCss from "./styles/auth-and-overlays.css?inline";
-import editorPanelsCss from "./styles/editor-panels.css?inline";
-import editorPreviewCss from "./styles/editor-preview.css?inline";
-import editorShellCss from "./styles/editor-shell.css?inline";
 import foundationsCss from "./styles/foundations.css?inline";
-import marketingCss from "./styles/marketing.css?inline";
-import responsiveCss from "./styles/responsive.css?inline";
 
 function escapeHtml(value: string): string {
   return value
@@ -95,17 +90,6 @@ type StaticExportAssetResult = {
   path: string | null;
 };
 
-function mediaExtension(type: string): string {
-  if (type === "image/png") return "png";
-  if (type === "image/webp") return "webp";
-  if (type === "image/gif") return "gif";
-  if (type === "video/mp4") return "mp4";
-  if (type === "video/webm") return "webm";
-  if (type === "video/ogg") return "ogv";
-  if (type === "video/quicktime") return "mov";
-  return "jpg";
-}
-
 async function readStaticExportAsset(
   assetId: string | null,
   source: StaticExportAssetSource,
@@ -156,12 +140,6 @@ function collectStaticCss(): string {
   return [
     getPublicProfileCssText(),
     foundationsCss,
-    marketingCss,
-    authAndOverlaysCss,
-    editorShellCss,
-    editorPanelsCss,
-    editorPreviewCss,
-    responsiveCss,
   ].join("\n");
 }
 

@@ -1,5 +1,6 @@
 import { strFromU8, unzipSync } from "fflate";
 import { createProfile, type LinkProfile } from "./profile";
+import { contentTypeFromPath } from "./media/config";
 
 type ExportManifest = {
   app?: string;
@@ -38,19 +39,6 @@ function readJsonFile<T>(files: ZipFiles, path: string): T | null {
   } catch {
     return null;
   }
-}
-
-function contentTypeFromPath(path: string): string {
-  const lowerPath = path.toLowerCase();
-  if (lowerPath.endsWith(".png")) return "image/png";
-  if (lowerPath.endsWith(".webp")) return "image/webp";
-  if (lowerPath.endsWith(".gif")) return "image/gif";
-  if (lowerPath.endsWith(".svg")) return "image/svg+xml";
-  if (lowerPath.endsWith(".mp4")) return "video/mp4";
-  if (lowerPath.endsWith(".webm")) return "video/webm";
-  if (lowerPath.endsWith(".ogv") || lowerPath.endsWith(".ogg")) return "video/ogg";
-  if (lowerPath.endsWith(".mov")) return "video/quicktime";
-  return "image/jpeg";
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {

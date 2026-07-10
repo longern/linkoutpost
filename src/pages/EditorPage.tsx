@@ -10,23 +10,14 @@ import {
 import {
   loadMyProfile,
   loadMyProfiles,
-  loadSession,
   saveProfile,
-  uploadAvatar,
-  uploadProfileAsset,
 } from "../apiClient";
 import {
   deleteLocalProfile,
   readLocalProfileByHandle,
-  readLocalProfile,
   readLocalProfileSummaries,
-  saveLocalAsset,
-  saveLocalAssetBlob,
   writeLocalProfile,
 } from "../localEditorStore";
-import {
-  resolveOEmbed,
-} from "../oembed";
 import {
   createProfile,
   hostedHandleMinLength,
@@ -35,53 +26,36 @@ import {
   normalizeHandle,
   type LinkItem,
   type LinkProfile,
-  type ProfileTheme,
 } from "../profile";
 import { siteTitle } from "../siteConfig";
 import type { ImportedStaticProfile } from "../staticImport";
 import type { ProfileSummary, SessionState } from "../types";
 import { DesignPanel } from "./editor/DesignPanel";
+import { createEditorMediaActions } from "./editor/createEditorMediaActions";
+import { createEditorProfileActions } from "./editor/createEditorProfileActions";
+import { EditorLoadingSpinner } from "./editor/EditorLoadingSpinner";
 import { EditorSidebar, type EditorPanel } from "./editor/EditorSidebar";
 import { HandleSetupDialog } from "./editor/HandleSetupDialog";
 import { LayoutPanel } from "./editor/LayoutPanel";
 import { LinksPanel } from "./editor/LinksPanel";
-import { prepareAvatarFile, prepareImageFile } from "./editor/avatarImage";
 import {
-  resolveProfileAssetUrl,
-  resolveProfileAvatarUrl,
-} from "./editor/profileAvatarUrl";
+  handleCreateErrorMessage,
+  loadEditorBootstrap,
+} from "./editor/loadEditorBootstrap";
 import {
   FullscreenProfilePreview,
   ProfilePreview,
 } from "./editor/ProfilePreview";
 import { ProfilePanel } from "./editor/ProfilePanel";
+import {
+  exportStaticProfile,
+  prepareImportedProfile,
+} from "./editor/profileTransfer";
 import { useAnimatedMenu } from "./editor/useAnimatedMenu";
-
-const maxBannerMediaBytes = 10 * 1024 * 1024;
-const maxProfileImageSize = 1920;
-
-function prepareProfileMediaFile(file: File): Promise<File> {
-  return prepareImageFile(file, { maxSize: maxProfileImageSize });
-}
-
-function EditorLoadingSpinner({ className = "" }: { className?: string }) {
-  return (
-    <div
-      aria-label="Loading"
-      className={`editor-loading${className ? ` ${className}` : ""}`}
-      role="status"
-    >
-      <span className="editor-loading-spinner" />
-    </div>
-  );
-}
-
-function handleCreateErrorMessage(error: unknown): string {
-  const message = error instanceof Error ? error.message : "";
-  return message === "Handle is already taken"
-    ? "That handle is already taken."
-    : message || "Handle create failed";
-}
+import {
+  useEditorAssetUrls,
+  type EditorMode,
+} from "./editor/useEditorAssetUrls";
 
 export function EditorPage({
   initialSession,
@@ -93,22 +67,10 @@ export function EditorPage({
   const [profileSummaries, setProfileSummaries] = useState<ProfileSummary[]>(
     [],
   );
-  const [mode, setMode] = useState<"loading" | "offline" | "backend">(
-    "loading",
-  );
+  const [mode, setMode] = useState<EditorMode>("loading");
   const [status, setStatus] = useState("Loading editor");
   const [activeEditorPanel, setActiveEditorPanel] =
     useState<EditorPanel>("profile");
-  const [editorAvatarUrl, setEditorAvatarUrl] = useState<string | null>(null);
-  const [editorBackgroundUrl, setEditorBackgroundUrl] = useState<string | null>(
-    null,
-  );
-  const [editorBannerImageUrl, setEditorBannerImageUrl] = useState<
-    string | null
-  >(null);
-  const [editorLinkImageUrls, setEditorLinkImageUrls] = useState<
-    Record<string, string | null>
-  >({});
   const [dragLinks, setDragLinks] = useState<LinkItem[] | null>(null);
   const [handleSetupOpen, setHandleSetupOpen] = useState(false);
   const [handleSetupRequired, setHandleSetupRequired] = useState(false);
@@ -130,125 +92,28 @@ export function EditorPage({
       typeof window !== "undefined" &&
       window.location.pathname === "/admin/preview",
   );
+  const {
+    avatarUrl: editorAvatarUrl,
+    backgroundUrl: editorBackgroundUrl,
+    bannerImageUrl: editorBannerImageUrl,
+    linkImageUrls: editorLinkImageUrls,
+  } = useEditorAssetUrls(profile, mode);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function boot() {
-      try {
-        const nextSession = await loadSession();
-        if (cancelled) return;
-        setSession(nextSession);
-
-        if (!nextSession.authenticated || nextSession.storage !== "backend") {
-          const offlineProfile = await readLocalProfile();
-          const summaries = await readLocalProfileSummaries();
-          if (cancelled) return;
-          const needsLocalHandle =
-            summaries.length === 0 && !normalizeHandle(offlineProfile.handle);
-          setProfile(offlineProfile);
-          setProfileSummaries(
-            summaries.length > 0 || needsLocalHandle
-              ? summaries
-              : [
-                  {
-                    handle: offlineProfile.handle,
-                    title: offlineProfile.title,
-                    updatedAt: offlineProfile.updatedAt,
-                  },
-                ],
-          );
-          setHandleDraft(needsLocalHandle ? "" : offlineProfile.handle);
-          setHandleSetupRequired(needsLocalHandle);
-          setHandleSetupOpen(needsLocalHandle);
-          setMode("offline");
-          setStatus("Offline editor");
-          return;
-        }
-
-        const summaries = await loadMyProfiles();
-        if (cancelled) return;
-
-        setProfileSummaries(summaries);
-        const requestedHandle =
-          typeof window !== "undefined"
-            ? normalizeHandle(
-                new URLSearchParams(window.location.search).get("create") ?? "",
-              )
-            : "";
-
-        if (summaries.length > 0) {
-          const firstHandle = summaries[0].handle;
-          const savedProfile = await loadMyProfile(firstHandle);
-          if (cancelled) return;
-
-          setProfile(savedProfile ?? createProfile({ handle: firstHandle }));
-          setHandleDraft(firstHandle);
-        } else {
-          const initialHandle =
-            requestedHandle || normalizeHandle(nextSession.name ?? "");
-          const initialProfile = createProfile({
-            handle: initialHandle,
-          });
-
-          if (requestedHandle) {
-            try {
-              await saveProfile(initialProfile);
-              if (cancelled) return;
-              setProfile(initialProfile);
-              setProfileSummaries([
-                {
-                  handle: initialProfile.handle,
-                  title: initialProfile.title,
-                  updatedAt: initialProfile.updatedAt,
-                },
-              ]);
-              setHandleDraft(initialProfile.handle);
-            } catch (error) {
-              if (cancelled) return;
-              setProfile(initialProfile);
-              setHandleDraft(initialHandle);
-              setHandleSetupError(handleCreateErrorMessage(error));
-              setHandleSetupRequired(true);
-              setHandleSetupOpen(true);
-            }
-          } else {
-            setProfile(initialProfile);
-            setHandleDraft(initialHandle);
-            setHandleSetupRequired(true);
-            setHandleSetupOpen(true);
-          }
-        }
-
-        setMode("backend");
-        setStatus("Backend editor");
-      } catch {
-        if (cancelled) return;
-        const offlineProfile = await readLocalProfile();
-        const summaries = await readLocalProfileSummaries();
-        const needsLocalHandle =
-          summaries.length === 0 && !normalizeHandle(offlineProfile.handle);
-        setProfile(offlineProfile);
-        setProfileSummaries(
-          summaries.length > 0 || needsLocalHandle
-            ? summaries
-            : [
-                {
-                  handle: offlineProfile.handle,
-                  title: offlineProfile.title,
-                  updatedAt: offlineProfile.updatedAt,
-                },
-              ],
-        );
-        setHandleDraft(needsLocalHandle ? "" : offlineProfile.handle);
-        setHandleSetupRequired(needsLocalHandle);
-        setHandleSetupOpen(needsLocalHandle);
-        setMode("offline");
-        setStatus("Backend unavailable, using offline editor");
-      }
-    }
-
-    boot();
+    void loadEditorBootstrap(initialSession).then((bootstrap) => {
+      if (cancelled) return;
+      setSession(bootstrap.session);
+      setProfile(bootstrap.profile);
+      setProfileSummaries(bootstrap.profileSummaries);
+      setHandleDraft(bootstrap.handleDraft);
+      setHandleSetupError(bootstrap.handleSetupError);
+      setHandleSetupRequired(bootstrap.handleSetupRequired);
+      setHandleSetupOpen(bootstrap.handleSetupOpen);
+      setMode(bootstrap.mode);
+      setStatus(bootstrap.status);
+    });
 
     return () => {
       cancelled = true;
@@ -265,114 +130,6 @@ export function EditorPage({
       window.removeEventListener("popstate", onPopState);
     };
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    let objectUrl: string | null = null;
-
-    resolveProfileAvatarUrl(profile, mode !== "backend")
-      .then((url) => {
-        if (cancelled) {
-          if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
-          return;
-        }
-        objectUrl = url;
-        setEditorAvatarUrl(url);
-      })
-      .catch(() => {
-        if (!cancelled) setEditorAvatarUrl(null);
-      });
-
-    return () => {
-      cancelled = true;
-      if (objectUrl?.startsWith("blob:")) URL.revokeObjectURL(objectUrl);
-    };
-  }, [mode, profile]);
-
-  useEffect(() => {
-    let cancelled = false;
-    let backgroundObjectUrl: string | null = null;
-    let bannerObjectUrl: string | null = null;
-
-    async function resolveEditorMedia(): Promise<void> {
-      const allowLocalAssets = mode !== "backend";
-      const [backgroundUrl, bannerImageUrl] = await Promise.all([
-        resolveProfileAssetUrl(
-          profile.theme.backgroundAssetId,
-          allowLocalAssets,
-        ),
-        resolveProfileAssetUrl(
-          profile.theme.bannerImageAssetId,
-          allowLocalAssets,
-        ),
-      ]);
-
-      if (cancelled) {
-        if (backgroundUrl?.startsWith("blob:"))
-          URL.revokeObjectURL(backgroundUrl);
-        if (bannerImageUrl?.startsWith("blob:"))
-          URL.revokeObjectURL(bannerImageUrl);
-        return;
-      }
-
-      backgroundObjectUrl = backgroundUrl;
-      bannerObjectUrl = bannerImageUrl;
-      setEditorBackgroundUrl(backgroundUrl);
-      setEditorBannerImageUrl(bannerImageUrl);
-    }
-
-    void resolveEditorMedia().catch(() => {
-      if (!cancelled) {
-        setEditorBackgroundUrl(null);
-        setEditorBannerImageUrl(null);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-      if (backgroundObjectUrl?.startsWith("blob:"))
-        URL.revokeObjectURL(backgroundObjectUrl);
-      if (bannerObjectUrl?.startsWith("blob:"))
-        URL.revokeObjectURL(bannerObjectUrl);
-    };
-  }, [mode, profile.theme.backgroundAssetId, profile.theme.bannerImageAssetId]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const objectUrls: string[] = [];
-
-    async function resolveLinkImages(): Promise<void> {
-      const allowLocalAssets = mode !== "backend";
-      const entries = await Promise.all(
-        profile.links
-          .filter((link) => link.type === "image" && link.imageAssetId)
-          .map(async (link) => {
-            const url = await resolveProfileAssetUrl(
-              link.imageAssetId ?? null,
-              allowLocalAssets,
-            );
-            if (url?.startsWith("blob:")) objectUrls.push(url);
-            return [link.id, url] as const;
-          }),
-      );
-
-      if (cancelled) {
-        objectUrls.forEach((url) => URL.revokeObjectURL(url));
-        return;
-      }
-
-      setEditorLinkImageUrls(Object.fromEntries(entries));
-    }
-
-    void resolveLinkImages().catch(() => {
-      if (!cancelled) setEditorLinkImageUrls({});
-    });
-
-    return () => {
-      cancelled = true;
-      objectUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [mode, profile.links]);
 
   const profileUrl = useMemo(
     () => (profile.handle ? `/${profile.handle}` : "/"),
@@ -416,227 +173,40 @@ export function EditorPage({
     setStatus("Saved locally");
   }
 
-  function saveCurrentProfile(): void {
-    void autosaveProfile(profile);
-  }
+  const {
+    onAvatarChange,
+    onBackgroundChange,
+    onBackgroundRemove,
+    onBannerImageChange,
+    onBannerImageRemove,
+    onLinkImageChange,
+  } = createEditorMediaActions({
+    autosaveProfile,
+    mode,
+    profile,
+    setProfile,
+    setStatus,
+  });
 
-  function updateProfile(patch: Partial<LinkProfile>): void {
-    setProfile((current) => ({
-      ...current,
-      ...patch,
-      updatedAt: new Date().toISOString(),
-    }));
-  }
-
-  function commitProfile(patch: Partial<LinkProfile>): void {
-    const nextProfile = {
-      ...profile,
-      ...patch,
-      updatedAt: new Date().toISOString(),
-    };
-    setProfile(nextProfile);
-    void autosaveProfile(nextProfile);
-  }
-
-  function updateLink(id: string, patch: Partial<LinkItem>): void {
-    updateProfile({
-      links: profile.links.map((link) =>
-        link.id === id ? { ...link, ...patch } : link,
-      ),
-    });
-  }
-
-  function updateTheme(patch: Partial<ProfileTheme>): void {
-    updateProfile({
-      theme: {
-        ...profile.theme,
-        ...patch,
-      },
-    });
-  }
-
-  function commitTheme(patch: Partial<ProfileTheme>): void {
-    const nextProfile = {
-      ...profile,
-      theme: {
-        ...profile.theme,
-        ...patch,
-      },
-      updatedAt: new Date().toISOString(),
-    };
-    setProfile(nextProfile);
-    void autosaveProfile(nextProfile);
-  }
-
-  function addLink(): void {
-    const nextProfile = {
-      ...profile,
-      links: [
-        ...profile.links,
-        {
-          id: crypto.randomUUID(),
-          label: "",
-          url: "",
-        },
-      ],
-      updatedAt: new Date().toISOString(),
-    };
-    setProfile(nextProfile);
-    void autosaveProfile(nextProfile);
-  }
-
-  function addImageCard(): void {
-    const nextProfile = {
-      ...profile,
-      links: [
-        ...profile.links,
-        {
-          id: crypto.randomUUID(),
-          imageAssetId: null,
-          label: "",
-          type: "image" as const,
-          url: "",
-        },
-      ],
-      updatedAt: new Date().toISOString(),
-    };
-    setProfile(nextProfile);
-    void autosaveProfile(nextProfile);
-  }
-
-  async function onLinkImageChange(
-    id: string,
-    file: File | null,
-  ): Promise<void> {
-    if (!file) return;
-    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-      setStatus("Choose an image or video file");
-      return;
-    }
-
-    try {
-      const mediaFile = file.type.startsWith("image/")
-        ? await prepareProfileMediaFile(file)
-        : file;
-      if (mediaFile.size > maxBannerMediaBytes) {
-        setStatus("Media card must be 10 MB or smaller");
-        return;
-      }
-      const imageAssetId =
-        mode === "backend"
-          ? await uploadProfileAsset(mediaFile, "link")
-          : (await saveLocalAsset(mediaFile)).id;
-      const nextProfile = {
-        ...profile,
-        links: profile.links.map((link) =>
-          link.id === id ? { ...link, imageAssetId } : link,
-        ),
-        updatedAt: new Date().toISOString(),
-      };
-      setProfile(nextProfile);
-      void autosaveProfile(nextProfile);
-      setStatus(mode === "backend" ? "Media uploaded" : "Media saved locally");
-    } catch {
-      setStatus(
-        mode === "backend"
-          ? "Media upload failed"
-          : "This browser cannot save local media",
-      );
-    }
-  }
-
-  function removeLink(id: string): void {
-    const nextProfile = {
-      ...profile,
-      links: profile.links.filter((link) => link.id !== id),
-      updatedAt: new Date().toISOString(),
-    };
-    setProfile(nextProfile);
-    void autosaveProfile(nextProfile);
-  }
-
-  function toggleLinkVisibility(id: string): void {
-    const nextProfile = {
-      ...profile,
-      links: profile.links.map((link) =>
-        link.id === id ? { ...link, hidden: !link.hidden } : link,
-      ),
-      updatedAt: new Date().toISOString(),
-    };
-    setProfile(nextProfile);
-    void autosaveProfile(nextProfile);
-  }
-
-  function saveLink(id: string): void {
-    const link = profile.links.find((item) => item.id === id);
-    if (!link || link.type === "image") {
-      saveCurrentProfile();
-      return;
-    }
-
-    const sourceUrl = link.url;
-    if (link.embedMode === "link") {
-      const nextProfile = {
-        ...profile,
-        links: profile.links.map((item) =>
-          item.id === id
-            ? { ...item, embedHtml: null, embedProvider: null }
-            : item,
-        ),
-        updatedAt: new Date().toISOString(),
-      };
-      setProfile(nextProfile);
-      void autosaveProfile(nextProfile);
-      return;
-    }
-
-    void resolveOEmbed(sourceUrl, {
-      allowDiscovery: link.embedMode === "embed",
-      useBackend: mode === "backend",
-    }).then((embed) => {
-      if (!embed) {
-        const nextProfile = {
-          ...profile,
-          links: profile.links.map((item) =>
-            item.id === id
-              ? { ...item, embedHtml: null, embedProvider: null }
-              : item,
-          ),
-          updatedAt: new Date().toISOString(),
-        };
-        setProfile(nextProfile);
-        void autosaveProfile(nextProfile);
-        return;
-      }
-
-      const nextProfile = {
-        ...profile,
-        links: profile.links.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                embedHtml: embed.html,
-                embedProvider: embed.provider,
-                label: item.label.trim() || embed.title,
-              }
-            : item,
-        ),
-        updatedAt: new Date().toISOString(),
-      };
-      setProfile(nextProfile);
-      void autosaveProfile(nextProfile);
-    });
-  }
-
-  function commitLinks(finalLinks: LinkItem[]): void {
-    const nextProfile = {
-      ...profile,
-      links: finalLinks,
-      updatedAt: new Date().toISOString(),
-    };
-    setProfile(nextProfile);
-    void autosaveProfile(nextProfile);
-  }
+  const {
+    addImageCard,
+    addLink,
+    commitLinks,
+    commitProfile,
+    commitTheme,
+    removeLink,
+    saveCurrentProfile,
+    saveLink,
+    toggleLinkVisibility,
+    updateLink,
+    updateProfile,
+    updateTheme,
+  } = createEditorProfileActions({
+    autosaveProfile,
+    mode,
+    profile,
+    setProfile,
+  });
 
   async function onSelectProfile(handle: string): Promise<void> {
     if (!handle || handle === profile.handle) return;
@@ -728,191 +298,8 @@ export function EditorPage({
     }
   }
 
-  async function onAvatarChange(file: File | null): Promise<void> {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setStatus("Choose an image file");
-      return;
-    }
-
-    try {
-      const avatarFile = await prepareAvatarFile(file);
-
-      if (mode === "backend") {
-        const avatarAssetId = await uploadAvatar(avatarFile);
-        const nextProfile = {
-          ...profile,
-          avatarAssetId,
-          updatedAt: new Date().toISOString(),
-        };
-        setProfile(nextProfile);
-        void autosaveProfile(nextProfile);
-        setStatus("Image uploaded");
-        return;
-      }
-
-      const asset = await saveLocalAsset(avatarFile);
-      const nextProfile = {
-        ...profile,
-        avatarAssetId: asset.id,
-        updatedAt: new Date().toISOString(),
-      };
-      setProfile(nextProfile);
-      void autosaveProfile(nextProfile);
-      setStatus("Image saved locally");
-    } catch {
-      setStatus(
-        mode === "backend"
-          ? "Image upload failed"
-          : "This browser cannot save local images",
-      );
-    }
-  }
-
-  async function onBackgroundChange(file: File | null): Promise<void> {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setStatus("Choose an image file");
-      return;
-    }
-
-    try {
-      const backgroundFile = await prepareProfileMediaFile(file);
-      if (mode === "backend") {
-        const backgroundAssetId = await uploadProfileAsset(
-          backgroundFile,
-          "background",
-        );
-        const nextProfile = {
-          ...profile,
-          theme: {
-            ...profile.theme,
-            backgroundAssetId,
-          },
-          updatedAt: new Date().toISOString(),
-        };
-        setProfile(nextProfile);
-        void autosaveProfile(nextProfile);
-        setStatus("Background uploaded");
-        return;
-      }
-
-      const asset = await saveLocalAsset(backgroundFile);
-      const nextProfile = {
-        ...profile,
-        theme: {
-          ...profile.theme,
-          backgroundAssetId: asset.id,
-        },
-        updatedAt: new Date().toISOString(),
-      };
-      setProfile(nextProfile);
-      void autosaveProfile(nextProfile);
-      setStatus("Background saved locally");
-    } catch {
-      setStatus(
-        mode === "backend"
-          ? "Background upload failed"
-          : "This browser cannot save local images",
-      );
-    }
-  }
-
-  function onBackgroundRemove(): void {
-    const nextProfile = {
-      ...profile,
-      theme: {
-        ...profile.theme,
-        backgroundAssetId: null,
-      },
-      updatedAt: new Date().toISOString(),
-    };
-    setProfile(nextProfile);
-    void autosaveProfile(nextProfile);
-    setStatus("Background removed");
-  }
-
-  async function onBannerImageChange(file: File | null): Promise<void> {
-    if (!file) return;
-    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-      setStatus("Choose an image or video file");
-      return;
-    }
-
-    try {
-      const bannerFile = file.type.startsWith("image/")
-        ? await prepareProfileMediaFile(file)
-        : file;
-      if (bannerFile.size > maxBannerMediaBytes) {
-        setStatus("Banner media must be 10 MB or smaller");
-        return;
-      }
-      if (mode === "backend") {
-        const bannerImageAssetId = await uploadProfileAsset(
-          bannerFile,
-          "banner",
-        );
-        const nextProfile = {
-          ...profile,
-          theme: {
-            ...profile.theme,
-            bannerImageAssetId,
-          },
-          updatedAt: new Date().toISOString(),
-        };
-        setProfile(nextProfile);
-        void autosaveProfile(nextProfile);
-        setStatus("Banner image uploaded");
-        return;
-      }
-
-      const asset = await saveLocalAsset(bannerFile);
-      const nextProfile = {
-        ...profile,
-        theme: {
-          ...profile.theme,
-          bannerImageAssetId: asset.id,
-        },
-        updatedAt: new Date().toISOString(),
-      };
-      setProfile(nextProfile);
-      void autosaveProfile(nextProfile);
-      setStatus("Banner image saved locally");
-    } catch {
-      setStatus(
-        mode === "backend"
-          ? "Banner image upload failed"
-          : "This browser cannot save local images",
-      );
-    }
-  }
-
-  function onBannerImageRemove(): void {
-    const nextProfile = {
-      ...profile,
-      theme: {
-        ...profile.theme,
-        bannerImageAssetId: null,
-      },
-      updatedAt: new Date().toISOString(),
-    };
-    setProfile(nextProfile);
-    void autosaveProfile(nextProfile);
-    setStatus("Banner image removed");
-  }
-
   async function onExport(): Promise<void> {
-    const { buildStaticZip } = await import("../staticExport");
-    const blob = await buildStaticZip(
-      profile,
-      mode === "backend" ? "backend" : "local",
-    );
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${profile.handle || "linkoutpost"}.zip`;
-    link.click();
-    URL.revokeObjectURL(url);
+    await exportStaticProfile(profile, mode);
     setStatus("Static ZIP exported");
   }
 
@@ -943,154 +330,6 @@ export function EditorPage({
     setImportSaving(false);
   }
 
-  async function prepareImportedProfile(
-    imported: ImportedStaticProfile,
-    handle: string,
-  ): Promise<LinkProfile> {
-    const fallbackAvatarAssetId = imported.profile.avatarAssetId?.startsWith(
-      "data:image/",
-    )
-      ? imported.profile.avatarAssetId
-      : null;
-    const fallbackBackgroundAssetId =
-      imported.profile.theme.backgroundAssetId?.startsWith("data:image/")
-        ? imported.profile.theme.backgroundAssetId
-        : null;
-    const fallbackBannerImageAssetId =
-      imported.profile.theme.bannerImageAssetId?.startsWith("data:image/") ||
-      imported.profile.theme.bannerImageAssetId?.startsWith("data:video/")
-        ? imported.profile.theme.bannerImageAssetId
-        : null;
-    let nextProfile = createProfile({
-      ...imported.profile,
-      handle,
-      avatarAssetId: fallbackAvatarAssetId,
-      theme: {
-        ...imported.profile.theme,
-        backgroundAssetId: fallbackBackgroundAssetId,
-        bannerImageAssetId: fallbackBannerImageAssetId,
-      },
-      updatedAt: new Date().toISOString(),
-    });
-
-    if (imported.avatar) {
-      if (mode === "backend") {
-        const file = new File([imported.avatar.blob], imported.avatar.name, {
-          type: imported.avatar.type,
-        });
-        nextProfile = {
-          ...nextProfile,
-          avatarAssetId: await uploadAvatar(file),
-        };
-      } else {
-        const asset = await saveLocalAssetBlob(
-          imported.avatar.blob,
-          imported.avatar.name,
-          imported.avatar.type,
-        );
-        nextProfile = {
-          ...nextProfile,
-          avatarAssetId: asset.id,
-        };
-      }
-    }
-
-    if (imported.background) {
-      if (mode === "backend") {
-        const file = new File(
-          [imported.background.blob],
-          imported.background.name,
-          {
-            type: imported.background.type,
-          },
-        );
-        nextProfile = {
-          ...nextProfile,
-          theme: {
-            ...nextProfile.theme,
-            backgroundAssetId: await uploadProfileAsset(file, "background"),
-          },
-        };
-      } else {
-        const asset = await saveLocalAssetBlob(
-          imported.background.blob,
-          imported.background.name,
-          imported.background.type,
-        );
-        nextProfile = {
-          ...nextProfile,
-          theme: {
-            ...nextProfile.theme,
-            backgroundAssetId: asset.id,
-          },
-        };
-      }
-    }
-
-    if (imported.bannerImage) {
-      if (mode === "backend") {
-        const file = new File(
-          [imported.bannerImage.blob],
-          imported.bannerImage.name,
-          {
-            type: imported.bannerImage.type,
-          },
-        );
-        nextProfile = {
-          ...nextProfile,
-          theme: {
-            ...nextProfile.theme,
-            bannerImageAssetId: await uploadProfileAsset(file, "banner"),
-          },
-        };
-      } else {
-        const asset = await saveLocalAssetBlob(
-          imported.bannerImage.blob,
-          imported.bannerImage.name,
-          imported.bannerImage.type,
-        );
-        nextProfile = {
-          ...nextProfile,
-          theme: {
-            ...nextProfile.theme,
-            bannerImageAssetId: asset.id,
-          },
-        };
-      }
-    }
-
-    const importedLinkImages = Object.entries(imported.linkImages);
-    if (importedLinkImages.length > 0) {
-      const linkImageAssetIds = new Map<string, string>();
-
-      for (const [linkId, asset] of importedLinkImages) {
-        if (mode === "backend") {
-          const file = new File([asset.blob], asset.name, {
-            type: asset.type,
-          });
-          linkImageAssetIds.set(linkId, await uploadProfileAsset(file, "link"));
-        } else {
-          const stored = await saveLocalAssetBlob(
-            asset.blob,
-            asset.name,
-            asset.type,
-          );
-          linkImageAssetIds.set(linkId, stored.id);
-        }
-      }
-
-      nextProfile = {
-        ...nextProfile,
-        links: nextProfile.links.map((link) => {
-          const imageAssetId = linkImageAssetIds.get(link.id);
-          return imageAssetId ? { ...link, imageAssetId } : link;
-        }),
-      };
-    }
-
-    return nextProfile;
-  }
-
   async function commitImportedProfile(
     imported: ImportedStaticProfile,
     handle: string,
@@ -1115,6 +354,7 @@ export function EditorPage({
       const nextProfile = await prepareImportedProfile(
         imported,
         normalizedHandle,
+        mode,
       );
 
       if (mode === "backend") {

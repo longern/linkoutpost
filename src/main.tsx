@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { App, type InitialState } from "./App";
-import "./PublicProfile.css";
+import "./features/profile/ProfilePage.css";
 import "./styles.css";
 
 declare global {

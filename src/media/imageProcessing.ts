@@ -1,3 +1,9 @@
+import {
+  avatarCompressionThresholdBytes,
+  avatarMaxDimension,
+  profileImageMaxDimension,
+} from "./config";
+
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -43,9 +49,7 @@ export async function prepareImageFile(
     file.type,
   );
 
-  if (smallEnough && staticBrowserImage) {
-    return file;
-  }
+  if (smallEnough && staticBrowserImage) return file;
 
   const scale = Math.min(
     1,
@@ -56,9 +60,7 @@ export async function prepareImageFile(
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
 
-  if (!context) {
-    throw new Error("Canvas is unavailable");
-  }
+  if (!context) throw new Error("Canvas is unavailable");
 
   canvas.width = width;
   canvas.height = height;
@@ -68,9 +70,7 @@ export async function prepareImageFile(
     (await canvasToBlob(canvas, "image/webp", 0.86)) ??
     (await canvasToBlob(canvas, "image/jpeg", 0.88));
 
-  if (!blob) {
-    throw new Error("Image compression failed");
-  }
+  if (!blob) throw new Error("Image compression failed");
 
   const extension = blob.type === "image/webp" ? "webp" : "jpg";
   const baseName =
@@ -80,8 +80,12 @@ export async function prepareImageFile(
 
 export function prepareAvatarFile(file: File): Promise<File> {
   return prepareImageFile(file, {
-    maxSize: 512,
-    maxOriginalBytes: 256 * 1024,
+    maxSize: avatarMaxDimension,
+    maxOriginalBytes: avatarCompressionThresholdBytes,
     outputName: "avatar",
   });
+}
+
+export function prepareProfileImageFile(file: File): Promise<File> {
+  return prepareImageFile(file, { maxSize: profileImageMaxDimension });
 }

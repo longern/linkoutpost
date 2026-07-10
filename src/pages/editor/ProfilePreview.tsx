@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa6";
 import type { LinkProfile } from "../../profile";
-import { ProfilePage } from "../../PublicProfile";
+import { ProfilePage } from "../../features/profile/ProfilePage";
 import {
   resolveProfileAssetUrl,
   resolveProfileAvatarUrl,

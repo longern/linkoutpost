@@ -2,6 +2,18 @@
 
 Cloudflare Workers + React app for personal link pages.
 
+## Code map
+
+- `src/pages/`: application routes. The editor page composes the focused modules under `src/pages/editor/`.
+- `src/pages/editor/links/`: link rows, media previews, editing, and drag-sort behavior.
+- `src/features/profile/`: the shared public profile renderer used by hosted SSR, editor previews, and static exports.
+- `src/media/`: shared upload kinds, limits, MIME mappings, and browser image resizing.
+- `src/oembed/`: provider-specific and generic oEmbed resolution.
+- `src/worker/`: Worker authentication, D1 profile persistence, R2 asset storage, and HTTP helpers. `src/worker.tsx` is the routing and SSR entrypoint.
+- `src/styles/`: global application styles split by surface. Public profile styles live with the profile feature because static exports reuse them.
+- `src/profile.ts`: the shared profile data model, normalization, defaults, and social platform definitions.
+- `src/staticExport.tsx` and `src/staticImport.ts`: the portable ZIP boundary.
+
 ## Routing model
 
 - `/` is served as a static asset.

@@ -1,4 +1,4 @@
-import type { PublicProfileStyleRule } from "../PublicProfileStyleRules";
+import type { PublicProfileStyleRule } from "../ProfileStyleRules";
 
 export const profileLayoutStyleRules: PublicProfileStyleRule[] = [
   {
