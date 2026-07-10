@@ -45,7 +45,7 @@ import { EditorSidebar, type EditorPanel } from "./editor/EditorSidebar";
 import { HandleSetupDialog } from "./editor/HandleSetupDialog";
 import { LayoutPanel } from "./editor/LayoutPanel";
 import { LinksPanel } from "./editor/LinksPanel";
-import { prepareAvatarFile } from "./editor/avatarImage";
+import { prepareAvatarFile, prepareImageFile } from "./editor/avatarImage";
 import {
   resolveProfileAssetUrl,
   resolveProfileAvatarUrl,
@@ -58,6 +58,23 @@ import { ProfilePanel } from "./editor/ProfilePanel";
 import { useAnimatedMenu } from "./editor/useAnimatedMenu";
 
 const maxBannerMediaBytes = 10 * 1024 * 1024;
+const maxProfileImageSize = 1920;
+
+function prepareProfileMediaFile(file: File): Promise<File> {
+  return prepareImageFile(file, { maxSize: maxProfileImageSize });
+}
+
+function EditorLoadingSpinner({ className = "" }: { className?: string }) {
+  return (
+    <div
+      aria-label="Loading"
+      className={`editor-loading${className ? ` ${className}` : ""}`}
+      role="status"
+    >
+      <span className="editor-loading-spinner" />
+    </div>
+  );
+}
 
 function handleCreateErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : "";
@@ -496,16 +513,19 @@ export function EditorPage({
       setStatus("Choose an image or video file");
       return;
     }
-    if (file.size > maxBannerMediaBytes) {
-      setStatus("Media card must be 10 MB or smaller");
-      return;
-    }
 
     try {
+      const mediaFile = file.type.startsWith("image/")
+        ? await prepareProfileMediaFile(file)
+        : file;
+      if (mediaFile.size > maxBannerMediaBytes) {
+        setStatus("Media card must be 10 MB or smaller");
+        return;
+      }
       const imageAssetId =
         mode === "backend"
-          ? await uploadProfileAsset(file, "link")
-          : (await saveLocalAsset(file)).id;
+          ? await uploadProfileAsset(mediaFile, "link")
+          : (await saveLocalAsset(mediaFile)).id;
       const nextProfile = {
         ...profile,
         links: profile.links.map((link) =>
@@ -757,8 +777,12 @@ export function EditorPage({
     }
 
     try {
+      const backgroundFile = await prepareProfileMediaFile(file);
       if (mode === "backend") {
-        const backgroundAssetId = await uploadProfileAsset(file, "background");
+        const backgroundAssetId = await uploadProfileAsset(
+          backgroundFile,
+          "background",
+        );
         const nextProfile = {
           ...profile,
           theme: {
@@ -773,7 +797,7 @@ export function EditorPage({
         return;
       }
 
-      const asset = await saveLocalAsset(file);
+      const asset = await saveLocalAsset(backgroundFile);
       const nextProfile = {
         ...profile,
         theme: {
@@ -814,14 +838,20 @@ export function EditorPage({
       setStatus("Choose an image or video file");
       return;
     }
-    if (file.size > maxBannerMediaBytes) {
-      setStatus("Banner media must be 10 MB or smaller");
-      return;
-    }
 
     try {
+      const bannerFile = file.type.startsWith("image/")
+        ? await prepareProfileMediaFile(file)
+        : file;
+      if (bannerFile.size > maxBannerMediaBytes) {
+        setStatus("Banner media must be 10 MB or smaller");
+        return;
+      }
       if (mode === "backend") {
-        const bannerImageAssetId = await uploadProfileAsset(file, "banner");
+        const bannerImageAssetId = await uploadProfileAsset(
+          bannerFile,
+          "banner",
+        );
         const nextProfile = {
           ...profile,
           theme: {
@@ -836,7 +866,7 @@ export function EditorPage({
         return;
       }
 
-      const asset = await saveLocalAsset(file);
+      const asset = await saveLocalAsset(bannerFile);
       const nextProfile = {
         ...profile,
         theme: {
@@ -1215,6 +1245,14 @@ export function EditorPage({
     }
   }
 
+  if (fullPreviewOpen && mode === "loading") {
+    return (
+      <main className="editor-full-preview">
+        <EditorLoadingSpinner className="editor-loading-fullscreen" />
+      </main>
+    );
+  }
+
   if (fullPreviewOpen) {
     return (
       <FullscreenProfilePreview
@@ -1377,62 +1415,68 @@ export function EditorPage({
 
         <div className="editor-scroll">
           <div className="editor-content">
-            {activeEditorPanel === "profile" && (
-              <ProfilePanel
-                avatarUrl={editorAvatarUrl}
-                onAvatarChange={(file) => {
-                  void onAvatarChange(file);
-                }}
-                onSave={saveCurrentProfile}
-                onCommit={commitProfile}
-                onUpdate={updateProfile}
-                profile={profile}
-              />
-            )}
+            {mode === "loading" ? (
+              <EditorLoadingSpinner className="editor-pane-loading" />
+            ) : (
+              <>
+                {activeEditorPanel === "profile" && (
+                  <ProfilePanel
+                    avatarUrl={editorAvatarUrl}
+                    onAvatarChange={(file) => {
+                      void onAvatarChange(file);
+                    }}
+                    onSave={saveCurrentProfile}
+                    onCommit={commitProfile}
+                    onUpdate={updateProfile}
+                    profile={profile}
+                  />
+                )}
 
-            {activeEditorPanel === "links" && (
-              <LinksPanel
-                linkImageUrls={editorLinkImageUrls}
-                links={profile.links}
-                onAddImage={addImageCard}
-                onAddLink={addLink}
-                onCommitLinks={commitLinks}
-                onImageChange={(id, file) => {
-                  void onLinkImageChange(id, file);
-                }}
-                onPreviewLinksChange={setDragLinks}
-                onRemove={removeLink}
-                onSaveLink={saveLink}
-                onToggleVisibility={toggleLinkVisibility}
-                onUpdate={updateLink}
-              />
-            )}
+                {activeEditorPanel === "links" && (
+                  <LinksPanel
+                    linkImageUrls={editorLinkImageUrls}
+                    links={profile.links}
+                    onAddImage={addImageCard}
+                    onAddLink={addLink}
+                    onCommitLinks={commitLinks}
+                    onImageChange={(id, file) => {
+                      void onLinkImageChange(id, file);
+                    }}
+                    onPreviewLinksChange={setDragLinks}
+                    onRemove={removeLink}
+                    onSaveLink={saveLink}
+                    onToggleVisibility={toggleLinkVisibility}
+                    onUpdate={updateLink}
+                  />
+                )}
 
-            {activeEditorPanel === "design" && (
-              <DesignPanel
-                backgroundUrl={editorBackgroundUrl}
-                bannerImageUrl={editorBannerImageUrl}
-                onBackgroundChange={(file) => {
-                  void onBackgroundChange(file);
-                }}
-                onBackgroundRemove={onBackgroundRemove}
-                onBannerImageChange={(file) => {
-                  void onBannerImageChange(file);
-                }}
-                onBannerImageRemove={onBannerImageRemove}
-                onSave={saveCurrentProfile}
-                onUpdateTheme={updateTheme}
-                profile={profile}
-              />
-            )}
+                {activeEditorPanel === "design" && (
+                  <DesignPanel
+                    backgroundUrl={editorBackgroundUrl}
+                    bannerImageUrl={editorBannerImageUrl}
+                    onBackgroundChange={(file) => {
+                      void onBackgroundChange(file);
+                    }}
+                    onBackgroundRemove={onBackgroundRemove}
+                    onBannerImageChange={(file) => {
+                      void onBannerImageChange(file);
+                    }}
+                    onBannerImageRemove={onBannerImageRemove}
+                    onSave={saveCurrentProfile}
+                    onUpdateTheme={updateTheme}
+                    profile={profile}
+                  />
+                )}
 
-            {activeEditorPanel === "layout" && (
-              <LayoutPanel
-                onCommitTheme={commitTheme}
-                onSave={saveCurrentProfile}
-                onUpdateTheme={updateTheme}
-                profile={profile}
-              />
+                {activeEditorPanel === "layout" && (
+                  <LayoutPanel
+                    onCommitTheme={commitTheme}
+                    onSave={saveCurrentProfile}
+                    onUpdateTheme={updateTheme}
+                    profile={profile}
+                  />
+                )}
+              </>
             )}
           </div>
         </div>
@@ -1440,10 +1484,19 @@ export function EditorPage({
 
       <hr className="editor-divider" />
 
-      <ProfilePreview
-        allowLocalAssets={mode !== "backend"}
-        profile={previewProfile}
-      />
+      {mode === "loading" ? (
+        <section
+          aria-label="Profile preview"
+          className="preview editor-preview-loading"
+        >
+          <EditorLoadingSpinner />
+        </section>
+      ) : (
+        <ProfilePreview
+          allowLocalAssets={mode !== "backend"}
+          profile={previewProfile}
+        />
+      )}
 
       {handleSetupOpen && (
         <HandleSetupDialog

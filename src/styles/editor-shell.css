@@ -419,6 +419,42 @@
   padding: 26px 16px 44px;
 }
 
+.editor-loading {
+  width: 100%;
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+}
+
+.editor-pane-loading {
+  min-height: min(420px, calc(100vh - 140px));
+}
+
+.editor-loading-fullscreen {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.editor-preview-loading {
+  display: grid;
+  place-items: center;
+}
+
+.editor-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgb(var(--brand-accent-rgb) / 16%);
+  border-top-color: var(--brand-accent);
+  border-radius: 999px;
+  animation: editor-loading-spin 760ms linear infinite;
+}
+
+@keyframes editor-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (min-width: 861px) and (max-width: 1200px) {
   .editor-shell {
     grid-template-columns: 252px minmax(0, 1fr);

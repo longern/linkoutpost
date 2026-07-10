@@ -25,13 +25,23 @@ function canvasToBlob(
   });
 }
 
-export async function prepareAvatarFile(file: File): Promise<File> {
+type PrepareImageOptions = {
+  maxSize: number;
+  maxOriginalBytes?: number;
+  outputName?: string;
+};
+
+export async function prepareImageFile(
+  file: File,
+  { maxSize, maxOriginalBytes, outputName }: PrepareImageOptions,
+): Promise<File> {
   const image = await loadImage(file);
-  const maxSize = 512;
   const smallEnough =
-    file.size <= 256 * 1024 &&
+    (maxOriginalBytes === undefined || file.size <= maxOriginalBytes) &&
     Math.max(image.naturalWidth, image.naturalHeight) <= maxSize;
-  const staticBrowserImage = ["image/jpeg", "image/png", "image/webp"].includes(file.type);
+  const staticBrowserImage = ["image/jpeg", "image/png", "image/webp"].includes(
+    file.type,
+  );
 
   if (smallEnough && staticBrowserImage) {
     return file;
@@ -59,9 +69,19 @@ export async function prepareAvatarFile(file: File): Promise<File> {
     (await canvasToBlob(canvas, "image/jpeg", 0.88));
 
   if (!blob) {
-    throw new Error("Avatar compression failed");
+    throw new Error("Image compression failed");
   }
 
   const extension = blob.type === "image/webp" ? "webp" : "jpg";
-  return new File([blob], `avatar.${extension}`, { type: blob.type });
+  const baseName =
+    outputName ?? (file.name.replace(/\.[^.]+$/, "") || "image");
+  return new File([blob], `${baseName}.${extension}`, { type: blob.type });
+}
+
+export function prepareAvatarFile(file: File): Promise<File> {
+  return prepareImageFile(file, {
+    maxSize: 512,
+    maxOriginalBytes: 256 * 1024,
+    outputName: "avatar",
+  });
 }
