@@ -13,6 +13,10 @@ import type { ProfileLayoutDefinition } from "./ProfileLayoutDefinition";
 export const profileLayoutDefinitions: readonly ProfileLayoutDefinition[] = [
   {
     description: "Avatar, bio, social icons, and stacked links.",
+    designCapabilities: {
+      backgroundImage: false,
+      bannerMedia: true,
+    },
     id: "classic",
     label: "Classic links",
     Preview: ProfileClassicLayoutPreview,
@@ -32,6 +36,10 @@ export const profileLayoutDefinitions: readonly ProfileLayoutDefinition[] = [
   },
   {
     description: "Structured visual card with profile details below.",
+    designCapabilities: {
+      backgroundImage: true,
+      bannerMedia: false,
+    },
     id: "card",
     label: "Structured card",
     Preview: ProfileCardLayoutPreview,
@@ -52,6 +60,10 @@ export const profileLayoutDefinitions: readonly ProfileLayoutDefinition[] = [
   },
   {
     description: "Banner identity with personal detail chips.",
+    designCapabilities: {
+      backgroundImage: false,
+      bannerMedia: true,
+    },
     id: "info",
     label: "Info header",
     Preview: ProfileInfoLayoutPreview,

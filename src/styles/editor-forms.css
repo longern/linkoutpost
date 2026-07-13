@@ -498,6 +498,24 @@ select:focus {
 }
 
 input[type="color"] {
-  min-height: 44px;
+  width: 52px;
+  height: 40px;
+  min-height: 40px;
+  flex: 0 0 auto;
   padding: 4px;
+}
+
+.design-color-control {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 10px;
+}
+
+.design-color-code {
+  color: #667085;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }

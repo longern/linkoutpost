@@ -21,6 +21,10 @@ export type ProfileLayoutRenderContext = {
 
 export type ProfileLayoutDefinition = {
   description: string;
+  designCapabilities: {
+    backgroundImage: boolean;
+    bannerMedia: boolean;
+  };
   id: ProfileLayout;
   label: string;
   Preview: ComponentType;
