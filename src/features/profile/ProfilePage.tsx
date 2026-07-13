@@ -18,9 +18,7 @@ import {
   type SocialLink,
 } from "../../profile";
 import { getOEmbedRenderData } from "../../oembed";
-import { ProfileCardLayout } from "./layouts/ProfileCardLayout";
-import { ProfileClassicLayout } from "./layouts/ProfileClassicLayout";
-import { ProfileInfoLayout } from "./layouts/ProfileInfoLayout";
+import { getProfileLayoutDefinition } from "./layouts/registry";
 import {
   copyProfileUrl,
   getProfileShareCapabilities,
@@ -642,23 +640,6 @@ export function ProfilePage({
     />
   );
   const profileFooter = <ProfileFooter />;
-
-  if (currentProfile.theme.layout === "card") {
-    return (
-      <ProfileCardLayout
-        avatar={profileAvatar}
-        backgroundUrl={backgroundUrl}
-        cardFields={<ProfileCardFields profile={currentProfile} />}
-        footer={profileFooter}
-        profileActions={profileActions}
-        profileIntro={profileIntro}
-        shareButton={shareButton}
-        shareDialog={shareDialog}
-        style={themeStyle(currentProfile.theme)}
-      />
-    );
-  }
-
   const bannerMedia = bannerImageUrl ? (
     <div className="banner-hero-image-wrap">
       {isVideoMedia(bannerImageUrl) ? (
@@ -675,38 +656,24 @@ export function ProfilePage({
       )}
     </div>
   ) : null;
+  const layout = getProfileLayoutDefinition(currentProfile.theme.layout);
 
-  if (currentProfile.theme.layout === "info") {
-    return (
-      <ProfileInfoLayout
-        avatar={profileAvatar}
-        bannerMedia={bannerMedia}
-        bio={
-          currentProfile.bio.trim() ? (
-            <p className="bio">{currentProfile.bio}</p>
-          ) : null
-        }
-        footer={profileFooter}
-        infoChips={<ProfileInfoChips profile={currentProfile} />}
-        profileActions={profileActions}
-        shareButton={shareButton}
-        shareDialog={shareDialog}
-        style={themeStyle(currentProfile.theme)}
-        titleBlock={profileTitleBlock}
-      />
-    );
-  }
-
-  return (
-    <ProfileClassicLayout
-      avatar={profileAvatar}
-      bannerMedia={bannerMedia}
-      footer={profileFooter}
-      profileActions={profileActions}
-      profileIntro={profileIntro}
-      shareButton={shareButton}
-      shareDialog={shareDialog}
-      style={themeStyle(currentProfile.theme)}
-    />
-  );
+  return layout.render({
+    avatar: profileAvatar,
+    backgroundUrl,
+    bannerMedia,
+    bio: currentProfile.bio.trim() ? (
+      <p className="bio">{currentProfile.bio}</p>
+    ) : null,
+    cardFields: <ProfileCardFields profile={currentProfile} />,
+    footer: profileFooter,
+    infoChips: <ProfileInfoChips profile={currentProfile} />,
+    profile: currentProfile,
+    profileActions,
+    profileIntro,
+    profileTitleBlock,
+    shareButton,
+    shareDialog,
+    style: themeStyle(currentProfile.theme),
+  });
 }

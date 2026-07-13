@@ -349,14 +349,6 @@
     gap: 10px;
   }
 
-  .card-field-editor-row {
-    grid-template-columns: 28px minmax(0, 1fr) 40px;
-  }
-
-  .card-field-editor-inputs {
-    grid-template-columns: 1fr;
-  }
-
   .social-editor-row {
     grid-template-columns: 1fr 40px;
   }

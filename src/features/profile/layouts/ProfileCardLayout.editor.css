@@ -1,0 +1,71 @@
+.layout-preview-card {
+  width: 52px;
+  height: 82px;
+  display: grid;
+  align-content: end;
+  gap: 5px;
+  border-radius: 9px;
+  background:
+    radial-gradient(circle at 68% 26%, #d7d8d3 0 12px, transparent 13px),
+    linear-gradient(135deg, #f8efe4, #ffffff);
+  box-shadow: 0 10px 22px rgb(24 32 47 / 16%);
+  padding: 8px;
+}
+
+.layout-preview-card-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  background: rgb(var(--brand-accent-rgb) / 22%);
+  justify-self: end;
+  margin: 0 0 12px;
+}
+
+.layout-preview-card-line {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: #2f394a;
+}
+
+.card-field-editor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card-field-editor-row {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 8px;
+  transition:
+    opacity 160ms ease,
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.card-field-editor-row.is-dragging {
+  opacity: 0.96;
+  position: relative;
+  z-index: 2;
+}
+
+.card-field-editor-inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.card-field-editor-row input {
+  min-width: 0;
+}
+
+@media (max-width: 620px) {
+  .card-field-editor-row {
+    grid-template-columns: 28px minmax(0, 1fr) 40px;
+  }
+
+  .card-field-editor-inputs {
+    grid-template-columns: 1fr;
+  }
+}

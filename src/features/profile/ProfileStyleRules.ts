@@ -1,13 +1,8 @@
-import type { GlobalStyleRule } from "@vanilla-extract/css";
-import { profileCardLayoutStyleRules } from "./layouts/ProfileCardLayout.styles";
-import { profileClassicLayoutStyleRules } from "./layouts/ProfileClassicLayout.styles";
-import { profileInfoLayoutStyleRules } from "./layouts/ProfileInfoLayout.styles";
 import { profileLayoutStyleRules } from "./layouts/ProfileLayout.styles";
+import { profileLayoutDefinitions } from "./layouts/registry";
+import type { PublicProfileStyleRule } from "./ProfileStyleRules.types";
 
-export type PublicProfileStyleRule = {
-  rule: GlobalStyleRule;
-  selector: string;
-};
+export type { PublicProfileStyleRule } from "./ProfileStyleRules.types";
 
 export const publicProfileStyleRules: PublicProfileStyleRule[] = [
   {
@@ -642,7 +637,5 @@ export const publicProfileStyleRules: PublicProfileStyleRule[] = [
     },
   },
   ...profileLayoutStyleRules,
-  ...profileClassicLayoutStyleRules,
-  ...profileCardLayoutStyleRules,
-  ...profileInfoLayoutStyleRules,
+  ...profileLayoutDefinitions.flatMap((definition) => definition.styleRules),
 ];
