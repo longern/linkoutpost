@@ -2,6 +2,17 @@ import type { PublicProfileStyleRule } from "../ProfileStyleRules.types";
 
 export const profileClassicLayoutStyleRules: PublicProfileStyleRule[] = [
   {
+    selector: ".public-profile-classic",
+    rule: {
+      padding: "80px 20px 16px",
+      "@container": {
+        "(min-width: 520px)": {
+          padding: "80px 28px 16px",
+        },
+      },
+    },
+  },
+  {
     selector: ".public-profile-classic.has-banner-image",
     rule: {
       paddingTop: 0,
@@ -50,8 +61,7 @@ export const profileClassicLayoutStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector:
-      ".public-profile-classic.has-banner-image .profile-avatar, .public-profile-classic.has-banner-image .profile-avatar-placeholder",
+    selector: ".public-profile-classic.has-banner-image .profile-avatar-media",
     rule: {
       boxShadow: "0 14px 36px rgb(16 24 39 / 20%)",
       marginTop: 0,

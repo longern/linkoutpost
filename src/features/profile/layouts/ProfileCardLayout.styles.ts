@@ -61,8 +61,7 @@ export const profileCardLayoutStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector:
-      ".profile-structured-card .profile-avatar, .profile-structured-card .profile-avatar-placeholder",
+    selector: ".profile-structured-card .profile-avatar-media",
     rule: {
       border: 0,
       borderRadius: 0,

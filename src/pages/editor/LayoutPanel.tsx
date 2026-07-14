@@ -1,6 +1,9 @@
 import type { LinkProfile, ProfileTheme } from "../../profile";
 import { getProfileLayoutEditor } from "../../features/profile/layouts/editorRegistry";
-import { profileLayoutDefinitions } from "../../features/profile/layouts/registry";
+import {
+  profileLayoutRegistry,
+  type ProfileLayout,
+} from "../../features/profile/layouts/registry";
 import "../../features/profile/layouts/ProfileLayoutEditor.css";
 
 type LayoutPanelProps = {
@@ -22,24 +25,26 @@ export function LayoutPanel({
     <section className="layout-panel" aria-label="Layout form">
       <fieldset className="layout-options" aria-label="Layout">
         <div className="layout-option-grid">
-          {profileLayoutDefinitions.map((definition) => {
+          {(Object.entries(profileLayoutRegistry) as Array<
+            [ProfileLayout, (typeof profileLayoutRegistry)[ProfileLayout]]
+          >).map(([key, definition]) => {
             const Preview = definition.Preview;
 
             return (
               <label
-                className={`layout-option${profile.theme.layout === definition.id ? " is-selected" : ""}`}
-                key={definition.id}
+                className={`layout-option${profile.theme.layout === key ? " is-selected" : ""}`}
+                key={key}
               >
                 <input
-                  checked={profile.theme.layout === definition.id}
+                  checked={profile.theme.layout === key}
                   name="profile-layout"
-                  onChange={() => onCommitTheme({ layout: definition.id })}
+                  onChange={() => onCommitTheme({ layout: key })}
                   type="radio"
-                  value={definition.id}
+                  value={key}
                 />
                 <span
                   aria-hidden="true"
-                  className={`layout-option-preview is-${definition.id}`}
+                  className={`layout-option-preview is-${key}`}
                 >
                   <span className="layout-preview-phone">
                     <Preview />

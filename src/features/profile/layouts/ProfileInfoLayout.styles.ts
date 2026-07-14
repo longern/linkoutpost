@@ -8,9 +8,7 @@ export const profileInfoLayoutStyleRules: PublicProfileStyleRule[] = [
       padding: "0 20px 16px",
       "@container": {
         "(min-width: 520px)": {
-          minHeight: "calc(100vh - 40px)",
           padding: "0 28px 16px",
-          width: "min(100%, 430px)",
         },
       },
     },
@@ -67,8 +65,7 @@ export const profileInfoLayoutStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector:
-      ".profile-info-identity .profile-avatar, .profile-info-identity .profile-avatar-placeholder",
+    selector: ".profile-info-identity .profile-avatar-media",
     rule: {
       border: "2px solid rgb(255 255 255 / 82%)",
       boxShadow: "0 14px 34px rgb(16 24 39 / 24%)",

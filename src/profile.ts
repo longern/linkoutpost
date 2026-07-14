@@ -1,4 +1,5 @@
 import { hostedHandleMinLength, siteTitle } from "./siteConfig";
+import type { ProfileLayout } from "./features/profile/layouts/registry";
 
 export type LinkItem = {
   embedMode?: "auto" | "embed" | "link";
@@ -58,7 +59,7 @@ export type SocialPlatformDefinition = {
   urlPrefix: string;
 };
 
-export type ProfileLayout = "classic" | "card" | "info";
+export type { ProfileLayout } from "./features/profile/layouts/registry";
 export type SocialLinksPosition = "top" | "bottom";
 
 export type ProfileCardField = {

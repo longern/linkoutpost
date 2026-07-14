@@ -28,6 +28,40 @@ import {
 } from "react-icons/si";
 import type { SocialPlatform } from "./profile";
 
+const socialPlatformColors = {
+  bilibili: "#00aeec",
+  bluesky: "#0285ff",
+  discord: "#5865f2",
+  email: "#ea4335",
+  facebook: "#1877f2",
+  github: "#181717",
+  instagram: "#e4405f",
+  linkedin: "#0a66c2",
+  mastodon: "#6364ff",
+  medium: "#000000",
+  pinterest: "#bd081c",
+  qq: "#12b7f5",
+  reddit: "#ff4500",
+  snapchat: "#fffc00",
+  spotify: "#1db954",
+  substack: "#ff6719",
+  telegram: "#26a5e4",
+  threads: "#000000",
+  tiktok: "#000000",
+  twitch: "#9146ff",
+  wechat: "#07c160",
+  weibo: "#e6162d",
+  whatsapp: "#25d366",
+  website: "#2563eb",
+  x: "#000000",
+  xiaohongshu: "#ff2442",
+  youtube: "#ff0000",
+} satisfies Record<SocialPlatform, string>;
+
+export function getSocialPlatformColor(platform: SocialPlatform): string {
+  return socialPlatformColors[platform];
+}
+
 export function getSocialPlatformIcon(platform: SocialPlatform): IconType {
   switch (platform) {
     case "bilibili":

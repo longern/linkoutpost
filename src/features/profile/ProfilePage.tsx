@@ -4,20 +4,28 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ReactNode,
   type RefObject,
 } from "react";
 import { FaCopy, FaUser, FaXmark } from "react-icons/fa6";
 import { LuCopyCheck } from "react-icons/lu";
 import { RxShare2 } from "react-icons/rx";
+import { getOEmbedRenderData } from "../../oembed";
 import {
-  getSocialLinkUrl,
   getProfileAssetUrl,
+  getSocialLinkUrl,
+  getSocialPlatformDefinition,
   type LinkItem,
   type LinkProfile,
   type ProfileTheme,
   type SocialLink,
 } from "../../profile";
-import { getOEmbedRenderData } from "../../oembed";
+import { siteTitle } from "../../siteConfig";
+import {
+  getSocialPlatformColor,
+  getSocialPlatformIcon,
+} from "../../socialIcons";
+import type { SocialLinksPresentation } from "./layouts/ProfileLayoutDefinition";
 import { getProfileLayoutDefinition } from "./layouts/registry";
 import {
   copyProfileUrl,
@@ -26,8 +34,6 @@ import {
   shareProfile,
   type ProfileShareCapabilities,
 } from "./share";
-import { siteTitle } from "../../siteConfig";
-import { getSocialPlatformIcon } from "../../socialIcons";
 
 const emptyEmbedScripts: readonly string[] = [];
 
@@ -93,21 +99,77 @@ function themeStyle(theme: ProfileTheme): CSSProperties {
   } as CSSProperties;
 }
 
-function ProfileSocialLinks({ links }: { links: SocialLink[] }) {
+function ProfileSocialLinks({
+  links,
+  presentation,
+}: {
+  links: SocialLink[];
+  presentation: SocialLinksPresentation;
+}) {
   const visibleLinks = links.filter((link) => link.userId.trim());
   const [copiedSocialId, setCopiedSocialId] = useState<string | null>(null);
   if (visibleLinks.length === 0) return null;
 
+  const linkPresentation = presentation === "links";
+
   return (
-    <div className="profile-social-links" aria-label="Social links">
+    <div
+      className={`profile-social-links${linkPresentation ? " is-links" : ""}`}
+      aria-label="Social links"
+    >
       {visibleLinks.map((link) => {
         const Icon = getSocialPlatformIcon(link.platform);
+        const platform = getSocialPlatformDefinition(link.platform);
+        const copied = copiedSocialId === link.id;
+        const socialIconStyle = {
+          "--social-icon-color": getSocialPlatformColor(link.platform),
+        } as CSSProperties;
+        const icon =
+          link.platform === "wechat" ? (
+            <>
+              <Icon
+                aria-hidden="true"
+                className="social-platform-icon wechat-default-icon"
+                size={20}
+              />
+              <LuCopyCheck
+                aria-hidden="true"
+                className="wechat-success-icon"
+                size={20}
+              />
+            </>
+          ) : (
+            <Icon
+              aria-hidden="true"
+              className="social-platform-icon"
+              size={20}
+            />
+          );
+        const content = linkPresentation ? (
+          <>
+            <span aria-hidden="true" className="public-link-surface" />
+            <span className="public-link-content">
+              <span className="public-link-thumbnail profile-social-link-icon">
+                {icon}
+              </span>
+              <span className="public-link-label">{platform.label}</span>
+            </span>
+            <span aria-hidden="true" className="public-link-arrow">
+              ›
+            </span>
+          </>
+        ) : (
+          <span className="profile-social-link-icon">{icon}</span>
+        );
+        const className = linkPresentation
+          ? `profile-social-link-card public-link public-link-panel has-thumbnail${copied ? " is-copied" : ""}`
+          : `profile-social-link${copied ? " is-copied" : ""}`;
+
         if (link.platform === "wechat") {
-          const copied = copiedSocialId === link.id;
           return (
             <button
               aria-label="Copy WeChat ID"
-              className={`profile-social-link${copied ? " is-copied" : ""}`}
+              className={`${className} wechat-copy-control`}
               data-profile-wechat-copy=""
               data-wechat-id={link.userId}
               key={link.id}
@@ -120,35 +182,25 @@ function ProfileSocialLinks({ links }: { links: SocialLink[] }) {
               }}
               title="Copy WeChat ID"
               type="button"
+              style={socialIconStyle}
             >
-              {copied ? (
-                <LuCopyCheck
-                  aria-hidden="true"
-                  data-wechat-success-icon=""
-                  size={20}
-                />
-              ) : (
-                <Icon
-                  aria-hidden="true"
-                  data-wechat-default-icon=""
-                  size={20}
-                />
-              )}
+              {content}
             </button>
           );
         }
 
         return (
           <a
-            aria-label={link.platform}
-            className="profile-social-link"
+            aria-label={platform.label}
+            className={className}
             href={getSocialLinkUrl(link)}
             key={link.id}
             rel="noreferrer noopener"
             target="_blank"
-            title={link.platform}
+            title={platform.label}
+            style={socialIconStyle}
           >
-            <Icon aria-hidden="true" size={20} />
+            {content}
           </a>
         );
       })}
@@ -189,10 +241,15 @@ const PublicEmbedHost = memo(
 
     return (
       <div
-        className="public-link public-embed-link"
+        className="public-link public-link-framed public-embed-link"
         data-profile-link-id={id}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
+      >
+        <span aria-hidden="true" className="public-link-surface" />
+        <div
+          className="public-link-framed-content public-embed-content"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      </div>
     );
   },
   (previous, next) =>
@@ -215,18 +272,24 @@ function PublicEmbeddedLink({
   if (!embed) {
     return (
       <a
-        className={`public-link${thumbnailUrl ? " has-thumbnail" : ""}`}
+        className={`public-link public-link-panel${thumbnailUrl ? " has-thumbnail" : ""}`}
         data-profile-link-id={link.id}
         href={link.url}
         rel="noreferrer"
         target="_blank"
       >
-        {thumbnailUrl ? (
-          <span className="public-link-thumbnail">
-            <img alt="" height={40} src={thumbnailUrl} width={40} />
-          </span>
-        ) : null}
-        <span className="public-link-label">{link.label}</span>
+        <span aria-hidden="true" className="public-link-surface" />
+        <span className="public-link-content">
+          {thumbnailUrl ? (
+            <span className="public-link-thumbnail public-link-media-thumbnail">
+              <img alt="" height={40} src={thumbnailUrl} width={40} />
+            </span>
+          ) : null}
+          <span className="public-link-label">{link.label}</span>
+        </span>
+        <span aria-hidden="true" className="public-link-arrow">
+          ›
+        </span>
       </a>
     );
   }
@@ -253,7 +316,7 @@ function PublicLinks({
             linkImageUrls[link.id] ??
             getProfileAssetUrl(link.imageAssetId ?? null);
           const imageCard = (
-            <>
+            <div className="public-link-framed-content public-image-content">
               {imageUrl && isVideoMedia(imageUrl) ? (
                 <video
                   autoPlay
@@ -277,19 +340,20 @@ function PublicLinks({
               {link.label.trim() && (
                 <span className="public-image-card-title">{link.label}</span>
               )}
-            </>
+            </div>
           );
 
           if (link.url.trim()) {
             return (
               <a
-                className="public-link public-image-card"
+                className="public-link public-link-framed public-image-card"
                 data-profile-link-id={link.id}
                 href={link.url}
                 key={link.id}
                 rel="noreferrer"
                 target="_blank"
               >
+                <span aria-hidden="true" className="public-link-surface" />
                 {imageCard}
               </a>
             );
@@ -297,10 +361,11 @@ function PublicLinks({
 
           return (
             <div
-              className="public-link public-image-card"
+              className="public-link public-link-framed public-image-card"
               data-profile-link-id={link.id}
               key={link.id}
             >
+              <span aria-hidden="true" className="public-link-surface" />
               {imageCard}
             </div>
           );
@@ -354,18 +419,36 @@ function ProfileActions({
 
 function ProfileAvatar({ avatarUrl }: { avatarUrl?: string | null }) {
   return avatarUrl ? (
-    <img alt="" className="profile-avatar" src={avatarUrl} />
+    <img
+      alt=""
+      className="profile-avatar profile-avatar-media"
+      src={avatarUrl}
+    />
   ) : (
-    <div aria-hidden="true" className="profile-avatar-placeholder">
+    <div
+      aria-hidden="true"
+      className="profile-avatar-placeholder profile-avatar-media"
+    >
       <FaUser size={34} />
     </div>
   );
 }
 
-function ProfileFooter() {
+function ProfileFooter({ content }: { content?: ReactNode }) {
+  const footerContent =
+    content === undefined ? (
+      <>
+        Powered by <a href="/">{siteTitle}</a>
+      </>
+    ) : (
+      content
+    );
+
+  if (footerContent === null || footerContent === false) return null;
+
   return (
     <footer className="profile-footer">
-      Powered by <a href="/">{siteTitle}</a>
+      <span className="profile-footer-attribution">{footerContent}</span>
     </footer>
   );
 }
@@ -563,6 +646,7 @@ export function ProfilePage({
   }
 
   const currentProfile = profile;
+  const layout = getProfileLayoutDefinition(currentProfile.theme.layout);
   const shareOverlayRef = useRef<HTMLDivElement | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareCapabilities, setShareCapabilities] =
@@ -630,7 +714,10 @@ export function ProfilePage({
     />
   );
   const profileSocialLinks = (
-    <ProfileSocialLinks links={currentProfile.socialLinks} />
+    <ProfileSocialLinks
+      links={currentProfile.socialLinks}
+      presentation={layout.socialLinksPresentation}
+    />
   );
   const profileActions = (
     <ProfileActions
@@ -639,7 +726,7 @@ export function ProfilePage({
       socialLinksPosition={currentProfile.theme.socialLinksPosition}
     />
   );
-  const profileFooter = <ProfileFooter />;
+  const profileFooter = <ProfileFooter content={layout.footerContent} />;
   const bannerMedia = bannerImageUrl ? (
     <div className="banner-hero-image-wrap">
       {isVideoMedia(bannerImageUrl) ? (
@@ -656,24 +743,27 @@ export function ProfilePage({
       )}
     </div>
   ) : null;
-  const layout = getProfileLayoutDefinition(currentProfile.theme.layout);
+  const Layout = layout.Component;
 
-  return layout.render({
-    avatar: profileAvatar,
-    backgroundUrl,
-    bannerMedia,
-    bio: currentProfile.bio.trim() ? (
-      <p className="bio">{currentProfile.bio}</p>
-    ) : null,
-    cardFields: <ProfileCardFields profile={currentProfile} />,
-    footer: profileFooter,
-    infoChips: <ProfileInfoChips profile={currentProfile} />,
-    profile: currentProfile,
-    profileActions,
-    profileIntro,
-    profileTitleBlock,
-    shareButton,
-    shareDialog,
-    style: themeStyle(currentProfile.theme),
-  });
+  return (
+    <Layout
+      avatar={profileAvatar}
+      backgroundUrl={backgroundUrl}
+      bannerMedia={bannerMedia}
+      bio={
+        currentProfile.bio.trim() ? (
+          <p className="bio">{currentProfile.bio}</p>
+        ) : null
+      }
+      cardFields={<ProfileCardFields profile={currentProfile} />}
+      footer={profileFooter}
+      infoChips={<ProfileInfoChips profile={currentProfile} />}
+      profileActions={profileActions}
+      profileIntro={profileIntro}
+      profileTitleBlock={profileTitleBlock}
+      shareButton={shareButton}
+      shareDialog={shareDialog}
+      style={themeStyle(currentProfile.theme)}
+    />
+  );
 }

@@ -1,6 +1,7 @@
 import type { CSSProperties, ComponentType, ReactNode } from "react";
-import type { LinkProfile, ProfileLayout } from "../../../profile";
 import type { PublicProfileStyleRule } from "../ProfileStyleRules.types";
+
+export type SocialLinksPresentation = "icons" | "links";
 
 export type ProfileLayoutRenderContext = {
   avatar: ReactNode;
@@ -10,7 +11,6 @@ export type ProfileLayoutRenderContext = {
   cardFields: ReactNode;
   footer: ReactNode;
   infoChips: ReactNode;
-  profile: LinkProfile;
   profileActions: ReactNode;
   profileIntro: ReactNode;
   profileTitleBlock: ReactNode;
@@ -20,14 +20,15 @@ export type ProfileLayoutRenderContext = {
 };
 
 export type ProfileLayoutDefinition = {
+  Component: ComponentType<ProfileLayoutRenderContext>;
   description: string;
   designCapabilities: {
     backgroundImage: boolean;
     bannerMedia: boolean;
   };
-  id: ProfileLayout;
+  footerContent?: ReactNode;
   label: string;
   Preview: ComponentType;
-  render(context: ProfileLayoutRenderContext): ReactNode;
+  socialLinksPresentation: SocialLinksPresentation;
   styleRules: PublicProfileStyleRule[];
 };

@@ -9,8 +9,6 @@ type QueryRoot = {
   querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E>;
 };
 
-const wechatCopiedIcon = '<svg aria-hidden="true" data-wechat-success-icon="" fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="m12 15 2 2 4-4"/><rect height="14" rx="2" ry="2" width="14" x="8" y="8"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
-
 function getCapabilities() {
   const browserNavigator = navigator as ShareNavigator;
   const canUseSecureApi =
@@ -114,19 +112,22 @@ function attachProfileRuntime(root: QueryRoot = document): void {
 
   root.querySelectorAll<HTMLButtonElement>("[data-profile-wechat-copy]").forEach((button) => {
     button.disabled = !capabilities.canCopy;
-    const defaultHtml = button.innerHTML;
 
     button.addEventListener("click", () => {
       const browserNavigator = navigator as ShareNavigator;
       const wechatId = button.dataset.wechatId;
-      if (!wechatId || !getCapabilities().canCopy || !browserNavigator.clipboard) return;
+      if (
+        !wechatId ||
+        !getCapabilities().canCopy ||
+        !browserNavigator.clipboard
+      ) {
+        return;
+      }
 
       void browserNavigator.clipboard.writeText(wechatId).then(() => {
         button.classList.add("is-copied");
-        button.innerHTML = wechatCopiedIcon;
         window.setTimeout(() => {
           button.classList.remove("is-copied");
-          button.innerHTML = defaultHtml;
         }, 1400);
       });
     });

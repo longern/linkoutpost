@@ -9,6 +9,8 @@
   --brand-row-background: #fffdfc;
   --brand-shadow-rgb: 79 45 32;
   --brand-text: #172033;
+  --motion-duration: 160ms;
+  --motion-duration-fast: 80ms;
   --z-app-bar: 1100;
   --z-drawer-backdrop: 1190;
   --z-drawer: 1200;

@@ -2,7 +2,7 @@ import type { PublicProfileStyleRule } from "../ProfileStyleRules.types";
 
 export const profileLayoutStyleRules: PublicProfileStyleRule[] = [
   {
-    selector: ".public-page-classic, .public-page-card, .public-page-info",
+    selector: ".public-page",
     rule: {
       "@media": {
         "(min-width: 520px)": {
@@ -14,14 +14,14 @@ export const profileLayoutStyleRules: PublicProfileStyleRule[] = [
     },
   },
   {
-    selector: ".public-profile-classic, .public-profile-card, .public-profile-info",
+    selector: ".public-profile",
     rule: {
       "@container": {
         "(min-width: 520px)": {
           borderRadius: "22px 22px 0 0",
-          boxShadow: "0 24px 70px rgb(16 24 39 / 14%)",
+          boxShadow:
+            "0 2px 6px rgb(16 24 39 / 12%), 0 16px 40px rgb(16 24 39 / 18%)",
           minHeight: "calc(100vh - 40px)",
-          padding: "80px 28px 16px",
           width: "min(100%, 430px)",
         },
       },

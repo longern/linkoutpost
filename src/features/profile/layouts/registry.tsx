@@ -1,4 +1,3 @@
-import type { ProfileLayout } from "../../../profile";
 import { ProfileCardLayout } from "./ProfileCardLayout";
 import { profileCardLayoutStyleRules } from "./ProfileCardLayout.styles";
 import { ProfileCardLayoutPreview } from "./ProfileCardLayoutPreview";
@@ -8,19 +7,17 @@ import { ProfileClassicLayoutPreview } from "./ProfileClassicLayoutPreview";
 import { ProfileInfoLayout } from "./ProfileInfoLayout";
 import { profileInfoLayoutStyleRules } from "./ProfileInfoLayout.styles";
 import { ProfileInfoLayoutPreview } from "./ProfileInfoLayoutPreview";
-import type { ProfileLayoutDefinition } from "./ProfileLayoutDefinition";
+import { ProfileNeonLayout } from "./ProfileNeonLayout";
+import { profileNeonLayoutStyleRules } from "./ProfileNeonLayout.styles";
+import { ProfileNeonLayoutPreview } from "./ProfileNeonLayoutPreview";
+import type {
+  ProfileLayoutDefinition,
+  ProfileLayoutRenderContext,
+} from "./ProfileLayoutDefinition";
 
-export const profileLayoutDefinitions: readonly ProfileLayoutDefinition[] = [
-  {
-    description: "Avatar, bio, social icons, and stacked links.",
-    designCapabilities: {
-      backgroundImage: false,
-      bannerMedia: true,
-    },
-    id: "classic",
-    label: "Classic links",
-    Preview: ProfileClassicLayoutPreview,
-    render: (context) => (
+export const profileLayoutRegistry = {
+  classic: {
+    Component: (context: ProfileLayoutRenderContext) => (
       <ProfileClassicLayout
         avatar={context.avatar}
         bannerMedia={context.bannerMedia}
@@ -32,18 +29,18 @@ export const profileLayoutDefinitions: readonly ProfileLayoutDefinition[] = [
         style={context.style}
       />
     ),
+    description: "Avatar, bio, social icons, and stacked links.",
+    designCapabilities: {
+      backgroundImage: false,
+      bannerMedia: true,
+    },
+    label: "Classic links",
+    Preview: ProfileClassicLayoutPreview,
+    socialLinksPresentation: "icons",
     styleRules: profileClassicLayoutStyleRules,
   },
-  {
-    description: "Structured visual card with profile details below.",
-    designCapabilities: {
-      backgroundImage: true,
-      bannerMedia: false,
-    },
-    id: "card",
-    label: "Structured card",
-    Preview: ProfileCardLayoutPreview,
-    render: (context) => (
+  card: {
+    Component: (context: ProfileLayoutRenderContext) => (
       <ProfileCardLayout
         avatar={context.avatar}
         backgroundUrl={context.backgroundUrl}
@@ -56,18 +53,18 @@ export const profileLayoutDefinitions: readonly ProfileLayoutDefinition[] = [
         style={context.style}
       />
     ),
+    description: "Structured visual card with profile details below.",
+    designCapabilities: {
+      backgroundImage: true,
+      bannerMedia: false,
+    },
+    label: "Structured card",
+    Preview: ProfileCardLayoutPreview,
+    socialLinksPresentation: "icons",
     styleRules: profileCardLayoutStyleRules,
   },
-  {
-    description: "Banner identity with personal detail chips.",
-    designCapabilities: {
-      backgroundImage: false,
-      bannerMedia: true,
-    },
-    id: "info",
-    label: "Info header",
-    Preview: ProfileInfoLayoutPreview,
-    render: (context) => (
+  info: {
+    Component: (context: ProfileLayoutRenderContext) => (
       <ProfileInfoLayout
         avatar={context.avatar}
         bannerMedia={context.bannerMedia}
@@ -81,6 +78,14 @@ export const profileLayoutDefinitions: readonly ProfileLayoutDefinition[] = [
         titleBlock={context.profileTitleBlock}
       />
     ),
+    description: "Banner identity with personal detail chips.",
+    designCapabilities: {
+      backgroundImage: false,
+      bannerMedia: true,
+    },
+    label: "Info header",
+    Preview: ProfileInfoLayoutPreview,
+    socialLinksPresentation: "icons",
     styleRules: profileInfoLayoutStyleRules,
   },
 ];
@@ -88,11 +93,12 @@ export const profileLayoutDefinitions: readonly ProfileLayoutDefinition[] = [
 const profileLayoutDefinitionById = new Map(
   profileLayoutDefinitions.map((definition) => [definition.id, definition]),
 );
+} satisfies Record<string, ProfileLayoutDefinition>;
+
+export type ProfileLayout = keyof typeof profileLayoutRegistry;
 
 export function getProfileLayoutDefinition(
   layout: ProfileLayout,
 ): ProfileLayoutDefinition {
-  return (
-    profileLayoutDefinitionById.get(layout) ?? profileLayoutDefinitions[0]
-  );
+  return profileLayoutRegistry[layout];
 }
