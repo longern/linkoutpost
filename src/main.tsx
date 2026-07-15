@@ -23,6 +23,7 @@ const initialState =
     session: {
       authProviders: {
         google: false,
+        shopify: false,
         twitter: false,
       },
       authenticated: false,

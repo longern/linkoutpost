@@ -1,5 +1,5 @@
 import { normalizeHandle } from "../profile";
-import type { SessionState } from "../types";
+import type { AuthProvider, SessionState } from "../types";
 import type { Env } from "./env";
 
 function safeLocalRedirect(value: string | null): string | undefined {
@@ -14,7 +14,7 @@ function safeLocalRedirect(value: string | null): string | undefined {
   }
 }
 
-export type Provider = "google" | "twitter";
+export type Provider = AuthProvider;
 type OAuthErrorCode =
   | "oauth_callback"
   | "oauth_failed"
@@ -30,7 +30,7 @@ type SessionPayload = {
 };
 
 type OAuthState = {
-  codeVerifier: string;
+  codeVerifier?: string;
   provider: Provider;
   redirectTo?: string;
   state: string;
@@ -118,6 +118,11 @@ function getOptionalAuthSecret(env: Env, request: Request): string | null {
 function getAuthProviders(env: Env): SessionState["authProviders"] {
   return {
     google: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
+    shopify: Boolean(
+      env.SHOPIFY_STOREFRONT_DOMAIN &&
+        env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID &&
+        env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET,
+    ),
     twitter: Boolean(env.TWITTER_CLIENT_ID && env.TWITTER_CLIENT_SECRET),
   };
 }
@@ -281,25 +286,111 @@ function requireAuthConfig(env: Env, provider: Provider): void {
   ) {
     throw new Error("Twitter OAuth credentials are not configured");
   }
+
+  if (
+    provider === "shopify" &&
+    (!env.SHOPIFY_STOREFRONT_DOMAIN ||
+      !env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID ||
+      !env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET)
+  ) {
+    throw new Error("Shopify Customer Account credentials are not configured");
+  }
 }
 
-function providerConfig(env: Env, provider: Provider) {
+type ProviderConfig = {
+  authUrl: string;
+  clientId: string;
+  clientSecret: string;
+  scope: string;
+  tokenAuth: "basic" | "body";
+  tokenUrl: string;
+  usesPkce: boolean;
+};
+
+function shopifyStorefrontOrigin(env: Env): string {
+  const value = env.SHOPIFY_STOREFRONT_DOMAIN?.trim();
+  if (!value) throw new Error("Shopify storefront domain is not configured");
+
+  const url = new URL(value.includes("://") ? value : `https://${value}`);
+  if (url.protocol !== "https:" || url.username || url.password) {
+    throw new Error("Shopify storefront domain must be an HTTPS origin");
+  }
+
+  return url.origin;
+}
+
+function requireHttpsEndpoint(value: unknown, name: string): string {
+  if (typeof value !== "string") {
+    throw new Error(`Shopify discovery response is missing ${name}`);
+  }
+
+  const url = new URL(value);
+  if (url.protocol !== "https:") {
+    throw new Error(`Shopify ${name} must use HTTPS`);
+  }
+
+  return url.toString();
+}
+
+async function fetchShopifyDiscovery<T>(
+  env: Env,
+  pathname: string,
+): Promise<T> {
+  const response = await fetch(`${shopifyStorefrontOrigin(env)}${pathname}`, {
+    headers: { Accept: "application/json" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Shopify discovery failed: ${response.status}`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+async function providerConfig(
+  env: Env,
+  provider: Provider,
+): Promise<ProviderConfig> {
   if (provider === "google") {
     return {
       authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
       clientId: env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: env.GOOGLE_CLIENT_SECRET ?? "",
       scope: "openid email profile",
+      tokenAuth: "body",
       tokenUrl: "https://oauth2.googleapis.com/token",
+      usesPkce: true,
     };
   }
 
+  if (provider === "twitter") {
+    return {
+      authUrl: "https://twitter.com/i/oauth2/authorize",
+      clientId: env.TWITTER_CLIENT_ID ?? "",
+      clientSecret: env.TWITTER_CLIENT_SECRET ?? "",
+      scope: "users.read tweet.read",
+      tokenAuth: "basic",
+      tokenUrl: "https://api.twitter.com/2/oauth2/token",
+      usesPkce: true,
+    };
+  }
+
+  const discovery = await fetchShopifyDiscovery<{
+    authorization_endpoint?: unknown;
+    token_endpoint?: unknown;
+  }>(env, "/.well-known/openid-configuration");
+
   return {
-    authUrl: "https://twitter.com/i/oauth2/authorize",
-    clientId: env.TWITTER_CLIENT_ID ?? "",
-    clientSecret: env.TWITTER_CLIENT_SECRET ?? "",
-    scope: "users.read tweet.read",
-    tokenUrl: "https://api.twitter.com/2/oauth2/token",
+    authUrl: requireHttpsEndpoint(
+      discovery.authorization_endpoint,
+      "authorization_endpoint",
+    ),
+    clientId: env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID ?? "",
+    clientSecret: env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET ?? "",
+    scope: "openid email customer-account-api:full",
+    tokenAuth: "basic",
+    tokenUrl: requireHttpsEndpoint(discovery.token_endpoint, "token_endpoint"),
+    usesPkce: false,
   };
 }
 
@@ -311,13 +402,13 @@ export async function startOAuth(
   requireAuthConfig(env, provider);
 
   const url = new URL(request.url);
-  const config = providerConfig(env, provider);
+  const config = await providerConfig(env, provider);
   const state: OAuthState = {
-    codeVerifier: randomToken(64),
     provider,
     redirectTo: safeLocalRedirect(url.searchParams.get("redirect_to")),
     state: randomToken(32),
   };
+  if (config.usesPkce) state.codeVerifier = randomToken(64);
   const signedState = await signCookieValue(env.AUTH_SECRET ?? "", state);
   const redirectUri = `${url.origin}/api/auth/${provider}/callback`;
   const authUrl = new URL(config.authUrl);
@@ -327,8 +418,10 @@ export async function startOAuth(
   authUrl.searchParams.set("response_type", "code");
   authUrl.searchParams.set("scope", config.scope);
   authUrl.searchParams.set("state", state.state);
-  authUrl.searchParams.set("code_challenge", await sha256(state.codeVerifier));
-  authUrl.searchParams.set("code_challenge_method", "S256");
+  if (state.codeVerifier) {
+    authUrl.searchParams.set("code_challenge", await sha256(state.codeVerifier));
+    authUrl.searchParams.set("code_challenge_method", "S256");
+  }
 
   if (provider === "google") {
     authUrl.searchParams.set("prompt", "select_account");
@@ -348,14 +441,13 @@ async function exchangeOAuthCode(
   env: Env,
   provider: Provider,
   code: string,
-  codeVerifier: string,
+  codeVerifier?: string,
 ): Promise<{ access_token: string }> {
   const url = new URL(request.url);
-  const config = providerConfig(env, provider);
+  const config = await providerConfig(env, provider);
   const body = new URLSearchParams({
     client_id: config.clientId,
     code,
-    code_verifier: codeVerifier,
     grant_type: "authorization_code",
     redirect_uri: `${url.origin}/api/auth/${provider}/callback`,
   });
@@ -363,7 +455,9 @@ async function exchangeOAuthCode(
     "Content-Type": "application/x-www-form-urlencoded",
   };
 
-  if (provider === "google") {
+  if (codeVerifier) body.set("code_verifier", codeVerifier);
+
+  if (config.tokenAuth === "body") {
     body.set("client_secret", config.clientSecret);
   } else {
     headers.Authorization = `Basic ${btoa(`${config.clientId}:${config.clientSecret}`)}`;
@@ -383,6 +477,7 @@ async function exchangeOAuthCode(
 }
 
 async function fetchIdentity(
+  env: Env,
   provider: Provider,
   accessToken: string,
 ): Promise<OAuthIdentity> {
@@ -415,33 +510,91 @@ async function fetchIdentity(
     };
   }
 
-  const response = await fetch(
-    "https://api.twitter.com/2/users/me?user.fields=profile_image_url,username,name",
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
+  if (provider === "twitter") {
+    const response = await fetch(
+      "https://api.twitter.com/2/users/me?user.fields=profile_image_url,username,name",
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       },
+    );
+
+    if (!response.ok) throw new Error("Twitter userinfo failed");
+
+    const payload = (await response.json()) as {
+      data: {
+        id: string;
+        name: string;
+        profile_image_url?: string;
+        username?: string;
+      };
+    };
+
+    return {
+      avatarUrl: payload.data.profile_image_url ?? null,
+      displayName: payload.data.name,
+      email: null,
+      provider,
+      providerUserId: payload.data.id,
+      username: payload.data.username ?? null,
+    };
+  }
+
+  const discovery = await fetchShopifyDiscovery<{ graphql_api?: unknown }>(
+    env,
+    "/.well-known/customer-account-api",
+  );
+  const response = await fetch(
+    requireHttpsEndpoint(discovery.graphql_api, "graphql_api"),
+    {
+      body: JSON.stringify({
+        query: `query CustomerIdentity {
+          customer {
+            id
+            displayName
+            emailAddress { emailAddress }
+            imageUrl
+          }
+        }`,
+      }),
+      headers: {
+        Accept: "application/json",
+        Authorization: accessToken,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
     },
   );
 
-  if (!response.ok) throw new Error("Twitter userinfo failed");
+  if (!response.ok) {
+    throw new Error(`Shopify customer query failed: ${response.status}`);
+  }
 
   const payload = (await response.json()) as {
-    data: {
-      id: string;
-      name: string;
-      profile_image_url?: string;
-      username?: string;
+    data?: {
+      customer?: {
+        displayName?: string;
+        emailAddress?: { emailAddress?: string } | null;
+        id?: string;
+        imageUrl?: string | null;
+      } | null;
     };
+    errors?: unknown[];
   };
+  const customer = payload.data?.customer;
+  if (payload.errors?.length || !customer?.id) {
+    throw new Error("Shopify customer identity is unavailable");
+  }
 
+  const email = customer.emailAddress?.emailAddress ?? null;
   return {
-    avatarUrl: payload.data.profile_image_url ?? null,
-    displayName: payload.data.name,
-    email: null,
+    avatarUrl: customer.imageUrl ?? null,
+    displayName: customer.displayName || email || "Shopify customer",
+    email,
     provider,
-    providerUserId: payload.data.id,
-    username: payload.data.username ?? null,
+    providerUserId: customer.id,
+    username: email ? email.split("@")[0] : null,
   };
 }
 
@@ -559,7 +712,7 @@ export async function completeOAuth(
     code,
     oauthState.codeVerifier,
   );
-  const identity = await fetchIdentity(provider, token.access_token);
+  const identity = await fetchIdentity(env, provider, token.access_token);
   const user = await upsertOAuthUser(env, identity);
   const session: SessionPayload = {
     exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30,

@@ -4,7 +4,7 @@ import { loadSession } from "../apiClient";
 import { SiteTopbar } from "../components/SiteTopbar";
 import { normalizeHandle } from "../profile";
 import { siteTitle } from "../siteConfig";
-import type { SessionState } from "../types";
+import type { AuthProvider, SessionState } from "../types";
 
 function authErrorMessage(searchParams: URLSearchParams): string | null {
   switch (searchParams.get("error")) {
@@ -55,14 +55,14 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
     };
   }, [initialSession]);
 
-  function authStartHref(provider: "google" | "twitter"): string {
+  function authStartHref(provider: AuthProvider): string {
     const redirectTo = requestedHandle
       ? `/admin?create=${encodeURIComponent(requestedHandle)}`
       : "/admin";
     return `/api/auth/${provider}/start?redirect_to=${encodeURIComponent(redirectTo)}`;
   }
 
-  function authProviderAction(provider: "google" | "twitter", label: string) {
+  function authProviderAction(provider: AuthProvider, label: string) {
     const enabled = session.authProviders?.[provider] ?? false;
     const content = (
       <>
@@ -98,6 +98,7 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
           <div className="auth-actions">
             {authProviderAction("google", "Continue with Google")}
             {authProviderAction("twitter", "Continue with Twitter")}
+            {authProviderAction("shopify", "Continue with Shopify")}
           </div>
           <a className="auth-secondary-link" href="/admin">Continue with local editor</a>
         </section>

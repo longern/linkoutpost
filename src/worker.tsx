@@ -260,6 +260,14 @@ export default {
       }
     }
 
+    if (url.pathname === "/api/auth/shopify/start") {
+      try {
+        return await startOAuth(request, env, "shopify");
+      } catch {
+        return signInErrorRedirect(request, "oauth_unavailable", false);
+      }
+    }
+
     if (url.pathname === "/api/auth/google/callback") {
       try {
         return await completeOAuth(request, env, "google");
@@ -271,6 +279,14 @@ export default {
     if (url.pathname === "/api/auth/twitter/callback") {
       try {
         return await completeOAuth(request, env, "twitter");
+      } catch {
+        return signInErrorRedirect(request, "oauth_failed");
+      }
+    }
+
+    if (url.pathname === "/api/auth/shopify/callback") {
+      try {
+        return await completeOAuth(request, env, "shopify");
       } catch {
         return signInErrorRedirect(request, "oauth_failed");
       }

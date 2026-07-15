@@ -1,13 +1,16 @@
 import type { LinkProfile } from "./profile";
 
+export type AuthProvider = "google" | "twitter" | "shopify";
+
 export type SessionState = {
   authProviders?: {
     google: boolean;
+    shopify: boolean;
     twitter: boolean;
   };
   authenticated: boolean;
   name?: string | null;
-  provider?: "google" | "twitter" | null;
+  provider?: AuthProvider | null;
   storage: "backend" | "offline";
 };
 

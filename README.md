@@ -32,15 +32,16 @@ The `/admin` editor uses the same UI in both modes:
 - Offline mode: used when the backend is unavailable or the user is not logged in. Data is saved in IndexedDB, and the editor can export a static ZIP containing `index.html`, `styles.css`, `profile.json`, and local image assets.
 - Backend mode: used when a backend session is present and a D1 binding exists. Data is saved to D1 and can be rendered at `/:handle`.
 
-Backend sessions are created through Google or Twitter/X OAuth. The Worker stores a signed `linkoutpost_session` cookie after the OAuth callback completes.
+Backend sessions are created through Google, Twitter/X, or Shopify Customer Account OAuth. The Worker stores a signed `linkoutpost_session` cookie after the OAuth callback completes.
 
 ## OAuth setup
 
-Create OAuth apps for Google and Twitter/X, then configure these callback URLs:
+Create OAuth clients for the providers you want to enable, then configure these callback URLs:
 
 ```txt
 https://<your-domain>/api/auth/google/callback
 https://<your-domain>/api/auth/twitter/callback
+https://<your-domain>/api/auth/shopify/callback
 ```
 
 For local testing, also allow:
@@ -50,6 +51,8 @@ http://localhost:8787/api/auth/google/callback
 http://localhost:8787/api/auth/twitter/callback
 ```
 
+Shopify Customer Account API callbacks must use HTTPS, so local Shopify login needs an HTTPS tunnel whose callback ends in `/api/auth/shopify/callback`.
+
 Set secrets in Cloudflare:
 
 ```bash
@@ -58,9 +61,14 @@ npx wrangler secret put GOOGLE_CLIENT_ID
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 npx wrangler secret put TWITTER_CLIENT_ID
 npx wrangler secret put TWITTER_CLIENT_SECRET
+npx wrangler secret put SHOPIFY_STOREFRONT_DOMAIN
+npx wrangler secret put SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID
+npx wrangler secret put SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET
 ```
 
-Google uses OpenID Connect scopes `openid email profile`. Twitter/X uses OAuth 2.0 Authorization Code with PKCE and scopes `users.read tweet.read`.
+For Shopify, enable customer accounts, add the Headless channel, create a confidential Customer Account API client, and register the production callback URL. `SHOPIFY_STOREFRONT_DOMAIN` is the storefront domain used for Shopify's discovery endpoints, for example `shop.example.com`.
+
+Google uses OpenID Connect scopes `openid email profile`. Twitter/X uses OAuth 2.0 Authorization Code with PKCE and scopes `users.read tweet.read`. Shopify uses the discovered Customer Account OAuth endpoints with scopes `openid email customer-account-api:full`.
 
 ## Browser storage choice
 

@@ -54,7 +54,7 @@ const content: Record<LegalPageKind, LegalPageContent> = {
       },
       {
         heading: "Service providers",
-        body: "The hosted service uses infrastructure and authentication providers such as Cloudflare, Google, and Twitter/X. These providers may process information needed to deliver hosting, storage, security, and OAuth sign-in.",
+        body: "The hosted service uses infrastructure and authentication providers such as Cloudflare, Google, Twitter/X, and Shopify. These providers may process information needed to deliver hosting, storage, security, and OAuth sign-in.",
       },
       {
         heading: "Cookies",
