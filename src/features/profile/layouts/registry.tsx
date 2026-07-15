@@ -7,6 +7,9 @@ import { ProfileClassicLayoutPreview } from "./ProfileClassicLayoutPreview";
 import { ProfileInfoLayout } from "./ProfileInfoLayout";
 import { profileInfoLayoutStyleRules } from "./ProfileInfoLayout.styles";
 import { ProfileInfoLayoutPreview } from "./ProfileInfoLayoutPreview";
+import { ProfileNeonLayout } from "./ProfileNeonLayout";
+import { profileNeonLayoutStyleRules } from "./ProfileNeonLayout.styles";
+import { ProfileNeonLayoutPreview } from "./ProfileNeonLayoutPreview";
 import type {
   ProfileLayoutDefinition,
   ProfileLayoutRenderContext,
@@ -84,6 +87,46 @@ export const profileLayoutRegistry = {
     Preview: ProfileInfoLayoutPreview,
     socialLinksPresentation: "icons",
     styleRules: profileInfoLayoutStyleRules,
+  },
+  neon: {
+    Component: (context: ProfileLayoutRenderContext) => (
+      <ProfileNeonLayout
+        avatar={context.avatar}
+        backgroundUrl={context.backgroundUrl}
+        footer={context.footer}
+        profileActions={context.profileActions}
+        profileIntro={context.profileIntro}
+        shareButton={context.shareButton}
+        shareDialog={context.shareDialog}
+        style={context.style}
+      />
+    ),
+    description: "Neon portrait frame with luminous link panels.",
+    designCapabilities: {
+      backgroundImage: true,
+      bannerMedia: false,
+    },
+    footerContent: (
+      <a
+        aria-label="Canine Teeth"
+        className="profile-footer-brand-link"
+        href="https://canineteeth.store/"
+        rel="noreferrer noopener"
+        target="_blank"
+      >
+        <img
+          alt="Canine"
+          className="profile-footer-brand-image"
+          height={100}
+          src="https://canineteeth.store/cdn/shop/files/favicon.png"
+          width={100}
+        />
+      </a>
+    ),
+    label: "Neon Frame",
+    Preview: ProfileNeonLayoutPreview,
+    socialLinksPresentation: "links",
+    styleRules: profileNeonLayoutStyleRules,
   },
 } satisfies Record<string, ProfileLayoutDefinition>;
 
