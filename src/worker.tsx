@@ -3,7 +3,11 @@ import {
   App,
   type InitialState,
 } from "./App";
-import { renderDocumentMeta, replaceDocumentMeta } from "./documentMeta";
+import {
+  renderDocumentMeta,
+  replaceDocumentFavicon,
+  replaceDocumentMeta,
+} from "./documentMeta";
 import {
   findDocumentTitle,
   findFaviconUrl,
@@ -14,6 +18,7 @@ import {
 } from "./oembed/generic";
 import {
   createProfile,
+  getProfileAvatarUrl,
   hostedHandleMinLength,
   isHostedHandleTooShort,
   isReservedPath,
@@ -58,6 +63,22 @@ function escapeHtml(value: string): string {
 
 function escapeScript(value: string): string {
   return value.replace(/<\/script/gi, "<\\/script");
+}
+
+function resolveAbsoluteHttpUrl(
+  value: string | null,
+  baseUrl: string,
+): string | null {
+  if (!value) return null;
+
+  try {
+    const url = new URL(value, baseUrl);
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function isClientAppRoute(pathname: string): boolean {
@@ -213,7 +234,21 @@ async function renderHandlePage(request: Request, env: Env): Promise<Response> {
   const html = await shell.text();
 
   const isPublicProfileRoute = !isClientAppRoute(url.pathname);
+  const profileAvatarUrl = isPublicProfileRoute
+    ? getProfileAvatarUrl(initialState.profile)
+    : null;
+  const socialImageUrl = resolveAbsoluteHttpUrl(
+    profileAvatarUrl,
+    request.url,
+  );
+  const socialImageAlt = initialState.profile
+    ? `Avatar for ${initialState.profile.title.trim() || `@${initialState.profile.handle}`}`
+    : null;
   const documentMeta = renderDocumentMeta({
+    image:
+      socialImageUrl && socialImageAlt
+        ? { alt: socialImageAlt, url: socialImageUrl }
+        : null,
     profile: initialState.profile,
     siteTitle: initialState.siteTitle,
     type: isPublicProfileRoute ? "profile" : "website",
@@ -222,9 +257,12 @@ async function renderHandlePage(request: Request, env: Env): Promise<Response> {
   const profileRuntimeScript = isPublicProfileRoute
     ? `<script>${escapeScript(await readProfileRuntimeScript(env, request))}</script>`
     : "";
-  const renderedHtml = replaceDocumentMeta(
-    isPublicProfileRoute ? removeClientEntrypoints(html) : html,
-    documentMeta,
+  const renderedHtml = replaceDocumentFavicon(
+    replaceDocumentMeta(
+      isPublicProfileRoute ? removeClientEntrypoints(html) : html,
+      documentMeta,
+    ),
+    profileAvatarUrl,
   )
     .replace(
       '<div id="app"></div>',

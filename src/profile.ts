@@ -115,8 +115,14 @@ export function getProfileDocumentTitle(
 
 export function getProfileDocumentDescription(
   profile: LinkProfile | null,
+  resolvedSiteTitle = siteTitle,
 ): string {
-  return profile?.bio.trim() || defaultDocumentDescription;
+  if (!profile) return defaultDocumentDescription;
+
+  return (
+    profile.bio.trim() ||
+    `View @${profile.handle} on ${resolvedSiteTitle}.`
+  );
 }
 
 export function getProfileAvatarUrl(
@@ -360,7 +366,7 @@ export const defaultTheme: ProfileTheme = {
     gender: "",
     location: "",
   },
-  layout: "classic",
+  layout: "neon",
   bannerImageAssetId: null,
   socialLinksPosition: "top",
   textColor: "#172033",
