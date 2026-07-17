@@ -137,11 +137,10 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
             </div>
           </div>
           <div className="home-hero-copy">
-            <h1>Your own free, portable link page.</h1>
+            <h1>Your own free, portable link page</h1>
             <p>
               Create a hosted handle page online, then use the local editor and
-              static export when you want your own domain or static file
-              hosting.
+              static export when you want your own domain or static file hosting
             </p>
             <form className="home-handle-form" onSubmit={onGetStarted}>
               <div className="home-handle-field">
@@ -195,7 +194,7 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
               <FaServer aria-hidden="true" size={20} />
               <h3>Free hosted pages</h3>
               <p>
-                Sign up when you want LinkOutpost to host and publish your
+                Sign up when you want {siteTitle} to host and publish your
                 public handle page for free.
               </p>
             </article>
