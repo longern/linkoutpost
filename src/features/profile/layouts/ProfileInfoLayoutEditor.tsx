@@ -1,5 +1,6 @@
 import type { ProfileTheme } from "../../../profile";
 import type { ProfileLayoutEditorProps } from "./ProfileLayoutEditor";
+import { useTranslation } from "../../../i18n";
 
 type InfoDetails = ProfileTheme["infoDetails"];
 
@@ -8,6 +9,7 @@ export function ProfileInfoLayoutEditor({
   onUpdateTheme,
   profile,
 }: ProfileLayoutEditorProps) {
+  const { t } = useTranslation();
   function updateInfoDetails(patch: Partial<InfoDetails>): void {
     onUpdateTheme({
       infoDetails: { ...profile.theme.infoDetails, ...patch },
@@ -21,15 +23,20 @@ export function ProfileInfoLayoutEditor({
   }
 
   return (
-    <section className="info-layout-editor" aria-label="Info layout options">
+    <section
+      className="info-layout-editor"
+      aria-label={t("editor.forms.infoLayoutOptions")}
+    >
       <div className="card-field-editor-header">
-        <strong>Personal info</strong>
+        <strong>{t("editor.forms.personalInfo")}</strong>
       </div>
       <div className="info-details-grid">
         <label className="design-field">
-          <span className="design-field-label">Gender</span>
+          <span className="design-field-label">
+            {t("editor.forms.gender")}
+          </span>
           <input
-            placeholder="Gender"
+            placeholder={t("editor.forms.gender")}
             value={profile.theme.infoDetails.gender}
             onChange={(event) =>
               updateInfoDetails({ gender: event.target.value })
@@ -40,7 +47,9 @@ export function ProfileInfoLayoutEditor({
           />
         </label>
         <label className="design-field">
-          <span className="design-field-label">Birth date</span>
+          <span className="design-field-label">
+            {t("editor.forms.birthDate")}
+          </span>
           <input
             type="date"
             value={profile.theme.infoDetails.birthDate}
@@ -53,9 +62,11 @@ export function ProfileInfoLayoutEditor({
           />
         </label>
         <label className="design-field">
-          <span className="design-field-label">Location</span>
+          <span className="design-field-label">
+            {t("editor.forms.location")}
+          </span>
           <input
-            placeholder="Location"
+            placeholder={t("editor.forms.location")}
             value={profile.theme.infoDetails.location}
             onChange={(event) =>
               updateInfoDetails({ location: event.target.value })

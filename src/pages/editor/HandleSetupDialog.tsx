@@ -1,6 +1,7 @@
 import { normalizeHandle } from "../../profile";
 import { siteTitle } from "../../siteConfig";
 import { FaXmark } from "react-icons/fa6";
+import { useTranslation } from "../../i18n";
 
 type HandleSetupDialogProps = {
   error: string | null;
@@ -21,6 +22,8 @@ export function HandleSetupDialog({
   onErrorClear,
   onSubmit,
 }: HandleSetupDialogProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="modal-backdrop" role="presentation">
       <section
@@ -31,10 +34,12 @@ export function HandleSetupDialog({
       >
         <form onSubmit={onSubmit}>
           <div className="handle-setup-header">
-            <h2 id="handle-setup-title">Create a handle</h2>
+            <h2 id="handle-setup-title">
+              {t("editor.forms.createHandle")}
+            </h2>
             {onClose && (
               <button
-                aria-label="Close handle dialog"
+                aria-label={t("editor.forms.closeHandleDialog")}
                 className="circle-icon-button"
                 onClick={onClose}
                 type="button"
@@ -43,9 +48,11 @@ export function HandleSetupDialog({
               </button>
             )}
           </div>
-          <p>Each handle has its own public {siteTitle} page.</p>
+          <p>
+            {t("editor.forms.handleDescription", { siteTitle })}
+          </p>
           <label>
-            Handle
+            {t("editor.forms.handle")}
             <input
               autoFocus
               name="handle"
@@ -58,7 +65,9 @@ export function HandleSetupDialog({
           </label>
           {error && <p className="field-error">{error}</p>}
           <button className="button-primary" disabled={saving} type="submit">
-            {saving ? "Creating" : "Create handle"}
+            {saving
+              ? t("editor.forms.creating")
+              : t("editor.forms.createHandleAction")}
           </button>
         </form>
       </section>

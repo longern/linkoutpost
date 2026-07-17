@@ -22,6 +22,7 @@ import type { LinkItem } from "../../profile";
 import { LinkRowOverlay, SortableLinkRow } from "./links/LinkRow";
 import { moveLinksById } from "./links/linkSorting";
 import { useAnimatedMenu } from "./useAnimatedMenu";
+import { useTranslation } from "../../i18n";
 
 const maxLinkItems = 50;
 const maxMediaCards = 10;
@@ -68,6 +69,7 @@ export function LinksPanel({
   onUpdate,
   onUrlChange,
 }: LinksPanelProps) {
+  const { t } = useTranslation();
   const [activeDragLinkId, setActiveDragLinkId] = useState<string | null>(null);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const addMenuAnimation = useAnimatedMenu(addMenuOpen);
@@ -141,7 +143,7 @@ export function LinksPanel({
           type="button"
         >
           <FaPlus aria-hidden="true" size={18} />
-          Add link
+          {t("editor.forms.addLink")}
         </button>
         <div className="add-content-menu-wrap">
           <button
@@ -152,7 +154,7 @@ export function LinksPanel({
             onClick={() => setAddMenuOpen((open) => !open)}
             type="button"
           >
-            Other
+            {t("editor.forms.other")}
             <FaChevronDown aria-hidden="true" size={14} />
           </button>
           {addMenuAnimation.mounted && (
@@ -180,7 +182,7 @@ export function LinksPanel({
                     type="button"
                   >
                     <FaImage aria-hidden="true" size={15} />
-                    Media card
+                    {t("editor.forms.mediaCard")}
                   </button>
                 </li>
               </ul>
@@ -201,7 +203,10 @@ export function LinksPanel({
           items={links.map((link) => link.id)}
           strategy={verticalListSortingStrategy}
         >
-          <section className="link-list" aria-label="Links">
+          <section
+            className="link-list"
+            aria-label={t("editor.forms.links")}
+          >
             {links.map((link) => (
               <SortableLinkRow
                 active={activeDragLinkId === link.id}

@@ -21,6 +21,7 @@ import { FaPlus, FaTrash } from "react-icons/fa6";
 import { RiDraggable } from "react-icons/ri";
 import type { ProfileTheme } from "../../../profile";
 import type { ProfileLayoutEditorProps } from "./ProfileLayoutEditor";
+import { useTranslation } from "../../../i18n";
 
 type CardField = ProfileTheme["cardFields"][number];
 
@@ -52,6 +53,7 @@ function SortableCardFieldRow({
   onSave(): void;
   onUpdate(id: string, patch: Partial<CardField>): void;
 }) {
+  const { t } = useTranslation();
   const { attributes, isDragging, listeners, setNodeRef, transform } =
     useSortable({ id: field.id });
   const style: CSSProperties = {
@@ -68,9 +70,11 @@ function SortableCardFieldRow({
       style={style}
     >
       <button
-        aria-label={`Drag ${field.label || "card field"}`}
+        aria-label={t("editor.forms.dragCardField", {
+          name: field.label || t("editor.forms.cardField"),
+        })}
         className="link-row-drag"
-        title="Drag to reorder"
+        title={t("editor.forms.dragToReorder")}
         type="button"
         {...attributes}
         {...listeners}
@@ -79,8 +83,8 @@ function SortableCardFieldRow({
       </button>
       <div className="card-field-editor-inputs">
         <input
-          aria-label="Field name"
-          placeholder="Field name"
+          aria-label={t("editor.forms.fieldName")}
+          placeholder={t("editor.forms.fieldName")}
           value={field.label}
           onChange={(event) =>
             onUpdate(field.id, { label: event.target.value })
@@ -88,8 +92,8 @@ function SortableCardFieldRow({
           onBlur={onSave}
         />
         <input
-          aria-label="Field value"
-          placeholder="Value"
+          aria-label={t("editor.forms.fieldValue")}
+          placeholder={t("editor.forms.value")}
           value={field.value}
           onChange={(event) =>
             onUpdate(field.id, { value: event.target.value })
@@ -98,10 +102,10 @@ function SortableCardFieldRow({
         />
       </div>
       <button
-        aria-label="Remove card field"
+        aria-label={t("editor.forms.removeCardField")}
         className="circle-icon-button danger"
         onClick={() => onRemove(field.id)}
-        title="Remove card field"
+        title={t("editor.forms.removeCardField")}
         type="button"
       >
         <FaTrash aria-hidden="true" size={18} />
@@ -116,6 +120,7 @@ export function ProfileCardLayoutEditor({
   onUpdateTheme,
   profile,
 }: ProfileLayoutEditorProps) {
+  const { t } = useTranslation();
   const [activeDragFieldId, setActiveDragFieldId] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -136,7 +141,7 @@ export function ProfileCardLayoutEditor({
     onUpdateTheme({
       cardFields: [
         ...profile.theme.cardFields,
-        { id: crypto.randomUUID(), label: "Field", value: "" },
+        { id: crypto.randomUUID(), label: t("editor.forms.field"), value: "" },
       ],
     });
   }
@@ -166,14 +171,17 @@ export function ProfileCardLayoutEditor({
   }
 
   return (
-    <section className="card-layout-editor" aria-label="Card layout options">
+    <section
+      className="card-layout-editor"
+      aria-label={t("editor.forms.cardLayoutOptions")}
+    >
       <div className="card-field-editor-header">
-        <strong>Card fields</strong>
+        <strong>{t("editor.forms.cardFields")}</strong>
         <button
-          aria-label="Add card field"
+          aria-label={t("editor.forms.addCardField")}
           className="circle-icon-button"
           onClick={addCardField}
-          title="Add card field"
+          title={t("editor.forms.addCardField")}
           type="button"
         >
           <FaPlus aria-hidden="true" size={18} />

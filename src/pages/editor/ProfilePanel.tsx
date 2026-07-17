@@ -8,6 +8,7 @@ import {
   type SocialPlatform,
 } from "../../profile";
 import { getSocialPlatformIcon } from "../../socialIcons";
+import { useTranslation } from "../../i18n";
 
 type ProfilePanelProps = {
   avatarUrl: string | null;
@@ -26,6 +27,7 @@ export function ProfilePanel({
   onUpdate,
   profile,
 }: ProfilePanelProps) {
+  const { t } = useTranslation();
   const [socialDialogOpen, setSocialDialogOpen] = useState(false);
 
   function addSocialLink(platform: SocialPlatform): void {
@@ -56,10 +58,13 @@ export function ProfilePanel({
   }
 
   return (
-    <section className="profile-panel" aria-label="Profile form">
+    <section className="profile-panel" aria-label={t("editor.forms.profile")}>
       <div className="profile-editor-summary">
-        <label className="profile-editor-avatar" title="Upload avatar">
-          <span className="sr-only">Avatar image</span>
+        <label
+          className="profile-editor-avatar"
+          title={t("editor.forms.uploadAvatar")}
+        >
+          <span className="sr-only">{t("editor.forms.avatarImage")}</span>
           <span className="profile-avatar-visual">
             {avatarUrl ? (
               <img alt="" src={avatarUrl} />
@@ -81,25 +86,25 @@ export function ProfilePanel({
         </label>
         <div className="profile-editor-identity">
           <span className="profile-editor-handle">
-            {profile.handle ? `@${profile.handle}` : "No handle"}
+            {profile.handle ? `@${profile.handle}` : t("editor.forms.noHandle")}
           </span>
         </div>
       </div>
 
       <div className="profile-fields-grid">
         <label>
-          Name
+          {t("editor.forms.name")}
           <input
-            placeholder="Your name"
+            placeholder={t("editor.forms.yourName")}
             value={profile.title}
             onChange={(event) => onUpdate({ title: event.target.value })}
             onBlur={onSave}
           />
         </label>
         <label>
-          Bio
+          {t("editor.forms.bio")}
           <textarea
-            placeholder="A short intro for your page"
+            placeholder={t("editor.forms.bioPlaceholder")}
             value={profile.bio}
             onChange={(event) => onUpdate({ bio: event.target.value })}
             onBlur={onSave}
@@ -111,12 +116,12 @@ export function ProfilePanel({
       <hr className="panel-section-divider" />
       <section className="design-section social-editor" aria-labelledby="social-editor-title">
         <div className="social-editor-header">
-          <h2 id="social-editor-title">Social icons</h2>
+          <h2 id="social-editor-title">{t("editor.forms.socialIcons")}</h2>
           <button
-            aria-label="Add social icon"
+            aria-label={t("editor.forms.addSocialIcon")}
             className="circle-icon-button"
             onClick={() => setSocialDialogOpen(true)}
-            title="Add social icon"
+            title={t("editor.forms.addSocialIcon")}
             type="button"
           >
             <FaPlus aria-hidden="true" size={18} />
@@ -149,10 +154,10 @@ export function ProfilePanel({
                     onBlur={onSave}
                   />
                   <button
-                    aria-label="Remove social icon"
+                    aria-label={t("editor.forms.removeSocialIcon")}
                     className="circle-icon-button danger"
                     onClick={() => removeSocialLink(link.id)}
-                    title="Remove social icon"
+                    title={t("editor.forms.removeSocialIcon")}
                     type="button"
                   >
                     <FaTrash aria-hidden="true" size={16} />
@@ -163,8 +168,12 @@ export function ProfilePanel({
           </div>
         )}
         <div className="social-position-field">
-          <span className="design-field-label">Position</span>
-          <div className="radio-options" role="radiogroup" aria-label="Social icons position">
+          <span className="design-field-label">{t("editor.forms.position")}</span>
+          <div
+            className="radio-options"
+            role="radiogroup"
+            aria-label={t("editor.forms.socialPosition")}
+          >
             <label className="radio-option">
               <input
                 checked={profile.theme.socialLinksPosition === "top"}
@@ -179,7 +188,7 @@ export function ProfilePanel({
                 }
                 type="radio"
               />
-              Top
+              {t("editor.forms.top")}
             </label>
             <label className="radio-option">
               <input
@@ -195,7 +204,7 @@ export function ProfilePanel({
                 }
                 type="radio"
               />
-              Bottom
+              {t("editor.forms.bottom")}
             </label>
           </div>
         </div>
@@ -210,9 +219,11 @@ export function ProfilePanel({
             role="dialog"
           >
             <div className="profile-social-dialog-header">
-              <h2 id="social-dialog-title">Add social icon</h2>
+              <h2 id="social-dialog-title">
+                {t("editor.forms.addSocialIcon")}
+              </h2>
               <button
-                aria-label="Close social icon dialog"
+                aria-label={t("editor.forms.closeSocialDialog")}
                 className="circle-icon-button"
                 onClick={() => setSocialDialogOpen(false)}
                 type="button"

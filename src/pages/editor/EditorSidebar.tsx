@@ -12,6 +12,7 @@ import type { LinkProfile } from "../../profile";
 import type { ProfileSummary } from "../../types";
 import { AccountHandleMenu } from "./AccountHandleMenu";
 import { useAnimatedMenu } from "./useAnimatedMenu";
+import { useTranslation } from "../../i18n";
 
 export type EditorPanel = "links" | "layout" | "design" | "profile";
 
@@ -48,6 +49,7 @@ export function EditorSidebar({
   profile,
   profileSummaries,
 }: EditorSidebarProps) {
+  const { t } = useTranslation();
   const accountTriggerRef = useRef<HTMLButtonElement | null>(null);
   const accountMenuAnimation = useAnimatedMenu(accountMenuOpen);
   const [accountMenuPosition, setAccountMenuPosition] = useState<{
@@ -164,7 +166,9 @@ export function EditorSidebar({
                 <FaCircleUser size={24} />
               )}
             </span>
-            <span>{profile.handle ? `@${profile.handle}` : "No handle"}</span>
+            <span>
+              {profile.handle ? `@${profile.handle}` : t("editor.forms.noHandle")}
+            </span>
             <FaChevronDown
               aria-hidden="true"
               className={`account-menu-chevron${accountMenuOpen ? " is-open" : ""}`}
@@ -180,7 +184,7 @@ export function EditorSidebar({
             type="button"
           >
             <FaCircleUser aria-hidden="true" size={16} />
-            Profile
+            {t("editor.sections.profile")}
           </button>
           <button
             className={`sidebar-nav-item${activePanel === "links" ? " active" : ""}`}
@@ -188,7 +192,7 @@ export function EditorSidebar({
             type="button"
           >
             <FaPlus aria-hidden="true" size={16} />
-            Links
+            {t("editor.sections.links")}
           </button>
           <button
             className={`sidebar-nav-item${activePanel === "layout" ? " active" : ""}`}
@@ -196,7 +200,7 @@ export function EditorSidebar({
             type="button"
           >
             <FaLayerGroup aria-hidden="true" size={16} />
-            Layout
+            {t("editor.sections.layout")}
           </button>
           <button
             className={`sidebar-nav-item${activePanel === "design" ? " active" : ""}`}
@@ -204,7 +208,7 @@ export function EditorSidebar({
             type="button"
           >
             <FaPalette aria-hidden="true" size={16} />
-            Design
+            {t("editor.sections.design")}
           </button>
         </nav>
 

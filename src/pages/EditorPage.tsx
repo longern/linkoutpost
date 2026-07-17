@@ -12,6 +12,7 @@ import {
   loadMyProfiles,
   saveProfile,
 } from "../apiClient";
+import { useTranslation } from "../i18n";
 import {
   deleteLocalProfile,
   readLocalProfileByHandle,
@@ -63,6 +64,19 @@ export function EditorPage({
 }: {
   initialSession: SessionState;
 }) {
+  const { t } = useTranslation();
+
+  function localizeHandleCreateError(error: unknown): string {
+    const message =
+      typeof error === "string" ? error : handleCreateErrorMessage(error);
+    if (message === "That handle is already taken.") {
+      return t("editor.forms.handleTaken");
+    }
+    if (message === "Handle create failed") {
+      return t("editor.forms.handleCreateFailed");
+    }
+    return message;
+  }
   const [session, setSession] = useState(initialSession);
   const [profile, setProfile] = useState<LinkProfile>(() => createProfile());
   const [profileSummaries, setProfileSummaries] = useState<ProfileSummary[]>(
@@ -110,7 +124,11 @@ export function EditorPage({
       setProfile(bootstrap.profile);
       setProfileSummaries(bootstrap.profileSummaries);
       setHandleDraft(bootstrap.handleDraft);
-      setHandleSetupError(bootstrap.handleSetupError);
+      setHandleSetupError(
+        bootstrap.handleSetupError
+          ? localizeHandleCreateError(bootstrap.handleSetupError)
+          : null,
+      );
       setHandleSetupRequired(bootstrap.handleSetupRequired);
       setHandleSetupOpen(bootstrap.handleSetupOpen);
       setMode(bootstrap.mode);
@@ -348,12 +366,14 @@ export function EditorPage({
     const normalizedHandle = normalizeHandle(handle);
 
     if (!normalizedHandle || isReservedPath(normalizedHandle)) {
-      setImportError("Choose a valid handle.");
+      setImportError(t("validation.invalidHandle"));
       return;
     }
 
     if (mode === "backend" && isHostedHandleTooShort(normalizedHandle)) {
-      setImportError(`Use at least ${hostedHandleMinLength} characters.`);
+      setImportError(
+        t("validation.minimumHandle", { count: hostedHandleMinLength }),
+      );
       return;
     }
 
@@ -407,7 +427,7 @@ export function EditorPage({
         setImportHandleDraft(
           createAvailableHandle(importedHandle || "imported"),
         );
-        setImportError("Choose a valid handle.");
+        setImportError(t("validation.invalidHandle"));
         return;
       }
 
@@ -456,12 +476,14 @@ export function EditorPage({
     const handle = normalizeHandle(handleDraft);
 
     if (!handle || isReservedPath(handle)) {
-      setHandleSetupError("Choose a valid handle.");
+      setHandleSetupError(t("validation.invalidHandle"));
       return;
     }
 
     if (mode === "backend" && isHostedHandleTooShort(handle)) {
-      setHandleSetupError(`Use at least ${hostedHandleMinLength} characters.`);
+      setHandleSetupError(
+        t("validation.minimumHandle", { count: hostedHandleMinLength }),
+      );
       return;
     }
 
@@ -490,7 +512,7 @@ export function EditorPage({
         window.history.replaceState(null, "", "/admin");
       }
     } catch (error) {
-      setHandleSetupError(handleCreateErrorMessage(error));
+      setHandleSetupError(localizeHandleCreateError(error));
     } finally {
       setHandleSetupSaving(false);
     }
@@ -576,12 +598,12 @@ export function EditorPage({
         <section className="editor-toolbar">
           <h1>
             {activeEditorPanel === "design"
-              ? "Design"
+              ? t("editor.sections.design")
               : activeEditorPanel === "layout"
-                ? "Layout"
+                ? t("editor.sections.layout")
                 : activeEditorPanel === "profile"
-                  ? "Profile"
-                  : "Links"}
+                  ? t("editor.sections.profile")
+                  : t("editor.sections.links")}
           </h1>
           <div className="toolbar-actions">
             {mode === "offline" && (
@@ -789,10 +811,13 @@ export function EditorPage({
             className="modal-card zip-import-dialog"
             role="dialog"
           >
-            <h2 id="zip-import-conflict-title">Import ZIP</h2>
+            <h2 id="zip-import-conflict-title">
+              {t("editor.forms.importZip")}
+            </h2>
             <p>
-              The ZIP uses @{importCandidate.profile.handle || "imported"}.
-              Choose how to import it.
+              {t("editor.forms.importDescription", {
+                handle: importCandidate.profile.handle || "imported",
+              })}
             </p>
             <div className="zip-import-actions">
               <button
@@ -806,10 +831,10 @@ export function EditorPage({
                 }}
                 type="button"
               >
-                Overwrite
+                {t("editor.forms.overwrite")}
               </button>
               <label>
-                Rename to
+                {t("editor.forms.renameTo")}
                 <input
                   value={importHandleDraft}
                   onChange={(event) => {
@@ -824,14 +849,14 @@ export function EditorPage({
                 onClick={() => {
                   const renamedHandle = normalizeHandle(importHandleDraft);
                   if (handleExists(renamedHandle)) {
-                    setImportError("That handle already exists.");
+                    setImportError(t("editor.forms.handleExists"));
                     return;
                   }
                   void commitImportedProfile(importCandidate, renamedHandle);
                 }}
                 type="button"
               >
-                Rename and import
+                {t("editor.forms.renameAndImport")}
               </button>
               <button
                 className="button-secondary"
@@ -839,7 +864,7 @@ export function EditorPage({
                 onClick={resetImportDialog}
                 type="button"
               >
-                Cancel
+                {t("editor.forms.cancel")}
               </button>
             </div>
             {importError && <p className="field-error">{importError}</p>}

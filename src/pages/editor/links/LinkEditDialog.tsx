@@ -2,6 +2,7 @@ import { createPortal } from "react-dom";
 import { FaImage, FaTrash, FaXmark } from "react-icons/fa6";
 import type { LinkItem } from "../../../profile";
 import { MediaCardPreview } from "./MediaCardPreview";
+import { useTranslation } from "../../../i18n";
 
 export function LinkEditDialog({
   link,
@@ -35,6 +36,7 @@ export function LinkEditDialog({
   onUpdate(id: string, patch: Partial<LinkItem>): void;
   onUrlChange(id: string, url: string): void;
 }) {
+  const { t } = useTranslation();
   const embedAvailable = Boolean(
     link.embedAvailable || (link.embedHtml && link.embedProvider),
   );
@@ -53,7 +55,7 @@ export function LinkEditDialog({
       role="presentation"
     >
       <button
-        aria-label="Close link editor"
+        aria-label={t("editor.forms.closeLinkEditor")}
         className="link-edit-scrim"
         onClick={closeAndSave}
         type="button"
@@ -66,13 +68,15 @@ export function LinkEditDialog({
       >
         <header className="link-edit-header">
           <h2 id={`link-edit-title-${link.id}`}>
-            {link.type === "image" ? "Edit media" : "Edit link"}
+            {link.type === "image"
+              ? t("editor.forms.editMedia")
+              : t("editor.forms.editLink")}
           </h2>
           <button
-            aria-label="Close link editor"
+            aria-label={t("editor.forms.closeLinkEditor")}
             className="circle-icon-button"
             onClick={closeAndSave}
-            title="Close"
+            title={t("editor.forms.closeLinkEditor")}
             type="button"
           >
             <FaXmark aria-hidden="true" size={18} />
@@ -88,7 +92,7 @@ export function LinkEditDialog({
         >
           {link.type === "image" ? (
             <div className="link-edit-field">
-              <span>Media</span>
+              <span>{t("editor.forms.media")}</span>
               <label
                 className={`image-card-upload link-edit-image-upload${linkImageUrl ? " has-image" : ""}`}
               >
@@ -108,13 +112,19 @@ export function LinkEditDialog({
             </div>
           ) : null}
           <label className="link-edit-field">
-            <span>Title</span>
+            <span>{t("editor.forms.title")}</span>
             <input
               aria-label={
-                link.type === "image" ? "Media card title" : "Link title"
+                link.type === "image"
+                  ? t("editor.forms.mediaCardTitle")
+                  : t("editor.forms.linkTitle")
               }
               autoFocus
-              placeholder={link.type === "image" ? "Media title" : "Link title"}
+              placeholder={
+                link.type === "image"
+                  ? t("editor.forms.mediaTitle")
+                  : t("editor.forms.linkTitle")
+              }
               value={link.label}
               onChange={(event) =>
                 onUpdate(link.id, { label: event.target.value })
@@ -122,12 +132,16 @@ export function LinkEditDialog({
             />
           </label>
           <label className="link-edit-field">
-            <span>URL</span>
+            <span>{t("editor.forms.url")}</span>
             <input
-              aria-label={link.type === "image" ? "Media card URL" : "Link URL"}
+              aria-label={
+                link.type === "image"
+                  ? t("editor.forms.mediaCardUrl")
+                  : t("editor.forms.linkUrl")
+              }
               placeholder={
                 link.type === "image"
-                  ? "Optional link URL"
+                  ? t("editor.forms.optionalLinkUrl")
                   : "https://example.com"
               }
               value={link.url}
@@ -145,7 +159,9 @@ export function LinkEditDialog({
           </label>
           {link.type === "image" ? null : (
             <div className="link-edit-field">
-              <span id={`link-display-title-${link.id}`}>Display</span>
+              <span id={`link-display-title-${link.id}`}>
+                {t("editor.forms.display")}
+              </span>
               <div
                 aria-labelledby={`link-display-title-${link.id}`}
                 className="link-edit-segmented"
@@ -166,10 +182,10 @@ export function LinkEditDialog({
                     />
                     <span>
                       {mode === "auto"
-                        ? "Auto"
+                        ? t("editor.forms.auto")
                         : mode === "embed"
-                          ? "Embed"
-                          : "Link"}
+                          ? t("editor.forms.embed")
+                          : t("editor.forms.link")}
                     </span>
                   </label>
                 ))}
@@ -178,13 +194,15 @@ export function LinkEditDialog({
           )}
           {link.type === "image" ? null : (
             <div className="link-edit-field">
-              <span>Thumbnail</span>
+              <span>{t("editor.forms.thumbnail")}</span>
               <div className="link-thumbnail-editor">
                 <label
                   className="link-thumbnail-preview"
-                  title="Upload thumbnail"
+                  title={t("editor.forms.uploadThumbnail")}
                 >
-                  <span className="sr-only">Upload thumbnail</span>
+                  <span className="sr-only">
+                    {t("editor.forms.uploadThumbnail")}
+                  </span>
                   {linkThumbnailUrl ? (
                     <img alt="" src={linkThumbnailUrl} />
                   ) : (
@@ -204,10 +222,10 @@ export function LinkEditDialog({
                 </label>
                 {linkThumbnailUrl ? (
                   <button
-                    aria-label="Remove thumbnail"
+                    aria-label={t("editor.forms.removeThumbnail")}
                     className="circle-icon-button danger"
                     onClick={() => onThumbnailRemove(link.id)}
-                    title="Remove thumbnail"
+                    title={t("editor.forms.removeThumbnail")}
                     type="button"
                   >
                     <FaTrash aria-hidden="true" size={16} />
@@ -217,7 +235,7 @@ export function LinkEditDialog({
             </div>
           )}
           <button className="button-primary link-edit-save" type="submit">
-            Save
+            {t("editor.forms.save")}
           </button>
         </form>
       </section>

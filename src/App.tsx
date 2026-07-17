@@ -11,6 +11,7 @@ import {
   normalizeHandle
 } from "./profile";
 import { ProfilePage } from "./features/profile/ProfilePage";
+import { I18nProvider } from "./i18n";
 import type { InitialState } from "./types";
 
 type AppProps = {
@@ -28,7 +29,11 @@ export function App({ initialState }: AppProps) {
   }, [initialState.profile, initialState.siteTitle]);
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
-    return <EditorPage initialSession={initialState.session} />;
+    return (
+      <I18nProvider>
+        <EditorPage initialSession={initialState.session} />
+      </I18nProvider>
+    );
   }
 
   if (pathname === "/") {

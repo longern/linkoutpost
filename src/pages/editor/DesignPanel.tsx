@@ -5,6 +5,7 @@ import {
   type ProfileTheme,
 } from "../../profile";
 import { getProfileLayoutDefinition } from "../../features/profile/layouts/registry";
+import { useTranslation } from "../../i18n";
 
 function isVideoUrl(url: string): boolean {
   return /^data:video\//i.test(url) || /\.(mp4|webm|ogv|ogg|mov)(?:[?#].*)?$/i.test(url);
@@ -35,6 +36,8 @@ function ColorField({
   onSave(): void;
   value: string;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="design-field">
       <label className="design-field-label" htmlFor={id}>
@@ -42,7 +45,7 @@ function ColorField({
       </label>
       <div className="design-color-control">
         <input
-          aria-label={`${label} color`}
+          aria-label={t("editor.forms.colorControl", { label })}
           id={id}
           type="color"
           value={value}
@@ -68,18 +71,21 @@ export function DesignPanel({
   onUpdateTheme,
   profile,
 }: DesignPanelProps) {
+  const { t } = useTranslation();
   const { designCapabilities } = getProfileLayoutDefinition(
     profile.theme.layout,
   );
 
   return (
-    <section className="design-panel" aria-label="Style form">
+    <section className="design-panel" aria-label={t("editor.forms.style")}>
       <section className="design-section" aria-labelledby="design-background-title">
-        <h2 id="design-background-title">Background</h2>
+        <h2 id="design-background-title">{t("editor.forms.background")}</h2>
         <div className="design-section-content">
           {designCapabilities.backgroundImage ? (
             <div className="design-field">
-              <div className="design-field-label">Background image</div>
+              <div className="design-field-label">
+                {t("editor.forms.backgroundImage")}
+              </div>
               <div
                 className={`media-upload-row${backgroundUrl ? " has-media" : ""}`}
               >
@@ -103,11 +109,11 @@ export function DesignPanel({
                   />
                 </label>
                 <button
-                  aria-label="Remove background image"
+                  aria-label={t("editor.forms.removeBackgroundImage")}
                   className="circle-icon-button danger"
                   disabled={!profile.theme.backgroundAssetId}
                   onClick={onBackgroundRemove}
-                  title="Remove background image"
+                  title={t("editor.forms.removeBackgroundImage")}
                   type="button"
                 >
                   <FaTrash aria-hidden="true" size={18} />
@@ -117,7 +123,7 @@ export function DesignPanel({
           ) : null}
           <ColorField
             id="design-background-color"
-            label="Background color"
+            label={t("editor.forms.backgroundColor")}
             onChange={(backgroundColor) => onUpdateTheme({ backgroundColor })}
             onSave={onSave}
             value={profile.theme.backgroundColor}
@@ -127,10 +133,12 @@ export function DesignPanel({
 
       {designCapabilities.bannerMedia ? (
         <section className="design-section" aria-labelledby="design-banner-title">
-          <h2 id="design-banner-title">Banner</h2>
+          <h2 id="design-banner-title">{t("editor.forms.banner")}</h2>
           <div className="design-section-content">
             <div className="design-field">
-              <div className="design-field-label">Banner image</div>
+              <div className="design-field-label">
+                {t("editor.forms.bannerImage")}
+              </div>
               <div
                 className={`media-upload-row${bannerImageUrl ? " has-media" : ""}`}
               >
@@ -156,11 +164,11 @@ export function DesignPanel({
                   />
                 </label>
                 <button
-                  aria-label="Remove banner image"
+                  aria-label={t("editor.forms.removeBannerImage")}
                   className="circle-icon-button danger"
                   disabled={!profile.theme.bannerImageAssetId}
                   onClick={onBannerImageRemove}
-                  title="Remove banner image"
+                  title={t("editor.forms.removeBannerImage")}
                   type="button"
                 >
                   <FaTrash aria-hidden="true" size={18} />
@@ -172,25 +180,25 @@ export function DesignPanel({
       ) : null}
 
       <section className="design-section" aria-labelledby="design-colors-title">
-        <h2 id="design-colors-title">Colors</h2>
+        <h2 id="design-colors-title">{t("editor.forms.colors")}</h2>
         <div className="design-section-content">
           <ColorField
             id="design-text-color"
-            label="Text"
+            label={t("editor.forms.text")}
             onChange={(textColor) => onUpdateTheme({ textColor })}
             onSave={onSave}
             value={profile.theme.textColor}
           />
           <ColorField
             id="design-accent-color"
-            label="Accent"
+            label={t("editor.forms.accent")}
             onChange={(accentColor) => onUpdateTheme({ accentColor })}
             onSave={onSave}
             value={profile.theme.accentColor}
           />
           <ColorField
             id="design-button-color"
-            label="Button"
+            label={t("editor.forms.button")}
             onChange={(buttonBackgroundColor) =>
               onUpdateTheme({ buttonBackgroundColor })
             }
@@ -199,7 +207,7 @@ export function DesignPanel({
           />
           <ColorField
             id="design-button-text-color"
-            label="Button text"
+            label={t("editor.forms.buttonText")}
             onChange={(buttonTextColor) => onUpdateTheme({ buttonTextColor })}
             onSave={onSave}
             value={profile.theme.buttonTextColor}
@@ -208,11 +216,11 @@ export function DesignPanel({
       </section>
 
       <section className="design-section" aria-labelledby="design-typography-title">
-        <h2 id="design-typography-title">Typography</h2>
+        <h2 id="design-typography-title">{t("editor.forms.typography")}</h2>
         <div className="design-section-content">
           <div className="design-field">
             <label className="design-field-label" htmlFor="design-font-family">
-              Font
+              {t("editor.forms.font")}
             </label>
             <select
               id="design-font-family"

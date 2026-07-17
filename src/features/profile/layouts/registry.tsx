@@ -89,8 +89,17 @@ export const profileLayoutRegistry = {
 
 export type ProfileLayout = keyof typeof profileLayoutRegistry;
 
+export function isProfileLayout(value: unknown): value is ProfileLayout {
+  return (
+    typeof value === "string" &&
+    Object.prototype.hasOwnProperty.call(profileLayoutRegistry, value)
+  );
+}
+
 export function getProfileLayoutDefinition(
-  layout: ProfileLayout,
+  layout: unknown,
 ): ProfileLayoutDefinition {
-  return profileLayoutRegistry[layout];
+  return isProfileLayout(layout)
+    ? profileLayoutRegistry[layout]
+    : profileLayoutRegistry.classic;
 }
