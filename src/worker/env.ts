@@ -10,4 +10,5 @@ export interface Env {
   SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET?: string;
   TWITTER_CLIENT_ID?: string;
   TWITTER_CLIENT_SECRET?: string;
+  VITE_SITE_TITLE?: string;
 }

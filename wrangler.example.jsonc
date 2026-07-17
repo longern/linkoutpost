@@ -20,6 +20,9 @@
       "!/admin/*",
     ],
   },
+  "vars": {
+    "VITE_SITE_TITLE": "LinkOutpost",
+  },
   "d1_databases": [
     {
       "binding": "DB",

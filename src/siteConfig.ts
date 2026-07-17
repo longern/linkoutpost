@@ -1,6 +1,14 @@
 const env = import.meta.env ?? {};
 
-export const siteTitle = env.VITE_SITE_TITLE || "LinkOutpost";
+export const defaultSiteTitle = "LinkOutpost";
+
+export function resolveSiteTitle(value: unknown): string {
+  return typeof value === "string" && value.trim()
+    ? value.trim()
+    : defaultSiteTitle;
+}
+
+export const siteTitle = resolveSiteTitle(env.VITE_SITE_TITLE);
 
 function readPositiveInteger(value: unknown, fallback: number): number {
   const parsed = Number.parseInt(String(value ?? ""), 10);

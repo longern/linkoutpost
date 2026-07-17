@@ -21,8 +21,11 @@ export function App({ initialState }: AppProps) {
   const pathname = initialState.pathname;
 
   useEffect(() => {
-    document.title = getProfileDocumentTitle(initialState.profile);
-  }, [initialState.profile]);
+    document.title = getProfileDocumentTitle(
+      initialState.profile,
+      initialState.siteTitle,
+    );
+  }, [initialState.profile, initialState.siteTitle]);
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     return <EditorPage initialSession={initialState.session} />;
@@ -50,7 +53,9 @@ export function App({ initialState }: AppProps) {
 
   const handle = normalizeHandle(pathname.split("/").filter(Boolean)[0] ?? "");
   if (!handle || isReservedPath(handle)) {
-    return <ProfilePage profile={null} />;
+    return (
+      <ProfilePage profile={null} siteTitle={initialState.siteTitle} />
+    );
   }
 
   return (
@@ -63,6 +68,7 @@ export function App({ initialState }: AppProps) {
         initialState.profile?.theme.bannerImageAssetId ?? null,
       )}
       profile={initialState.profile}
+      siteTitle={initialState.siteTitle}
     />
   );
 }

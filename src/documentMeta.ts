@@ -3,13 +3,14 @@ import {
   getProfileDocumentTitle,
   type LinkProfile,
 } from "./profile";
-import { siteTitle } from "./siteConfig";
+import { siteTitle as defaultSiteTitle } from "./siteConfig";
 
 export const documentMetaStartMarker = "<!--linkoutpost-document-meta-start-->";
 export const documentMetaEndMarker = "<!--linkoutpost-document-meta-end-->";
 
 type DocumentMetaOptions = {
   profile?: LinkProfile | null;
+  siteTitle?: string;
   type?: "profile" | "website";
   url?: string | null;
 };
@@ -25,10 +26,11 @@ function escapeHtml(value: string): string {
 
 export function renderDocumentMeta({
   profile = null,
+  siteTitle = defaultSiteTitle,
   type = "website",
   url = null,
 }: DocumentMetaOptions = {}): string {
-  const title = escapeHtml(getProfileDocumentTitle(profile));
+  const title = escapeHtml(getProfileDocumentTitle(profile, siteTitle));
   const description = escapeHtml(getProfileDocumentDescription(profile));
   const siteName = escapeHtml(siteTitle);
   const tags = [

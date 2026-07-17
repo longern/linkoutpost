@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { App, type InitialState } from "./App";
+import { siteTitle } from "./siteConfig";
 import "./features/profile/ProfilePage.css";
 import "./styles.css";
 
@@ -31,6 +32,7 @@ const initialState =
       provider: null,
       storage: "offline",
     },
+    siteTitle,
   } satisfies InitialState);
 
 createRoot(rootElement).render(<App initialState={initialState} />);

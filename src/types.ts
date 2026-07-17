@@ -24,4 +24,5 @@ export type InitialState = {
   pathname: string;
   profile: LinkProfile | null;
   session: SessionState;
+  siteTitle: string;
 };

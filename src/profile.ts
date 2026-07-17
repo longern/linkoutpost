@@ -105,9 +105,12 @@ export { hostedHandleMinLength, siteTitle } from "./siteConfig";
 export const defaultDocumentDescription =
   "Create a free hosted link page, export your profile data and page files, or deploy a rendered static page anywhere.";
 
-export function getProfileDocumentTitle(profile: LinkProfile | null): string {
+export function getProfileDocumentTitle(
+  profile: LinkProfile | null,
+  resolvedSiteTitle = siteTitle,
+): string {
   const name = profile?.title.trim();
-  return name ? `${name} | ${siteTitle}` : siteTitle;
+  return name ? `${name} | ${resolvedSiteTitle}` : resolvedSiteTitle;
 }
 
 export function getProfileDocumentDescription(

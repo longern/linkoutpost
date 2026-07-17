@@ -20,7 +20,7 @@ import {
   type ProfileTheme,
   type SocialLink,
 } from "../../profile";
-import { siteTitle } from "../../siteConfig";
+import { siteTitle as defaultSiteTitle } from "../../siteConfig";
 import {
   getSocialPlatformColor,
   getSocialPlatformIcon,
@@ -434,7 +434,13 @@ function ProfileAvatar({ avatarUrl }: { avatarUrl?: string | null }) {
   );
 }
 
-function ProfileFooter({ content }: { content?: ReactNode }) {
+function ProfileFooter({
+  content,
+  siteTitle,
+}: {
+  content?: ReactNode;
+  siteTitle: string;
+}) {
   const footerContent =
     content === undefined ? (
       <>
@@ -621,6 +627,7 @@ export function ProfilePage({
   shareEnabled = true,
   linkImageUrls,
   linkThumbnailUrls,
+  siteTitle = defaultSiteTitle,
 }: {
   avatarUrl?: string | null;
   backgroundUrl?: string | null;
@@ -629,6 +636,7 @@ export function ProfilePage({
   linkThumbnailUrls?: Record<string, string | null>;
   profile: LinkProfile | null;
   shareEnabled?: boolean;
+  siteTitle?: string;
 }) {
   if (!profile) {
     return (
@@ -639,7 +647,7 @@ export function ProfilePage({
             <h1 className="profile-title">Profile not found</h1>
             <p>This handle does not have a published page yet.</p>
           </div>
-          <ProfileFooter />
+          <ProfileFooter siteTitle={siteTitle} />
         </section>
       </main>
     );
@@ -726,7 +734,9 @@ export function ProfilePage({
       socialLinksPosition={currentProfile.theme.socialLinksPosition}
     />
   );
-  const profileFooter = <ProfileFooter content={layout.footerContent} />;
+  const profileFooter = (
+    <ProfileFooter content={layout.footerContent} siteTitle={siteTitle} />
+  );
   const bannerMedia = bannerImageUrl ? (
     <div className="banner-hero-image-wrap">
       {isVideoMedia(bannerImageUrl) ? (

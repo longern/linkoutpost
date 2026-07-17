@@ -30,6 +30,7 @@ import {
   startOAuth,
 } from "./worker/auth";
 import type { Env } from "./worker/env";
+import { resolveSiteTitle } from "./siteConfig";
 import { apiHeaders, jsonError, ssrHeaders } from "./worker/http";
 import {
   listProfilesByOwner,
@@ -197,6 +198,7 @@ async function renderHandlePage(request: Request, env: Env): Promise<Response> {
     pathname: url.pathname,
     profile: handle ? await readProfileByHandle(env, handle) : null,
     session: await getSession(request, env),
+    siteTitle: resolveSiteTitle(env.VITE_SITE_TITLE),
   };
   const stream = await renderToReadableStream(
     <App initialState={initialState} />,
@@ -213,6 +215,7 @@ async function renderHandlePage(request: Request, env: Env): Promise<Response> {
   const isPublicProfileRoute = !isClientAppRoute(url.pathname);
   const documentMeta = renderDocumentMeta({
     profile: initialState.profile,
+    siteTitle: initialState.siteTitle,
     type: isPublicProfileRoute ? "profile" : "website",
     url: `${url.origin}${url.pathname}`,
   });
