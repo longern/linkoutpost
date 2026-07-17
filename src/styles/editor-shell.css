@@ -17,7 +17,7 @@
 
 .editor-mobile-menu-button:hover {
   border-color: transparent;
-  color: var(--brand-accent-hover);
+  color: var(--brand-accent-foreground);
 }
 
 .editor-mobile-brand {
@@ -38,8 +38,8 @@
   place-items: center;
   justify-self: end;
   border-radius: 999px;
-  background: #ebe9e4;
-  color: #6b6f6a;
+  background: var(--brand-surface-strong);
+  color: var(--brand-text-subtle);
   overflow: hidden;
 }
 
@@ -67,7 +67,7 @@
   margin: 0;
   overflow: hidden;
   padding: 0;
-  background: #faf9f7;
+  background: var(--brand-page-background);
 }
 
 .editor-sidebar {
@@ -78,7 +78,7 @@
   flex-direction: column;
   gap: 24px;
   border-right: 1px solid var(--brand-border);
-  background: #f4f3f0;
+  background: var(--brand-surface-muted);
   overflow: auto;
   padding: 18px 16px;
 }
@@ -88,7 +88,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #5d635f;
+  color: var(--brand-text-muted);
   font-size: 0.9rem;
 }
 
@@ -118,8 +118,8 @@
   justify-content: center;
   overflow: hidden;
   border-radius: 999px;
-  background: #ebe9e4;
-  color: #6b6f6a;
+  background: var(--brand-surface-strong);
+  color: var(--brand-text-subtle);
 }
 
 .account-menu-avatar img {
@@ -137,7 +137,7 @@
 
 .account-menu-chevron {
   justify-self: end;
-  color: #7a817b;
+  color: var(--brand-text-subtle);
   transition: transform 160ms ease;
 }
 
@@ -237,7 +237,7 @@
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: #344054;
+  color: var(--brand-text-muted);
   font-size: 0.9rem;
   padding: 0 10px;
   text-align: left;
@@ -246,8 +246,8 @@
 
 .account-menu-item:hover,
 .account-menu-item.is-active {
-  background: #f4f3f0;
-  color: var(--brand-accent);
+  background: var(--brand-surface-muted);
+  color: var(--brand-accent-foreground);
 }
 
 .account-menu-divider {
@@ -264,7 +264,7 @@
 
 .sidebar-nav p {
   margin: 0 0 4px;
-  color: #888b86;
+  color: var(--brand-text-subtle);
   font-size: 0.78rem;
 }
 
@@ -277,7 +277,7 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #5b5f5b;
+  color: var(--brand-text-muted);
   cursor: pointer;
   font-size: 0.875rem;
   padding: 0 10px;
@@ -291,17 +291,17 @@
 }
 
 .sidebar-nav-item.active {
-  background: #e7e5e0;
-  color: var(--brand-accent);
+  background: var(--brand-surface-strong);
+  color: var(--brand-accent-foreground);
 }
 
 .sidebar-offline-notice {
   display: grid;
   gap: 6px;
-  border: 1px solid #f0c36d;
+  border: 1px solid var(--brand-warning-border);
   border-radius: 8px;
-  background: #fff7df;
-  color: #6f4e00;
+  background: var(--brand-warning-background);
+  color: var(--brand-warning-text);
   margin-top: auto;
   padding: 12px;
 }

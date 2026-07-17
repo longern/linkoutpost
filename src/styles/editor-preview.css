@@ -11,7 +11,7 @@
   display: grid;
   place-items: center;
   border: 0;
-  background: whitesmoke;
+  background: var(--brand-surface-muted);
   padding: 32px 24px;
   box-shadow: none;
 }
@@ -31,7 +31,7 @@
   padding: 0;
   scrollbar-width: none;
   zoom: var(--preview-scale);
-  box-shadow: 0 28px 80px rgb(24 32 47 / 18%);
+  box-shadow: 0 28px 80px rgb(var(--brand-shadow-rgb) / 32%);
 }
 
 .preview-frame > main::-webkit-scrollbar {

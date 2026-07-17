@@ -1,14 +1,33 @@
 :root {
-  --brand-accent: #b64222;
-  --brand-accent-hover: #8f3219;
-  --brand-accent-rgb: 182 66 34;
+  --brand-accent: #81021f;
+  --brand-accent-hover: #650218;
+  --brand-accent-foreground: #81021f;
+  --brand-accent-rgb: 129 2 31;
   --brand-border: #e7d2c7;
   --brand-border-strong: #e0c8bc;
   --brand-page-background: whitesmoke;
   --brand-raised-background: #ffffff;
   --brand-row-background: #fffdfc;
+  --brand-surface-muted: #f3f4f6;
+  --brand-surface-strong: #eef0ed;
+  --brand-surface-hover: #f7f6f3;
+  --brand-tint-background: #f7e7dd;
   --brand-shadow-rgb: 79 45 32;
+  --brand-overlay-rgb: 0 0 0;
+  --brand-checker-rgb: 23 32 51;
   --brand-text: #172033;
+  --brand-text-strong: #1d2636;
+  --brand-text-muted: #526070;
+  --brand-text-subtle: #667085;
+  --brand-text-disabled: #98a2b3;
+  --brand-on-accent: #ffffff;
+  --brand-danger: #9b2c2c;
+  --brand-danger-strong: #7a271a;
+  --brand-danger-background: #fef3f2;
+  --brand-danger-border: #fecdca;
+  --brand-warning-background: #fff7df;
+  --brand-warning-border: #efd58b;
+  --brand-warning-text: #6b5214;
   --motion-duration: 160ms;
   --motion-duration-fast: 80ms;
   --z-app-bar: 1100;
@@ -19,6 +38,7 @@
   --z-popover: 1320;
   --z-tooltip: 1500;
 
+  color-scheme: light;
   color: var(--brand-text);
   background: var(--brand-page-background);
   font-family:
@@ -32,6 +52,38 @@
   font-synthesis: none;
   line-height: 1.5;
   text-rendering: optimizeLegibility;
+}
+
+:root[data-app-theme="dark"],
+.app-theme-dark {
+  --brand-accent-hover: #a30a32;
+  --brand-accent-foreground: #ff9bb2;
+  --brand-border: #343434;
+  --brand-border-strong: #4a4a4a;
+  --brand-page-background: #101010;
+  --brand-raised-background: #181818;
+  --brand-row-background: #1d1d1d;
+  --brand-surface-muted: #202020;
+  --brand-surface-strong: #292929;
+  --brand-surface-hover: #303030;
+  --brand-tint-background: #151515;
+  --brand-shadow-rgb: 0 0 0;
+  --brand-overlay-rgb: 0 0 0;
+  --brand-checker-rgb: 255 255 255;
+  --brand-text: #f2f2f2;
+  --brand-text-strong: #ffffff;
+  --brand-text-muted: #c3c3c3;
+  --brand-text-subtle: #949494;
+  --brand-text-disabled: #707070;
+  --brand-danger: #ff8e86;
+  --brand-danger-strong: #ff6b62;
+  --brand-danger-background: #321719;
+  --brand-danger-border: #6d2d2f;
+  --brand-warning-background: #302714;
+  --brand-warning-border: #635126;
+  --brand-warning-text: #f5d77d;
+
+  color-scheme: dark;
 }
 
 * {
@@ -63,7 +115,7 @@ select {
   border: 1px solid var(--brand-border-strong);
   border-radius: 8px;
   background: var(--brand-raised-background);
-  color: #233044;
+  color: var(--brand-text);
   cursor: pointer;
   padding: 8px 14px;
   text-decoration: none;
@@ -112,7 +164,7 @@ button {
 .button-primary {
   border-color: var(--brand-accent);
   background: var(--brand-accent);
-  color: #ffffff;
+  color: var(--brand-on-accent);
 }
 
 .button-secondary {
@@ -142,13 +194,13 @@ button {
 }
 
 .circle-icon-button.danger {
-  color: #9b2c2c;
+  color: var(--brand-danger);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .circle-icon-button:hover {
     background: rgb(var(--brand-accent-rgb) / 10%);
-    color: var(--brand-accent-hover);
+    color: var(--brand-accent-foreground);
   }
 
   .circle-icon-button:active {
@@ -157,7 +209,7 @@ button {
 
   .circle-icon-button.danger:hover {
     background: rgb(180 35 24 / 10%);
-    color: #7a271a;
+    color: var(--brand-danger-strong);
   }
 
   .circle-icon-button.danger:active {
@@ -167,20 +219,20 @@ button {
 
 .button-secondary:hover {
   border-color: var(--brand-accent);
-  color: var(--brand-accent-hover);
+  color: var(--brand-accent-foreground);
 }
 
 .button-secondary:active {
   background: rgb(var(--brand-accent-rgb) / 8%);
   border-color: var(--brand-accent);
-  color: var(--brand-accent-hover);
+  color: var(--brand-accent-foreground);
   transition-duration: 80ms;
 }
 
 .button-primary:hover {
   border-color: var(--brand-accent-hover);
   background: var(--brand-accent-hover);
-  color: #ffffff;
+  color: var(--brand-on-accent);
 }
 
 .button-primary:active {

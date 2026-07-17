@@ -1,16 +1,20 @@
 import { siteTitle } from "../siteConfig";
+import { AppThemeToggle } from "./AppThemeToggle";
 
 export function SiteTopbar({
   currentPath,
-  signedIn
+  showThemeToggle = true,
+  signedIn,
 }: {
   currentPath?: string;
+  showThemeToggle?: boolean;
   signedIn: boolean;
 }) {
   return (
     <header className="site-topbar">
       <a className="site-brand" href="/">{siteTitle}</a>
       <nav className="site-nav" aria-label="Account">
+        {showThemeToggle && <AppThemeToggle />}
         {signedIn ? (
           <>
             <a className="button-primary button-pill site-nav-primary" href="/admin">Admin</a>

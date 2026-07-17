@@ -35,7 +35,7 @@
 
 .auth-kicker {
   margin: 0 0 14px;
-  color: var(--brand-accent);
+  color: var(--brand-accent-foreground);
   font-size: 0.78rem;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -57,26 +57,26 @@
 .auth-card > p:not(.auth-kicker) {
   max-width: 34ch;
   margin: 18px 0 28px;
-  color: #526070;
+  color: var(--brand-text-muted);
   font-size: 1rem;
   line-height: 1.45;
 }
 
 .auth-card > .auth-error {
   max-width: none;
-  border: 1px solid rgb(185 28 28 / 20%);
+  border: 1px solid var(--brand-danger-border);
   border-radius: 8px;
-  background: rgb(254 242 242);
+  background: var(--brand-danger-background);
   margin: -10px 0 18px;
   padding: 10px 12px;
-  color: #991b1b;
+  color: var(--brand-danger);
   font-size: 0.95rem;
 }
 
 .legal-card > p:not(.auth-kicker) {
   max-width: 62ch;
   margin: 18px 0 0;
-  color: #526070;
+  color: var(--brand-text-muted);
   font-size: 1rem;
   line-height: 1.55;
 }
@@ -94,7 +94,7 @@
 
 .legal-section p {
   margin: 0;
-  color: #526070;
+  color: var(--brand-text-muted);
   line-height: 1.55;
 }
 
@@ -107,8 +107,8 @@
   min-height: 48px;
   border: 1px solid rgb(var(--brand-shadow-rgb) / 16%);
   border-radius: 8px;
-  background: #ffffff;
-  color: #233044;
+  background: var(--brand-raised-background);
+  color: var(--brand-text);
   text-decoration: none;
   transition:
     background-color 160ms ease,
@@ -117,9 +117,9 @@
 }
 
 .auth-provider-link:hover {
-  background: rgb(16 24 39 / 3%);
+  background: var(--brand-surface-muted);
   border-color: rgb(var(--brand-accent-rgb) / 32%);
-  color: #172033;
+  color: var(--brand-text-strong);
 }
 
 .auth-provider-link:disabled {
@@ -128,15 +128,15 @@
 }
 
 .auth-provider-link:disabled:hover {
-  background: #ffffff;
+  background: var(--brand-raised-background);
   border-color: rgb(var(--brand-shadow-rgb) / 16%);
-  color: #233044;
+  color: var(--brand-text);
 }
 
 .auth-secondary-link {
   display: inline-block;
   margin-top: 20px;
-  color: var(--brand-accent);
+  color: var(--brand-accent-foreground);
   font-size: 0.9rem;
   text-decoration: none;
 }
@@ -147,7 +147,7 @@
   z-index: var(--z-modal);
   display: grid;
   place-items: center;
-  background: rgb(23 32 51 / 36%);
+  background: rgb(var(--brand-overlay-rgb) / 56%);
   padding: 20px;
 }
 
@@ -178,7 +178,7 @@
 
 .modal-card p {
   margin: 0;
-  color: #526070;
+  color: var(--brand-text-muted);
 }
 
 .modal-card .button-primary {
@@ -212,7 +212,7 @@
 
 .eyebrow {
   margin: 0 0 12px;
-  color: var(--brand-accent);
+  color: var(--brand-accent-foreground);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0;

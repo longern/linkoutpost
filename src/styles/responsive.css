@@ -27,8 +27,12 @@
     min-height: calc(100dvh - 60px);
   }
 
-  .home-hero {
+  .home-hero,
+  .home-feature-band {
     min-height: 0;
+  }
+
+  .home-hero {
     grid-template-columns: 1fr;
     gap: 32px;
     width: min(100% - 32px, 520px);
@@ -141,7 +145,7 @@
     display: block;
     border: 0;
     border-radius: 0;
-    background: rgb(23 32 51 / 32%);
+    background: rgb(var(--brand-overlay-rgb) / 48%);
     opacity: 0;
     padding: 0;
     pointer-events: none;
@@ -381,5 +385,11 @@
 
   .toolbar-actions > * {
     flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 360px) {
+  .site-nav a[href="/signin"]:not(.site-nav-primary) {
+    display: none;
   }
 }
