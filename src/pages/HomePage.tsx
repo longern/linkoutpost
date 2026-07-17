@@ -92,8 +92,11 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
   }
 
   return (
-    <>
-      <SiteTopbar signedIn={session.authenticated} />
+    <div className="app-theme-dark home-theme-dark">
+      <SiteTopbar
+        showThemeToggle={false}
+        signedIn={session.authenticated}
+      />
       <main className="home-page">
         <section className="home-hero">
           <div className="home-hero-scene" aria-hidden="true">
@@ -173,47 +176,49 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
         </section>
 
         <section
-          className="home-section"
+          className="home-feature-band"
           aria-labelledby="home-difference-title"
         >
-          <div className="home-section-heading">
-            <h2 id="home-difference-title">
-              Create quickly, host free, stay portable.
-            </h2>
-          </div>
-          <div className="home-feature-grid">
-            <article className="home-feature">
-              <FaBolt aria-hidden="true" size={20} />
-              <h3>Quick to create</h3>
-              <p>
-                Start from a simple editor, add your links and profile details,
-                and get a clean page ready fast.
-              </p>
-            </article>
-            <article className="home-feature">
-              <FaServer aria-hidden="true" size={20} />
-              <h3>Free hosted pages</h3>
-              <p>
-                Sign up when you want {siteTitle} to host and publish your
-                public handle page for free.
-              </p>
-            </article>
-            <article className="home-feature">
-              <FaDownload aria-hidden="true" size={20} />
-              <h3>Exportable by design</h3>
-              <p>
-                Create locally without logging in, then download your profile
-                data, images, and page files.
-              </p>
-            </article>
-            <article className="home-feature">
-              <FaFileExport aria-hidden="true" size={20} />
-              <h3>Ready for self-hosting</h3>
-              <p>
-                Deploy the rendered static page to your own domain, CDN, object
-                storage, or static host.
-              </p>
-            </article>
+          <div className="home-section">
+            <div className="home-section-heading">
+              <h2 id="home-difference-title">
+                Create quickly, host free, stay portable.
+              </h2>
+            </div>
+            <div className="home-feature-grid">
+              <article className="home-feature">
+                <FaBolt aria-hidden="true" size={20} />
+                <h3>Quick to create</h3>
+                <p>
+                  Start from a simple editor, add your links and profile
+                  details, and get a clean page ready fast.
+                </p>
+              </article>
+              <article className="home-feature">
+                <FaServer aria-hidden="true" size={20} />
+                <h3>Free hosted pages</h3>
+                <p>
+                  Sign up when you want {siteTitle} to host and publish your
+                  public handle page for free.
+                </p>
+              </article>
+              <article className="home-feature">
+                <FaDownload aria-hidden="true" size={20} />
+                <h3>Exportable by design</h3>
+                <p>
+                  Create locally without logging in, then download your profile
+                  data, images, and page files.
+                </p>
+              </article>
+              <article className="home-feature">
+                <FaFileExport aria-hidden="true" size={20} />
+                <h3>Ready for self-hosting</h3>
+                <p>
+                  Deploy the rendered static page to your own domain, CDN,
+                  object storage, or static host.
+                </p>
+              </article>
+            </div>
           </div>
         </section>
 
@@ -258,6 +263,6 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
           </nav>
         </footer>
       </main>
-    </>
+    </div>
   );
 }

@@ -3,6 +3,33 @@
 
 <head>
   <meta charset="UTF-8" />
+  <meta name="color-scheme" content="dark light" />
+  <script>
+    (() => {
+      const path = window.location.pathname;
+      const isAppPage =
+        path === "/" ||
+        path === "/privacy" ||
+        path === "/terms" ||
+        path === "/license" ||
+        path === "/admin" ||
+        path.startsWith("/admin/") ||
+        path === "/signin" ||
+        path.startsWith("/signin/");
+
+      if (!isAppPage) return;
+
+      try {
+        const storedTheme = localStorage.getItem("linkoutpost:app-theme");
+        document.documentElement.dataset.appTheme =
+          storedTheme === "light" || storedTheme === "dark"
+            ? storedTheme
+            : "dark";
+      } catch {
+        document.documentElement.dataset.appTheme = "dark";
+      }
+    })();
+  </script>
   <!--linkoutpost-document-meta-start-->
   <meta name="description"
     content="Create a free hosted link page, export your profile data and page files, or deploy a rendered static page anywhere." />

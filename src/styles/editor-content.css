@@ -10,7 +10,7 @@
   border: 0;
   border-radius: 999px;
   background: var(--brand-accent);
-  color: #ffffff;
+  color: var(--brand-on-accent);
   font-size: 1rem;
   font-weight: 700;
   padding: 0 24px;
@@ -76,12 +76,12 @@
 
 .add-link-button:hover {
   background: var(--brand-accent-hover);
-  color: #ffffff;
+  color: var(--brand-on-accent);
 }
 
 .field-error {
   margin: -8px 0 0;
-  color: #9b2c2c;
+  color: var(--brand-danger);
   font-size: 0.9rem;
 }
 
@@ -142,12 +142,12 @@
   border: 1px dashed var(--brand-border-strong);
   border-radius: 8px;
   background:
-    linear-gradient(135deg, rgb(23 32 51 / 4%) 25%, transparent 25%) 0 0 / 18px
+    linear-gradient(135deg, rgb(var(--brand-checker-rgb) / 4%) 25%, transparent 25%) 0 0 / 18px
       18px,
-    linear-gradient(135deg, transparent 75%, rgb(23 32 51 / 4%) 75%) 0 0 / 18px
+    linear-gradient(135deg, transparent 75%, rgb(var(--brand-checker-rgb) / 4%) 75%) 0 0 / 18px
       18px,
     var(--brand-raised-background);
-  color: #667085;
+  color: var(--brand-text-subtle);
 }
 
 .media-upload-preview img,
@@ -166,6 +166,6 @@
   width: 44px;
   height: 44px;
   border-radius: 999px;
-  background: rgb(255 255 255 / 72%);
-  color: #667085;
+  background: var(--brand-surface-strong);
+  color: var(--brand-text-subtle);
 }

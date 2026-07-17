@@ -14,6 +14,7 @@ import {
   loadMyProfiles,
   saveProfile,
 } from "../apiClient";
+import { AppThemeToggle } from "../components/AppThemeToggle";
 import { useTranslation } from "../i18n";
 import {
   deleteLocalProfile,
@@ -625,6 +626,7 @@ export function EditorPage({
                     : t("editor.sections.links")}
           </h1>
           <div className="toolbar-actions">
+            <AppThemeToggle />
             {mode === "offline" && (
               <button
                 aria-label="Preview page"
