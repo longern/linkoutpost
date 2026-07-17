@@ -432,6 +432,11 @@
   outline: 0;
 }
 
+.home-handle-field:focus-within {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgb(var(--brand-accent-rgb) / 20%);
+}
+
 .home-handle-error {
   grid-column: 1 / -1;
   min-height: 1.25em;

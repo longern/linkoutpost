@@ -7,9 +7,6 @@ import { ProfileClassicLayoutPreview } from "./ProfileClassicLayoutPreview";
 import { ProfileInfoLayout } from "./ProfileInfoLayout";
 import { profileInfoLayoutStyleRules } from "./ProfileInfoLayout.styles";
 import { ProfileInfoLayoutPreview } from "./ProfileInfoLayoutPreview";
-import { ProfileNeonLayout } from "./ProfileNeonLayout";
-import { profileNeonLayoutStyleRules } from "./ProfileNeonLayout.styles";
-import { ProfileNeonLayoutPreview } from "./ProfileNeonLayoutPreview";
 import type {
   ProfileLayoutDefinition,
   ProfileLayoutRenderContext,
@@ -88,11 +85,6 @@ export const profileLayoutRegistry = {
     socialLinksPresentation: "icons",
     styleRules: profileInfoLayoutStyleRules,
   },
-];
-
-const profileLayoutDefinitionById = new Map(
-  profileLayoutDefinitions.map((definition) => [definition.id, definition]),
-);
 } satisfies Record<string, ProfileLayoutDefinition>;
 
 export type ProfileLayout = keyof typeof profileLayoutRegistry;
