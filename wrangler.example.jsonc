@@ -14,7 +14,6 @@
       "!/signin/*",
       "!/privacy",
       "!/terms",
-      "!/license",
       "!/assets/*",
       "!/admin",
       "!/admin/*",

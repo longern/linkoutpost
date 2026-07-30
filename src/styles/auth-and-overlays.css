@@ -159,17 +159,6 @@
   color: var(--brand-text-strong);
 }
 
-.auth-provider-link:disabled {
-  cursor: not-allowed;
-  opacity: 0.48;
-}
-
-.auth-provider-link:disabled:hover {
-  background: var(--brand-raised-background);
-  border-color: rgb(var(--brand-shadow-rgb) / 16%);
-  color: var(--brand-text);
-}
-
 .auth-secondary-link {
   display: inline-block;
   margin-top: 20px;

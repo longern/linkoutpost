@@ -2,6 +2,8 @@
 
 Cloudflare Workers + React app for personal link pages.
 
+This branch is proprietary and confidential. See `LICENSE`.
+
 ## Code map
 
 - `src/pages/`: application routes. The editor page composes the focused modules under `src/pages/editor/`.
@@ -18,7 +20,7 @@ Cloudflare Workers + React app for personal link pages.
 
 - `/` is served as a static asset.
 - `/admin` and `/admin/*` are served as static assets and run the client-side editor.
-- `/privacy`, `/terms`, and `/license` are served as static assets and run the client-side app.
+- `/privacy` and `/terms` are served as static assets and run the client-side app.
 - `/assets/*` is served directly by Workers Static Assets.
 - `/api/*` runs in the Worker.
 - `/:handle` runs in the Worker and server-renders a public profile page.

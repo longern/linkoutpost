@@ -91,7 +91,6 @@ function isClientAppRoute(pathname: string): boolean {
     pathname.startsWith("/signin/") ||
     pathname === "/privacy" ||
     pathname === "/terms" ||
-    pathname === "/license" ||
     pathname === "/admin" ||
     pathname.startsWith("/admin/")
   );

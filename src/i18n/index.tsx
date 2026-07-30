@@ -1,8 +1,10 @@
 import {
+  useCallback,
   createContext,
   useContext,
   useEffect,
   useMemo,
+  useState,
   type ReactNode,
 } from "react";
 import { resources } from "./resources";
@@ -12,6 +14,7 @@ export type TranslationOptions = Record<string, string | number>;
 export type Translate = (key: string, options?: TranslationOptions) => string;
 
 const fallbackLanguage: Language = "en";
+const languageStorageKey = "linkoutpost:language";
 
 function normalizeLanguage(value: string): Language | null {
   const language = value.trim().toLowerCase().split("-")[0];
@@ -38,8 +41,18 @@ export function detectLanguage(
 export function detectBrowserLanguage(): Language {
   if (typeof navigator === "undefined") return fallbackLanguage;
   return detectLanguage(
-    navigator.languages.length ? navigator.languages : [navigator.language],
+    navigator.languages?.length ? navigator.languages : [navigator.language],
   );
+}
+
+function readStoredLanguage(): Language | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    return normalizeLanguage(window.localStorage.getItem(languageStorageKey) ?? "");
+  } catch {
+    return null;
+  }
 }
 
 function lookup(language: Language, key: string): unknown {
@@ -69,24 +82,38 @@ export function createTranslator(language: Language): Translate {
 
 type I18nContextValue = {
   language: Language;
+  setLanguage(language: Language): void;
   t: Translate;
 };
 
 const I18nContext = createContext<I18nContextValue>({
   language: fallbackLanguage,
+  setLanguage: () => {},
   t: createTranslator(fallbackLanguage),
 });
 
 export function I18nProvider({
   children,
-  language = detectBrowserLanguage(),
+  language: initialLanguage,
 }: {
   children: ReactNode;
   language?: Language;
 }) {
+  const [language, setCurrentLanguage] = useState<Language>(
+    () => initialLanguage ?? readStoredLanguage() ?? detectBrowserLanguage(),
+  );
+  const setLanguage = useCallback((nextLanguage: Language) => {
+    setCurrentLanguage(nextLanguage);
+
+    try {
+      window.localStorage.setItem(languageStorageKey, nextLanguage);
+    } catch {
+      // Continue using the selected language when storage is unavailable.
+    }
+  }, []);
   const value = useMemo(
-    () => ({ language, t: createTranslator(language) }),
-    [language],
+    () => ({ language, setLanguage, t: createTranslator(language) }),
+    [language, setLanguage],
   );
 
   useEffect(() => {

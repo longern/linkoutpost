@@ -56,10 +56,6 @@ function AppContent({ initialState }: AppProps) {
     return <LegalPage initialSession={initialState.session} kind="terms" />;
   }
 
-  if (pathname === "/license") {
-    return <LegalPage initialSession={initialState.session} kind="license" />;
-  }
-
   const handle = normalizeHandle(pathname.split("/").filter(Boolean)[0] ?? "");
   if (!handle || isReservedPath(handle)) {
     return (

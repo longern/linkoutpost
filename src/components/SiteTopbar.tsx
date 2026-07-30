@@ -1,5 +1,6 @@
 import { useTranslation } from "../i18n";
 import { siteTitle } from "../siteConfig";
+import { AppLanguageSelect } from "./AppLanguageSelect";
 import { AppThemeToggle } from "./AppThemeToggle";
 
 export function SiteTopbar({
@@ -17,6 +18,7 @@ export function SiteTopbar({
     <header className="site-topbar">
       <a className="site-brand" href="/">{siteTitle}</a>
       <nav className="site-nav" aria-label={t("navigation.account")}>
+        <AppLanguageSelect className="site-language-select" />
         {showThemeToggle && <AppThemeToggle />}
         {signedIn ? (
           <>

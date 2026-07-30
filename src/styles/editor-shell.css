@@ -308,8 +308,8 @@
 }
 
 .sidebar-nav-item.active {
-  background: var(--brand-surface-strong);
-  color: var(--brand-accent-foreground);
+  background: var(--brand-accent);
+  color: var(--brand-on-accent);
 }
 
 .sidebar-offline-notice {

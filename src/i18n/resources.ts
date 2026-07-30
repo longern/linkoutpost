@@ -3,10 +3,27 @@ export const resources = {
     navigation: {
       account: "Account",
       admin: "Admin",
+      language: "Language",
       localEditor: "Local editor",
       logOut: "Log out",
       signIn: "Sign in",
       signUp: "Sign up",
+    },
+    home: {
+      footer: {
+        description: "Your own free, portable pup archive",
+        label: "Footer",
+        privacy: "Privacy",
+        terms: "Terms",
+      },
+      hero: {
+        descriptionLine1:
+          "Create your digital identity by using our local editor or your own X page.",
+        descriptionLine2: "Preserve your story. Let your pack recognize you.",
+        getStarted: "Get Started",
+        titleLine1: "Your own free,",
+        titleLine2: "portable pup archive",
+      },
     },
     signIn: {
       account: "{{siteTitle}} account",
@@ -146,8 +163,7 @@ export const resources = {
         handleExists: "That handle already exists.",
         handleTaken: "That handle is already taken.",
         handleCreateFailed: "Handle create failed",
-        importDescription:
-          "The ZIP uses @{{handle}}. Choose how to import it.",
+        importDescription: "The ZIP uses @{{handle}}. Choose how to import it.",
         overwrite: "Overwrite",
         renameTo: "Rename to",
         renameAndImport: "Rename and import",
@@ -167,10 +183,27 @@ export const resources = {
     navigation: {
       account: "账户",
       admin: "管理后台",
+      language: "语言",
       localEditor: "本地编辑器",
       logOut: "退出登录",
       signIn: "登录",
       signUp: "注册",
+    },
+    home: {
+      footer: {
+        description: "你的专属犬牙电子狗狗档案",
+        label: "页脚",
+        privacy: "隐私",
+        terms: "条款",
+      },
+      hero: {
+        descriptionLine1:
+          "通过本地编辑工具或链接你的个人 X 主页，建立你的专属数字身份档案。",
+        descriptionLine2: "记录你的故事，让犬群识别你的身份。",
+        getStarted: "开始",
+        titleLine1: "你的专属",
+        titleLine2: "犬牙电子狗狗档案",
+      },
     },
     signIn: {
       account: "{{siteTitle}} 账户",

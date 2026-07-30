@@ -2,7 +2,7 @@ import { SiteTopbar } from "../components/SiteTopbar";
 import { siteTitle } from "../siteConfig";
 import type { SessionState } from "../types";
 
-type LegalPageKind = "license" | "privacy" | "terms";
+type LegalPageKind = "privacy" | "terms";
 
 type LegalPageContent = {
   title: string;
@@ -14,24 +14,6 @@ type LegalPageContent = {
 };
 
 const content: Record<LegalPageKind, LegalPageContent> = {
-  license: {
-    title: "License",
-    intro: `${siteTitle} is open source under the MIT License.`,
-    sections: [
-      {
-        heading: "Source code",
-        body: "You can inspect, fork, modify, and self-host the project from the public source repository.",
-      },
-      {
-        heading: "MIT License",
-        body: "Permission is granted to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software, subject to including the copyright and license notice.",
-      },
-      {
-        heading: "No warranty",
-        body: "The software is provided as-is, without warranty of any kind.",
-      },
-    ],
-  },
   privacy: {
     title: "Privacy",
     intro: `${siteTitle} is designed for public link pages, local editing, and portable static exports.`,

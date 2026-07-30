@@ -85,21 +85,13 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
     label: string,
   ) {
     const enabled = session.authProviders?.[provider] ?? false;
-    const content = (
-      <>
+    if (!enabled) return null;
+
+    return (
+      <a className="button-secondary auth-provider-link" href={authStartHref(provider)}>
         <FaRightToBracket aria-hidden="true" size={16} />
         {label}
-      </>
-    );
-
-    return enabled ? (
-      <a className="button-secondary auth-provider-link" href={authStartHref(provider)}>
-        {content}
       </a>
-    ) : (
-      <button className="button-secondary auth-provider-link" disabled type="button">
-        {content}
-      </button>
     );
   }
 
