@@ -42,7 +42,7 @@ const content: Record<LegalPageKind, LegalPageContent> = {
       },
       {
         heading: "Information you provide",
-        body: "If you sign in or publish a hosted page, the service may store your profile content, handle, title, bio, social links, external links, theme settings, uploaded media, and account information received from your OAuth provider, such as display name, username, email address, and avatar URL.",
+        body: "If you sign in or publish a hosted page, the service may store your profile content, handle, title, bio, social links, external links, theme settings, uploaded media, email address, and account information received from your authentication provider, such as display name, username, and avatar URL.",
       },
       {
         heading: "Public pages",
@@ -54,11 +54,11 @@ const content: Record<LegalPageKind, LegalPageContent> = {
       },
       {
         heading: "Service providers",
-        body: "The hosted service uses infrastructure and authentication providers such as Cloudflare, Google, Twitter/X, and Shopify. These providers may process information needed to deliver hosting, storage, security, and OAuth sign-in.",
+        body: "The hosted service uses infrastructure, email delivery, and authentication providers such as Cloudflare, Resend, Google, Twitter/X, and Shopify. These providers may process information needed to deliver hosting, storage, security, email links, and OAuth sign-in.",
       },
       {
         heading: "Cookies",
-        body: "The app uses necessary cookies for OAuth sign-in, session state, and security. It does not need a separate cookie banner unless optional analytics or tracking cookies are added later.",
+        body: "The app uses necessary cookies for sign-in, session state, and security. It does not need a separate cookie banner unless optional analytics or tracking cookies are added later.",
       },
       {
         heading: "Retention and deletion",

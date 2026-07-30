@@ -19,6 +19,14 @@ type AppProps = {
 };
 
 export function App({ initialState }: AppProps) {
+  return (
+    <I18nProvider>
+      <AppContent initialState={initialState} />
+    </I18nProvider>
+  );
+}
+
+function AppContent({ initialState }: AppProps) {
   const pathname = initialState.pathname;
 
   useEffect(() => {
@@ -29,11 +37,7 @@ export function App({ initialState }: AppProps) {
   }, [initialState.profile, initialState.siteTitle]);
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
-    return (
-      <I18nProvider>
-        <EditorPage initialSession={initialState.session} />
-      </I18nProvider>
-    );
+    return <EditorPage initialSession={initialState.session} />;
   }
 
   if (pathname === "/") {

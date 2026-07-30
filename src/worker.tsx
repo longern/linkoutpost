@@ -23,10 +23,12 @@ import {
 import { readUserFile, writeProfileAssetUpload } from "./worker/assetStorage";
 import {
   clearCookie,
+  completeEmailSignIn,
   completeOAuth,
   getSession,
   getSessionPayload,
   signInErrorRedirect,
+  startEmailSignIn,
   startOAuth,
 } from "./worker/auth";
 import type { Env } from "./worker/env";
@@ -246,6 +248,26 @@ async function renderHandlePage(request: Request, env: Env): Promise<Response> {
 export default {
   async fetch(request, env): Promise<Response> {
     const url = new URL(request.url);
+
+    if (url.pathname === "/api/auth/email/start") {
+      if (request.method !== "POST") return jsonError("Method not allowed", 405);
+
+      try {
+        return await startEmailSignIn(request, env);
+      } catch {
+        return signInErrorRedirect(request, "email_failed", false);
+      }
+    }
+
+    if (url.pathname === "/api/auth/email/callback") {
+      if (request.method !== "GET") return jsonError("Method not allowed", 405);
+
+      try {
+        return await completeEmailSignIn(request, env);
+      } catch {
+        return signInErrorRedirect(request, "email_failed", false);
+      }
+    }
 
     if (url.pathname === "/api/auth/google/start") {
       try {

@@ -103,6 +103,43 @@
   gap: 10px;
 }
 
+.auth-email-form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.auth-email-input,
+.auth-email-submit {
+  width: 100%;
+  min-height: 48px;
+}
+
+.auth-email-input {
+  border: 1px solid rgb(var(--brand-shadow-rgb) / 16%);
+  border-radius: 8px;
+  background: var(--brand-raised-background);
+  color: var(--brand-text);
+  padding: 11px 14px;
+}
+
+.auth-email-input:focus {
+  border-color: var(--brand-accent);
+  box-shadow: 0 0 0 3px rgb(var(--brand-accent-rgb) / 12%);
+  outline: none;
+}
+
+.auth-card > .auth-notice {
+  max-width: none;
+  border: 1px solid rgb(var(--brand-accent-rgb) / 20%);
+  border-radius: 8px;
+  background: rgb(var(--brand-accent-rgb) / 6%);
+  margin: -10px 0 18px;
+  padding: 10px 12px;
+  color: var(--brand-text);
+  font-size: 0.95rem;
+}
+
 .auth-provider-link {
   min-height: 48px;
   border: 1px solid rgb(var(--brand-shadow-rgb) / 16%);

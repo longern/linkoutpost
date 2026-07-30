@@ -2,29 +2,42 @@ import { useEffect, useState } from "react";
 import { FaRightToBracket } from "react-icons/fa6";
 import { loadSession } from "../apiClient";
 import { SiteTopbar } from "../components/SiteTopbar";
+import { useTranslation } from "../i18n";
 import { normalizeHandle } from "../profile";
 import { siteTitle } from "../siteConfig";
 import type { AuthProvider, SessionState } from "../types";
 
-function authErrorMessage(searchParams: URLSearchParams): string | null {
+function authErrorKey(searchParams: URLSearchParams): string | null {
   switch (searchParams.get("error")) {
+    case "email_expired":
+      return "signIn.errors.emailExpired";
+    case "email_failed":
+      return "signIn.errors.emailFailed";
+    case "email_invalid":
+      return "signIn.errors.emailInvalid";
     case "oauth_state":
-      return "Sign-in session expired.";
+      return "signIn.errors.oauthState";
     case "oauth_provider":
-      return "Sign-in was cancelled or denied.";
+      return "signIn.errors.oauthProvider";
     case "oauth_callback":
-      return "The sign-in callback was incomplete. Please start again.";
+      return "signIn.errors.oauthCallback";
     case "oauth_unavailable":
-      return "This sign-in method is currently unavailable.";
+      return "signIn.errors.oauthUnavailable";
     case "oauth_failed":
-      return "Sign-in could not be completed right now.";
+      return "signIn.errors.oauthFailed";
     default:
       return null;
   }
 }
 
 export function SignInPage({ initialSession }: { initialSession: SessionState }) {
+  const { t } = useTranslation();
   const [session, setSession] = useState(initialSession);
+  const [emailSent, setEmailSent] = useState(() =>
+    typeof window === "undefined"
+      ? false
+      : new URLSearchParams(window.location.search).get("email_sent") === "1",
+  );
   const [requestedHandle, setRequestedHandle] = useState(() =>
     typeof window === "undefined"
       ? ""
@@ -33,14 +46,15 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
   const [authError, setAuthError] = useState<string | null>(() =>
     typeof window === "undefined"
       ? null
-      : authErrorMessage(new URLSearchParams(window.location.search)),
+      : authErrorKey(new URLSearchParams(window.location.search)),
   );
 
   useEffect(() => {
     let cancelled = false;
     const searchParams = new URLSearchParams(window.location.search);
+    setEmailSent(searchParams.get("email_sent") === "1");
     setRequestedHandle(normalizeHandle(searchParams.get("create") ?? ""));
-    setAuthError(authErrorMessage(searchParams));
+    setAuthError(authErrorKey(searchParams));
 
     loadSession()
       .then((nextSession) => {
@@ -55,14 +69,21 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
     };
   }, [initialSession]);
 
-  function authStartHref(provider: AuthProvider): string {
-    const redirectTo = requestedHandle
+  function redirectToEditor(): string {
+    return requestedHandle
       ? `/admin?create=${encodeURIComponent(requestedHandle)}`
       : "/admin";
+  }
+
+  function authStartHref(provider: Exclude<AuthProvider, "email">): string {
+    const redirectTo = redirectToEditor();
     return `/api/auth/${provider}/start?redirect_to=${encodeURIComponent(redirectTo)}`;
   }
 
-  function authProviderAction(provider: AuthProvider, label: string) {
+  function authProviderAction(
+    provider: Exclude<AuthProvider, "email">,
+    label: string,
+  ) {
     const enabled = session.authProviders?.[provider] ?? false;
     const content = (
       <>
@@ -87,20 +108,53 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
       <SiteTopbar currentPath="/signin" signedIn={session.authenticated} />
       <main className="auth-page">
         <section className="auth-card">
-          <p className="auth-kicker">{siteTitle} account</p>
-          <h1>Sign in</h1>
-          <p>Manage multiple handles, keep your pages synced, and publish them from one account.</p>
+          <p className="auth-kicker">
+            {t("signIn.account", { siteTitle })}
+          </p>
+          <h1>{t("signIn.title")}</h1>
+          <p>{t("signIn.description")}</p>
           {authError ? (
             <p className="auth-error" role="alert">
-              {authError}
+              {t(authError)}
             </p>
           ) : null}
+          {emailSent ? (
+            <p className="auth-notice" role="status">
+              {t("signIn.emailSent")}
+            </p>
+          ) : null}
+          {session.authProviders?.email ? (
+            <form
+              action={`/api/auth/email/start?redirect_to=${encodeURIComponent(redirectToEditor())}`}
+              className="auth-email-form"
+              method="post"
+            >
+              <label className="visually-hidden" htmlFor="signin-email">
+                {t("signIn.emailAddress")}
+              </label>
+              <input
+                autoComplete="email"
+                className="auth-email-input"
+                id="signin-email"
+                inputMode="email"
+                name="email"
+                placeholder={t("signIn.emailAddress")}
+                required
+                type="email"
+              />
+              <button className="button-primary auth-email-submit" type="submit">
+                {t("signIn.continue")}
+              </button>
+            </form>
+          ) : null}
           <div className="auth-actions">
-            {authProviderAction("google", "Continue with Google")}
-            {authProviderAction("twitter", "Continue with Twitter")}
-            {authProviderAction("shopify", "Continue with Shopify")}
+            {authProviderAction("google", t("signIn.continueWithGoogle"))}
+            {authProviderAction("twitter", t("signIn.continueWithTwitter"))}
+            {authProviderAction("shopify", t("signIn.continueWithShopify"))}
           </div>
-          <a className="auth-secondary-link" href="/admin">Continue with local editor</a>
+          <a className="auth-secondary-link" href="/admin">
+            {t("signIn.continueWithLocalEditor")}
+          </a>
         </section>
       </main>
     </>

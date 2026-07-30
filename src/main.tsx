@@ -23,6 +23,7 @@ const initialState =
     profile: null,
     session: {
       authProviders: {
+        email: false,
         google: false,
         shopify: false,
         twitter: false,

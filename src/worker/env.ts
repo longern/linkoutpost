@@ -3,6 +3,8 @@ export interface Env {
   BUCKET?: R2Bucket;
   DB?: D1Database;
   AUTH_SECRET?: string;
+  RESEND_API_KEY?: string;
+  RESEND_FROM_EMAIL?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   SHOPIFY_STOREFRONT_DOMAIN?: string;

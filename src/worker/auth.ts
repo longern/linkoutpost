@@ -1,4 +1,5 @@
 import { normalizeHandle } from "../profile";
+import { resolveSiteTitle } from "../siteConfig";
 import type { AuthProvider, SessionState } from "../types";
 import type { Env } from "./env";
 
@@ -14,8 +15,11 @@ function safeLocalRedirect(value: string | null): string | undefined {
   }
 }
 
-export type Provider = AuthProvider;
-type OAuthErrorCode =
+export type Provider = Exclude<AuthProvider, "email">;
+type SignInErrorCode =
+  | "email_expired"
+  | "email_failed"
+  | "email_invalid"
   | "oauth_callback"
   | "oauth_failed"
   | "oauth_provider"
@@ -25,8 +29,14 @@ type OAuthErrorCode =
 type SessionPayload = {
   exp: number;
   name: string;
-  provider: Provider;
+  provider: AuthProvider;
   userId: string;
+};
+
+type EmailAuthToken = {
+  email: string;
+  exp: number;
+  redirectTo?: string;
 };
 
 type OAuthState = {
@@ -36,11 +46,11 @@ type OAuthState = {
   state: string;
 };
 
-type OAuthIdentity = {
+type AuthIdentity = {
   avatarUrl: string | null;
   displayName: string;
   email: string | null;
-  provider: Provider;
+  provider: AuthProvider;
   providerUserId: string;
   username: string | null;
 };
@@ -117,6 +127,12 @@ function getOptionalAuthSecret(env: Env, request: Request): string | null {
 
 function getAuthProviders(env: Env): SessionState["authProviders"] {
   return {
+    email: Boolean(
+      env.RESEND_API_KEY &&
+        env.RESEND_FROM_EMAIL &&
+        env.AUTH_SECRET &&
+        env.DB,
+    ),
     google: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
     shopify: Boolean(
       env.SHOPIFY_STOREFRONT_DOMAIN &&
@@ -183,9 +199,24 @@ export function clearCookie(request: Request, name: string): string {
   return `${name}=; HttpOnly${secure}; SameSite=Lax; Path=/; Max-Age=0`;
 }
 
+function preserveRequestedHandle(
+  signinUrl: URL,
+  redirectTo: string | undefined,
+): void {
+  if (!redirectTo) return;
+
+  const redirectUrl = new URL(redirectTo, signinUrl.origin);
+  const requestedHandle = normalizeHandle(
+    redirectUrl.searchParams.get("create") ?? "",
+  );
+  if (redirectUrl.pathname === "/admin" && requestedHandle) {
+    signinUrl.searchParams.set("create", requestedHandle);
+  }
+}
+
 export function signInErrorRedirect(
   request: Request,
-  error: OAuthErrorCode,
+  error: SignInErrorCode,
   clearOAuthCookie = true,
 ): Response {
   const requestUrl = new URL(request.url);
@@ -193,14 +224,7 @@ export function signInErrorRedirect(
   const signinUrl = new URL("/signin", requestUrl.origin);
 
   signinUrl.searchParams.set("error", error);
-
-  if (redirectTo) {
-    const redirectUrl = new URL(redirectTo, requestUrl.origin);
-    const requestedHandle = normalizeHandle(redirectUrl.searchParams.get("create") ?? "");
-    if (redirectUrl.pathname === "/admin" && requestedHandle) {
-      signinUrl.searchParams.set("create", requestedHandle);
-    }
-  }
+  preserveRequestedHandle(signinUrl, redirectTo);
 
   const headers = new Headers({
     Location: `${signinUrl.pathname}${signinUrl.search}`,
@@ -266,6 +290,160 @@ export async function getSessionPayload(
 
   if (!payload || payload.exp < Math.floor(Date.now() / 1000)) return null;
   return payload;
+}
+
+function normalizeEmail(value: FormDataEntryValue | string | null): string | null {
+  if (typeof value !== "string") return null;
+
+  const email = value.trim().toLowerCase();
+  return email.length <= 254 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ? email
+    : null;
+}
+
+function requireEmailAuthConfig(env: Env): void {
+  if (!env.DB) throw new Error("D1 binding is required for email login");
+  if (!env.AUTH_SECRET)
+    throw new Error("AUTH_SECRET is required for email login");
+  if (!env.RESEND_API_KEY)
+    throw new Error("RESEND_API_KEY is required for email login");
+  if (!env.RESEND_FROM_EMAIL)
+    throw new Error("RESEND_FROM_EMAIL is required for email login");
+}
+
+function escapeEmailHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+export async function startEmailSignIn(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  requireEmailAuthConfig(env);
+
+  const requestUrl = new URL(request.url);
+  const requestOrigin = request.headers.get("Origin");
+  if (requestOrigin && requestOrigin !== requestUrl.origin) {
+    throw new Error("Cross-origin email login is not allowed");
+  }
+
+  const redirectTo = safeLocalRedirect(
+    requestUrl.searchParams.get("redirect_to"),
+  );
+  const formData = await request.formData();
+  const email = normalizeEmail(formData.get("email"));
+  if (!email) {
+    return signInErrorRedirect(request, "email_invalid", false);
+  }
+
+  const token = await signCookieValue(env.AUTH_SECRET ?? "", {
+    email,
+    exp: Math.floor(Date.now() / 1000) + 10 * 60,
+    redirectTo,
+  } satisfies EmailAuthToken);
+  const callbackUrl = new URL("/api/auth/email/callback", requestUrl.origin);
+  callbackUrl.searchParams.set("token", token);
+
+  const siteTitle = resolveSiteTitle(env.VITE_SITE_TITLE);
+  const escapedSiteTitle = escapeEmailHtml(siteTitle);
+  const escapedCallbackUrl = escapeEmailHtml(callbackUrl.toString());
+  const resendResponse = await fetch("https://api.resend.com/emails", {
+    body: JSON.stringify({
+      from: env.RESEND_FROM_EMAIL,
+      html:
+        `<p>Continue signing in to ${escapedSiteTitle}:</p>` +
+        `<p><a href="${escapedCallbackUrl}">Continue</a></p>` +
+        "<p>This link expires in 10 minutes.</p>",
+      subject: `Sign in to ${siteTitle}`,
+      text:
+        `Continue signing in to ${siteTitle}:\n\n${callbackUrl.toString()}` +
+        "\n\nThis link expires in 10 minutes.",
+      to: [email],
+    }),
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+      "Idempotency-Key": `email-login-${randomToken(16)}`,
+    },
+    method: "POST",
+  });
+
+  if (!resendResponse.ok) {
+    throw new Error(`Resend email failed: ${resendResponse.status}`);
+  }
+
+  const signinUrl = new URL("/signin", requestUrl.origin);
+  signinUrl.searchParams.set("email_sent", "1");
+  preserveRequestedHandle(signinUrl, redirectTo);
+
+  return new Response(null, {
+    headers: {
+      Location: `${signinUrl.pathname}${signinUrl.search}`,
+    },
+    status: 302,
+  });
+}
+
+export async function completeEmailSignIn(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  requireEmailAuthConfig(env);
+
+  const requestUrl = new URL(request.url);
+  const token = requestUrl.searchParams.get("token");
+  const payload = await verifyCookieValue<EmailAuthToken>(
+    env.AUTH_SECRET ?? "",
+    token,
+  );
+  const email = normalizeEmail(payload?.email ?? null);
+
+  if (
+    !payload ||
+    !email ||
+    payload.exp < Math.floor(Date.now() / 1000)
+  ) {
+    return signInErrorRedirect(request, "email_expired", false);
+  }
+
+  const displayName = email.split("@")[0] || email;
+  const user = await upsertAuthUser(env, {
+    avatarUrl: null,
+    displayName,
+    email,
+    provider: "email",
+    providerUserId: email,
+    username: displayName,
+  });
+  const session: SessionPayload = {
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30,
+    name: displayName,
+    provider: "email",
+    userId: user.userId,
+  };
+  const signedSession = await signCookieValue(
+    getAuthSecret(env, request),
+    session,
+  );
+
+  return new Response(null, {
+    headers: {
+      Location: payload.redirectTo ?? "/admin",
+      "Set-Cookie": cookie(
+        request,
+        "linkoutpost_session",
+        signedSession,
+        60 * 60 * 24 * 30,
+      ),
+    },
+    status: 302,
+  });
 }
 
 function requireAuthConfig(env: Env, provider: Provider): void {
@@ -480,7 +658,7 @@ async function fetchIdentity(
   env: Env,
   provider: Provider,
   accessToken: string,
-): Promise<OAuthIdentity> {
+): Promise<AuthIdentity> {
   if (provider === "google") {
     const response = await fetch(
       "https://openidconnect.googleapis.com/v1/userinfo",
@@ -598,9 +776,9 @@ async function fetchIdentity(
   };
 }
 
-async function upsertOAuthUser(
+async function upsertAuthUser(
   env: Env,
-  identity: OAuthIdentity,
+  identity: AuthIdentity,
 ): Promise<{
   created: boolean;
   userId: string;
@@ -713,7 +891,7 @@ export async function completeOAuth(
     oauthState.codeVerifier,
   );
   const identity = await fetchIdentity(env, provider, token.access_token);
-  const user = await upsertOAuthUser(env, identity);
+  const user = await upsertAuthUser(env, identity);
   const session: SessionPayload = {
     exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30,
     name: identity.displayName,

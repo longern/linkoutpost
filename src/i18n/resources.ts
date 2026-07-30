@@ -1,5 +1,37 @@
 export const resources = {
   en: {
+    navigation: {
+      account: "Account",
+      admin: "Admin",
+      localEditor: "Local editor",
+      logOut: "Log out",
+      signIn: "Sign in",
+      signUp: "Sign up",
+    },
+    signIn: {
+      account: "{{siteTitle}} account",
+      continue: "Continue",
+      continueWithGoogle: "Continue with Google",
+      continueWithLocalEditor: "Continue with local editor",
+      continueWithShopify: "Continue with Shopify",
+      continueWithTwitter: "Continue with Twitter",
+      description:
+        "Manage multiple handles, keep your pages synced, and publish them from one account.",
+      emailAddress: "Email address",
+      emailSent: "Check your email for a sign-in link.",
+      errors: {
+        emailExpired: "This email sign-in link is invalid or has expired.",
+        emailFailed: "The email sign-in link could not be sent. Please try again.",
+        emailInvalid: "Enter a valid email address.",
+        oauthCallback:
+          "The sign-in callback was incomplete. Please start again.",
+        oauthFailed: "Sign-in could not be completed right now.",
+        oauthProvider: "Sign-in was cancelled or denied.",
+        oauthState: "Sign-in session expired.",
+        oauthUnavailable: "This sign-in method is currently unavailable.",
+      },
+      title: "Sign in",
+    },
     validation: {
       invalidHandle: "Choose a valid handle.",
       minimumHandle: "Use at least {{count}} characters.",
@@ -113,6 +145,36 @@ export const resources = {
     },
   },
   zh: {
+    navigation: {
+      account: "账户",
+      admin: "管理后台",
+      localEditor: "本地编辑器",
+      logOut: "退出登录",
+      signIn: "登录",
+      signUp: "注册",
+    },
+    signIn: {
+      account: "{{siteTitle}} 账户",
+      continue: "继续",
+      continueWithGoogle: "使用 Google 继续",
+      continueWithLocalEditor: "继续使用本地编辑器",
+      continueWithShopify: "使用 Shopify 继续",
+      continueWithTwitter: "使用 Twitter 继续",
+      description: "集中管理多个用户名、同步页面，并通过一个账户完成发布。",
+      emailAddress: "邮箱地址",
+      emailSent: "登录链接已发送，请检查你的邮箱。",
+      errors: {
+        emailExpired: "邮箱登录链接无效或已过期。",
+        emailFailed: "暂时无法发送邮箱登录链接，请重试。",
+        emailInvalid: "请输入有效的邮箱地址。",
+        oauthCallback: "登录回调不完整，请重新开始。",
+        oauthFailed: "暂时无法完成登录。",
+        oauthProvider: "登录已取消或被拒绝。",
+        oauthState: "登录会话已过期。",
+        oauthUnavailable: "此登录方式当前不可用。",
+      },
+      title: "登录",
+    },
     validation: {
       invalidHandle: "请输入有效的用户名。",
       minimumHandle: "请至少输入 {{count}} 个字符。",

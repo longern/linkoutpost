@@ -32,7 +32,22 @@ The `/admin` editor uses the same UI in both modes:
 - Offline mode: used when the backend is unavailable or the user is not logged in. Data is saved in IndexedDB, and the editor can export a static ZIP containing `index.html`, `styles.css`, `profile.json`, and local image assets.
 - Backend mode: used when a backend session is present and a D1 binding exists. Data is saved to D1 and can be rendered at `/:handle`.
 
-Backend sessions are created through Google, Twitter/X, or Shopify Customer Account OAuth. The Worker stores a signed `linkoutpost_session` cookie after the OAuth callback completes.
+Backend sessions are created through email links or Google, Twitter/X, and Shopify Customer Account OAuth. The Worker stores a signed `linkoutpost_session` cookie after authentication completes.
+
+## Email sign-in setup
+
+Email sign-in appears when D1, `AUTH_SECRET`, `RESEND_API_KEY`, and
+`RESEND_FROM_EMAIL` are configured. `RESEND_FROM_EMAIL` must use a sender
+allowed by your verified Resend domain and may include a display name, for
+example `LinkOutpost <login@example.com>`.
+
+```bash
+npx wrangler secret put AUTH_SECRET
+npx wrangler secret put RESEND_API_KEY
+npx wrangler secret put RESEND_FROM_EMAIL
+```
+
+Email sign-in links expire after 10 minutes.
 
 ## OAuth setup
 

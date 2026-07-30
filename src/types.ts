@@ -1,9 +1,10 @@
 import type { LinkProfile } from "./profile";
 
-export type AuthProvider = "google" | "twitter" | "shopify";
+export type AuthProvider = "email" | "google" | "twitter" | "shopify";
 
 export type SessionState = {
   authProviders?: {
+    email: boolean;
     google: boolean;
     shopify: boolean;
     twitter: boolean;
