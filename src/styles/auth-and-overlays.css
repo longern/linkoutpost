@@ -159,14 +159,6 @@
   color: var(--brand-text-strong);
 }
 
-.auth-secondary-link {
-  display: inline-block;
-  margin-top: 20px;
-  color: var(--brand-accent-foreground);
-  font-size: 0.9rem;
-  text-decoration: none;
-}
-
 .modal-backdrop {
   position: fixed;
   inset: 0;

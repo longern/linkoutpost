@@ -4,7 +4,6 @@ export const resources = {
       account: "Account",
       admin: "Admin",
       language: "Language",
-      localEditor: "Local editor",
       logOut: "Log out",
       signIn: "Sign in",
       signUp: "Sign up",
@@ -18,7 +17,7 @@ export const resources = {
       },
       hero: {
         descriptionLine1:
-          "Create your digital identity by using our local editor or your own X page.",
+          "Create your digital identity by using our online editor or your own X page.",
         descriptionLine2: "Preserve your story. Let your pack recognize you.",
         getStarted: "Get Started",
         titleLine1: "Your own free,",
@@ -29,7 +28,6 @@ export const resources = {
       account: "{{siteTitle}} account",
       continue: "Continue",
       continueWithGoogle: "Continue with Google",
-      continueWithLocalEditor: "Continue with local editor",
       continueWithShopify: "Continue with Shopify",
       continueWithTwitter: "Continue with Twitter",
       description:
@@ -37,6 +35,9 @@ export const resources = {
       emailAddress: "Email address",
       emailSent: "Check your email for a sign-in link.",
       errors: {
+        authRequired: "Sign in to access the editor.",
+        backendUnavailable:
+          "The online editor is currently unavailable. Please try again later.",
         emailExpired: "This email sign-in link is invalid or has expired.",
         emailFailed: "The email sign-in link could not be sent. Please try again.",
         emailInvalid: "Enter a valid email address.",
@@ -47,6 +48,7 @@ export const resources = {
         oauthState: "Sign-in session expired.",
         oauthUnavailable: "This sign-in method is currently unavailable.",
       },
+      noMethods: "No sign-in methods are currently available.",
       title: "Sign in",
     },
     validation: {
@@ -184,7 +186,6 @@ export const resources = {
       account: "账户",
       admin: "管理后台",
       language: "语言",
-      localEditor: "本地编辑器",
       logOut: "退出登录",
       signIn: "登录",
       signUp: "注册",
@@ -198,7 +199,7 @@ export const resources = {
       },
       hero: {
         descriptionLine1:
-          "通过本地编辑工具或链接你的个人 X 主页，建立你的专属数字身份档案。",
+          "通过在线编辑工具或链接你的个人 X 主页，建立你的专属数字身份档案。",
         descriptionLine2: "记录你的故事，让犬群识别你的身份。",
         getStarted: "开始",
         titleLine1: "你的专属",
@@ -209,13 +210,14 @@ export const resources = {
       account: "{{siteTitle}} 账户",
       continue: "继续",
       continueWithGoogle: "使用 Google 继续",
-      continueWithLocalEditor: "继续使用本地编辑器",
       continueWithShopify: "使用 Shopify 继续",
       continueWithTwitter: "使用 Twitter 继续",
       description: "集中管理多个用户名、同步页面，并通过一个账户完成发布。",
       emailAddress: "邮箱地址",
       emailSent: "登录链接已发送，请检查你的邮箱。",
       errors: {
+        authRequired: "请先登录以访问编辑器。",
+        backendUnavailable: "在线编辑器当前不可用，请稍后重试。",
         emailExpired: "邮箱登录链接无效或已过期。",
         emailFailed: "暂时无法发送邮箱登录链接，请重试。",
         emailInvalid: "请输入有效的邮箱地址。",
@@ -225,6 +227,7 @@ export const resources = {
         oauthState: "登录会话已过期。",
         oauthUnavailable: "此登录方式当前不可用。",
       },
+      noMethods: "当前没有可用的登录方式。",
       title: "登录",
     },
     validation: {

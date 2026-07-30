@@ -4,25 +4,29 @@ import {
   loadSession,
   saveProfile,
 } from "../../apiClient";
-import {
-  readLocalProfile,
-  readLocalProfileSummaries,
-} from "../../localEditorStore";
 import { createProfile, normalizeHandle, type LinkProfile } from "../../profile";
 import type { ProfileSummary, SessionState } from "../../types";
-import type { EditorMode } from "./useEditorAssetUrls";
 
 export type EditorBootstrap = {
   handleDraft: string;
   handleSetupError: string | null;
   handleSetupOpen: boolean;
   handleSetupRequired: boolean;
-  mode: EditorMode;
+  mode: "backend";
   profile: LinkProfile;
   profileSummaries: ProfileSummary[];
   session: SessionState;
   status: string;
 };
+
+export class EditorBootstrapError extends Error {
+  constructor(
+    public readonly code: "auth_required" | "backend_unavailable",
+  ) {
+    super(code);
+    this.name = "EditorBootstrapError";
+  }
+}
 
 function profileSummary(profile: LinkProfile): ProfileSummary {
   return {
@@ -39,43 +43,16 @@ export function handleCreateErrorMessage(error: unknown): string {
     : message || "Handle create failed";
 }
 
-async function loadOfflineBootstrap(
-  session: SessionState,
-  status: string,
-): Promise<EditorBootstrap> {
-  const profile = await readLocalProfile();
-  const summaries = await readLocalProfileSummaries();
-  const needsHandle = summaries.length === 0 && !normalizeHandle(profile.handle);
-
-  return {
-    handleDraft: needsHandle ? "" : profile.handle,
-    handleSetupError: null,
-    handleSetupOpen: needsHandle,
-    handleSetupRequired: needsHandle,
-    mode: "offline",
-    profile,
-    profileSummaries:
-      summaries.length > 0 || needsHandle ? summaries : [profileSummary(profile)],
-    session,
-    status,
-  };
-}
-
-export async function loadEditorBootstrap(
-  fallbackSession: SessionState,
-): Promise<EditorBootstrap> {
+export async function loadEditorBootstrap(): Promise<EditorBootstrap> {
   let session: SessionState;
   try {
     session = await loadSession();
   } catch {
-    return loadOfflineBootstrap(
-      fallbackSession,
-      "Backend unavailable, using offline editor",
-    );
+    throw new EditorBootstrapError("backend_unavailable");
   }
 
   if (!session.authenticated || session.storage !== "backend") {
-    return loadOfflineBootstrap(session, "Offline editor");
+    throw new EditorBootstrapError("auth_required");
   }
 
   try {
@@ -129,10 +106,8 @@ export async function loadEditorBootstrap(
       session,
       status: "Backend editor",
     };
-  } catch {
-    return loadOfflineBootstrap(
-      session,
-      "Backend unavailable, using offline editor",
-    );
+  } catch (error) {
+    if (error instanceof EditorBootstrapError) throw error;
+    throw new EditorBootstrapError("backend_unavailable");
   }
 }

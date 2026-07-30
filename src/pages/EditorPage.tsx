@@ -44,6 +44,7 @@ import { HandleSetupDialog } from "./editor/HandleSetupDialog";
 import { LayoutPanel } from "./editor/LayoutPanel";
 import { LinksPanel } from "./editor/LinksPanel";
 import {
+  EditorBootstrapError,
   handleCreateErrorMessage,
   loadEditorBootstrap,
 } from "./editor/loadEditorBootstrap";
@@ -126,22 +127,38 @@ export function EditorPage({
   useEffect(() => {
     let cancelled = false;
 
-    void loadEditorBootstrap(initialSession).then((bootstrap) => {
-      if (cancelled) return;
-      setSession(bootstrap.session);
-      setProfile(bootstrap.profile);
-      setProfileSummaries(bootstrap.profileSummaries);
-      setHandleDraft(bootstrap.handleDraft);
-      setHandleSetupError(
-        bootstrap.handleSetupError
-          ? localizeHandleCreateError(bootstrap.handleSetupError)
-          : null,
-      );
-      setHandleSetupRequired(bootstrap.handleSetupRequired);
-      setHandleSetupOpen(bootstrap.handleSetupOpen);
-      setMode(bootstrap.mode);
-      setStatus(bootstrap.status);
-    });
+    void loadEditorBootstrap()
+      .then((bootstrap) => {
+        if (cancelled) return;
+        setSession(bootstrap.session);
+        setProfile(bootstrap.profile);
+        setProfileSummaries(bootstrap.profileSummaries);
+        setHandleDraft(bootstrap.handleDraft);
+        setHandleSetupError(
+          bootstrap.handleSetupError
+            ? localizeHandleCreateError(bootstrap.handleSetupError)
+            : null,
+        );
+        setHandleSetupRequired(bootstrap.handleSetupRequired);
+        setHandleSetupOpen(bootstrap.handleSetupOpen);
+        setMode(bootstrap.mode);
+        setStatus(bootstrap.status);
+      })
+      .catch((error: unknown) => {
+        if (cancelled || typeof window === "undefined") return;
+
+        const searchParams = new URLSearchParams({
+          error:
+            error instanceof EditorBootstrapError
+              ? error.code
+              : "backend_unavailable",
+        });
+        const requestedHandle = normalizeHandle(
+          new URLSearchParams(window.location.search).get("create") ?? "",
+        );
+        if (requestedHandle) searchParams.set("create", requestedHandle);
+        window.location.replace(`/signin?${searchParams.toString()}`);
+      });
 
     return () => {
       cancelled = true;

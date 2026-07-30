@@ -16,12 +16,8 @@ type LegalPageContent = {
 const content: Record<LegalPageKind, LegalPageContent> = {
   privacy: {
     title: "Privacy",
-    intro: `${siteTitle} is designed for public link pages, local editing, and portable static exports.`,
+    intro: `${siteTitle} is designed for public link pages, hosted editing, and portable static exports.`,
     sections: [
-      {
-        heading: "Local editor",
-        body: "When you use the local editor without signing in, profile data and uploaded images are stored in your browser storage and can be exported as a static ZIP.",
-      },
       {
         heading: "Information you provide",
         body: "If you sign in or publish a hosted page, the service may store your profile content, handle, title, bio, social links, external links, theme settings, uploaded media, email address, and account information received from your authentication provider, such as display name, username, and avatar URL.",
@@ -44,11 +40,11 @@ const content: Record<LegalPageKind, LegalPageContent> = {
       },
       {
         heading: "Retention and deletion",
-        body: "Local editor data remains in your browser until you delete it or clear browser storage. Hosted profile data and uploaded assets are kept while your hosted page or account remains active, unless deleted by you or removed under the Terms.",
+        body: "Hosted profile data and uploaded assets are kept while your hosted page or account remains active, unless deleted by you or removed under the Terms.",
       },
       {
         heading: "Your choices",
-        body: "You can avoid hosted storage by using the local editor and static export. You can edit or remove public page content from the editor, and hosted deployments should provide a reasonable way to request account or hosted page deletion.",
+        body: "You can edit or remove public page content from the editor, export your page files, and request account or hosted page deletion.",
       },
       {
         heading: "Children",

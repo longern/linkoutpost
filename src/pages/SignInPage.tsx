@@ -15,6 +15,10 @@ function authErrorKey(searchParams: URLSearchParams): string | null {
       return "signIn.errors.emailFailed";
     case "email_invalid":
       return "signIn.errors.emailInvalid";
+    case "auth_required":
+      return "signIn.errors.authRequired";
+    case "backend_unavailable":
+      return "signIn.errors.backendUnavailable";
     case "oauth_state":
       return "signIn.errors.oauthState";
     case "oauth_provider":
@@ -94,6 +98,9 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
       </a>
     );
   }
+  const hasAuthProvider = Object.values(session.authProviders ?? {}).some(
+    Boolean,
+  );
 
   return (
     <>
@@ -144,9 +151,7 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
             {authProviderAction("twitter", t("signIn.continueWithTwitter"))}
             {authProviderAction("shopify", t("signIn.continueWithShopify"))}
           </div>
-          <a className="auth-secondary-link" href="/admin">
-            {t("signIn.continueWithLocalEditor")}
-          </a>
+          {!hasAuthProvider && <p>{t("signIn.noMethods")}</p>}
         </section>
       </main>
     </>

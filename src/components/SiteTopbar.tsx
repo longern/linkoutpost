@@ -29,7 +29,6 @@ export function SiteTopbar({
           </>
         ) : (
           <>
-            <a href="/admin">{t("navigation.localEditor")}</a>
             {currentPath !== "/signin" && (
               <a href="/signin">{t("navigation.signIn")}</a>
             )}
