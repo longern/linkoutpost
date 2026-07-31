@@ -93,6 +93,11 @@
     flex-direction: column;
   }
 
+  .home-footer > .home-footer-copyright {
+    width: 100%;
+    flex-basis: auto;
+  }
+
   .home-footer nav {
     justify-content: flex-start;
   }

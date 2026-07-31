@@ -152,6 +152,9 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
             <a href="/terms">{t("home.footer.terms")}</a>
             <AppLanguageSelect className="home-language-select" />
           </nav>
+          <p className="home-footer-copyright">
+            Created by 龙忍 · © 2026 CanineTeeth. All rights reserved.
+          </p>
         </footer>
       </main>
     </div>
