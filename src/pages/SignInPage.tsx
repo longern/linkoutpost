@@ -35,7 +35,7 @@ function authErrorKey(searchParams: URLSearchParams): string | null {
 }
 
 export function SignInPage({ initialSession }: { initialSession: SessionState }) {
-  const { t } = useTranslation();
+  const { language, t } = useTranslation();
   const [session, setSession] = useState(initialSession);
   const [emailSent, setEmailSent] = useState(() =>
     typeof window === "undefined"
@@ -137,6 +137,7 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
               className="auth-email-form"
               method="post"
             >
+              <input name="language" type="hidden" value={language} />
               <label className="visually-hidden" htmlFor="signin-email">
                 {t("signIn.emailAddress")}
               </label>

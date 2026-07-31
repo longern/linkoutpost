@@ -116,8 +116,11 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
                   autoComplete="off"
                   autoCorrect="off"
                   name="handle"
-                  onChange={(event) => {
+                  onBlur={(event) => {
                     setHandleDraft(normalizeHandle(event.currentTarget.value));
+                  }}
+                  onChange={(event) => {
+                    setHandleDraft(event.currentTarget.value);
                     setHandleError(null);
                   }}
                   spellCheck={false}

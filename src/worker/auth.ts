@@ -128,16 +128,13 @@ function getOptionalAuthSecret(env: Env, request: Request): string | null {
 function getAuthProviders(env: Env): SessionState["authProviders"] {
   return {
     email: Boolean(
-      env.RESEND_API_KEY &&
-        env.RESEND_FROM_EMAIL &&
-        env.AUTH_SECRET &&
-        env.DB,
+      env.RESEND_API_KEY && env.RESEND_FROM_EMAIL && env.AUTH_SECRET && env.DB,
     ),
     google: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
     shopify: Boolean(
       env.SHOPIFY_STOREFRONT_DOMAIN &&
-        env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID &&
-        env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET,
+      env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID &&
+      env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET,
     ),
     twitter: Boolean(env.TWITTER_CLIENT_ID && env.TWITTER_CLIENT_SECRET),
   };
@@ -220,7 +217,9 @@ export function signInErrorRedirect(
   clearOAuthCookie = true,
 ): Response {
   const requestUrl = new URL(request.url);
-  const redirectTo = safeLocalRedirect(requestUrl.searchParams.get("redirect_to"));
+  const redirectTo = safeLocalRedirect(
+    requestUrl.searchParams.get("redirect_to"),
+  );
   const signinUrl = new URL("/signin", requestUrl.origin);
 
   signinUrl.searchParams.set("error", error);
@@ -240,7 +239,10 @@ export function signInErrorRedirect(
   });
 }
 
-export async function getSession(request: Request, env: Env): Promise<SessionState> {
+export async function getSession(
+  request: Request,
+  env: Env,
+): Promise<SessionState> {
   const secret = getOptionalAuthSecret(env, request);
   if (!secret) {
     return {
@@ -292,12 +294,13 @@ export async function getSessionPayload(
   return payload;
 }
 
-function normalizeEmail(value: FormDataEntryValue | string | null): string | null {
+function normalizeEmail(
+  value: FormDataEntryValue | string | null,
+): string | null {
   if (typeof value !== "string") return null;
 
   const email = value.trim().toLowerCase();
-  return email.length <= 254 &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
     ? email
     : null;
 }
@@ -321,6 +324,100 @@ function escapeEmailHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
+type EmailLanguage = "en" | "zh";
+
+function normalizeEmailLanguage(
+  value: FormDataEntryValue | string | null,
+): EmailLanguage | null {
+  if (typeof value !== "string") return null;
+
+  const language = value.trim().toLowerCase().split("-")[0];
+  return language === "en" || language === "zh" ? language : null;
+}
+
+function resolveEmailLanguage(
+  request: Request,
+  selectedLanguage: FormDataEntryValue | null,
+): EmailLanguage {
+  const selected = normalizeEmailLanguage(selectedLanguage);
+  if (selected) return selected;
+
+  const acceptedLanguages = (request.headers.get("Accept-Language") ?? "")
+    .split(",")
+    .map((value) => value.split(";")[0]);
+  for (const acceptedLanguage of acceptedLanguages) {
+    const language = normalizeEmailLanguage(acceptedLanguage);
+    if (language) return language;
+  }
+
+  return "en";
+}
+
+function createEmailSignInContent({
+  callbackUrl,
+  language,
+  siteTitle,
+}: {
+  callbackUrl: string;
+  language: EmailLanguage;
+  siteTitle: string;
+}): {
+  html: string;
+  subject: string;
+  text: string;
+} {
+  const copy =
+    language === "zh"
+      ? {
+          button: "继续登录",
+          expiry: "此链接将在 10 分钟后过期。",
+          fallback: "如果按钮无法跳转，请复制以下链接并粘贴到浏览器中：",
+          heading: `登录 ${siteTitle}`,
+          intro: "点击下方按钮继续登录。",
+          lang: "zh-CN",
+          notice: "如果这不是你的操作，可以忽略此邮件。",
+          subject: `登录 ${siteTitle}`,
+        }
+      : {
+          button: "Continue",
+          expiry: "This link expires in 10 minutes.",
+          fallback:
+            "If the button does not work, copy and paste this link into your browser:",
+          heading: `Sign in to ${siteTitle}`,
+          intro: "Use the button below to continue signing in.",
+          lang: "en",
+          notice:
+            "If you did not request this email, you can safely ignore it.",
+          subject: `Sign in to ${siteTitle}`,
+        };
+  const escapedCallbackUrl = escapeEmailHtml(callbackUrl);
+  const escapedHeading = escapeEmailHtml(copy.heading);
+  const escapedSiteTitle = escapeEmailHtml(siteTitle);
+
+  return {
+    html:
+      `<!doctype html><html lang="${copy.lang}"><body style="margin:0;background:#101010;color:#f2f2f2;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">` +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#101010;">' +
+      '<tr><td align="center" style="padding:32px 16px;">' +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background:#181818;border:1px solid #343434;border-radius:12px;">' +
+      '<tr><td style="padding:32px;">' +
+      `<p style="margin:0 0 12px;color:#ff9bb2;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">${escapedSiteTitle}</p>` +
+      `<h1 style="margin:0 0 12px;color:#ffffff;font-size:28px;line-height:1.2;">${escapedHeading}</h1>` +
+      `<p style="margin:0 0 24px;color:#c3c3c3;font-size:16px;line-height:1.6;">${copy.intro}</p>` +
+      `<p style="margin:0 0 24px;text-align:center;"><a href="${escapedCallbackUrl}" style="display:inline-block;background:#81021f;border-radius:8px;color:#ffffff!important;font-size:16px;font-weight:700;line-height:1;text-decoration:none;padding:14px 22px;">${copy.button}</a></p>` +
+      `<p style="margin:0 0 8px;color:#c3c3c3;font-size:13px;line-height:1.5;">${copy.expiry}</p>` +
+      `<p style="margin:0 0 24px;color:#949494;font-size:13px;line-height:1.5;">${copy.notice}</p>` +
+      '<div style="border-top:1px solid #343434;padding-top:18px;">' +
+      `<p style="margin:0 0 8px;color:#949494;font-size:12px;line-height:1.5;">${copy.fallback}</p>` +
+      `<p style="margin:0;color:#ff9bb2;font-size:11px;line-height:1.5;overflow-wrap:anywhere;word-break:break-all;"><a href="${escapedCallbackUrl}" style="color:#ff9bb2;text-decoration:underline;">${escapedCallbackUrl}</a></p>` +
+      "</div></td></tr></table></td></tr></table></body></html>",
+    subject: copy.subject,
+    text:
+      `${copy.heading}\n\n${copy.intro}\n\n${callbackUrl}\n\n` +
+      `${copy.expiry}\n${copy.notice}\n\n${copy.fallback}\n${callbackUrl}`,
+  };
+}
+
 export async function startEmailSignIn(
   request: Request,
   env: Env,
@@ -338,6 +435,7 @@ export async function startEmailSignIn(
   );
   const formData = await request.formData();
   const email = normalizeEmail(formData.get("email"));
+  const language = resolveEmailLanguage(request, formData.get("language"));
   if (!email) {
     return signInErrorRedirect(request, "email_invalid", false);
   }
@@ -351,19 +449,17 @@ export async function startEmailSignIn(
   callbackUrl.searchParams.set("token", token);
 
   const siteTitle = resolveSiteTitle(env.VITE_SITE_TITLE);
-  const escapedSiteTitle = escapeEmailHtml(siteTitle);
-  const escapedCallbackUrl = escapeEmailHtml(callbackUrl.toString());
+  const emailContent = createEmailSignInContent({
+    callbackUrl: callbackUrl.toString(),
+    language,
+    siteTitle,
+  });
   const resendResponse = await fetch("https://api.resend.com/emails", {
     body: JSON.stringify({
       from: env.RESEND_FROM_EMAIL,
-      html:
-        `<p>Continue signing in to ${escapedSiteTitle}:</p>` +
-        `<p><a href="${escapedCallbackUrl}">Continue</a></p>` +
-        "<p>This link expires in 10 minutes.</p>",
-      subject: `Sign in to ${siteTitle}`,
-      text:
-        `Continue signing in to ${siteTitle}:\n\n${callbackUrl.toString()}` +
-        "\n\nThis link expires in 10 minutes.",
+      html: emailContent.html,
+      subject: emailContent.subject,
+      text: emailContent.text,
       to: [email],
     }),
     headers: {
@@ -410,11 +506,7 @@ export async function completeEmailSignIn(
   );
   const email = normalizeEmail(payload?.email ?? null);
 
-  if (
-    !payload ||
-    !email ||
-    payload.exp < Math.floor(Date.now() / 1000)
-  ) {
+  if (!payload || !email || payload.exp < Math.floor(Date.now() / 1000)) {
     return signInErrorRedirect(request, "email_expired", false);
   }
 
@@ -603,7 +695,10 @@ export async function startOAuth(
   authUrl.searchParams.set("scope", config.scope);
   authUrl.searchParams.set("state", state.state);
   if (state.codeVerifier) {
-    authUrl.searchParams.set("code_challenge", await sha256(state.codeVerifier));
+    authUrl.searchParams.set(
+      "code_challenge",
+      await sha256(state.codeVerifier),
+    );
     authUrl.searchParams.set("code_challenge_method", "S256");
   }
 
@@ -910,9 +1005,7 @@ export async function completeOAuth(
   );
 
   const headers = new Headers({
-    Location:
-      oauthState.redirectTo ??
-      "/admin",
+    Location: oauthState.redirectTo ?? "/admin",
   });
   headers.append(
     "Set-Cookie",
