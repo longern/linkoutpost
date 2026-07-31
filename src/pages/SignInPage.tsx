@@ -109,10 +109,9 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
   );
 
   return (
-    <div className="app-theme-dark auth-theme-dark">
+    <div className="app-theme-dark site-theme-dark">
       <SiteTopbar
         currentPath="/signin"
-        showThemeToggle={false}
         signedIn={session.authenticated}
       />
       <main className="auth-page">

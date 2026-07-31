@@ -76,10 +76,7 @@ export function HomePage({ initialSession }: { initialSession: SessionState }) {
 
   return (
     <div className="app-theme-dark home-theme-dark">
-      <SiteTopbar
-        showThemeToggle={false}
-        signedIn={session.authenticated}
-      />
+      <SiteTopbar signedIn={session.authenticated} />
       <main className="home-page">
         <section className="home-hero">
           <div className="home-hero-scene" aria-hidden="true">

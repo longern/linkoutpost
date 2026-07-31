@@ -106,7 +106,7 @@ export function LegalPage({
   const page = content[kind];
 
   return (
-    <>
+    <div className="app-theme-dark site-theme-dark">
       <SiteTopbar signedIn={initialSession.authenticated} />
       <main className="legal-page">
         <section className="legal-card">
@@ -121,6 +121,6 @@ export function LegalPage({
           ))}
         </section>
       </main>
-    </>
+    </div>
   );
 }

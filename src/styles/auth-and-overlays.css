@@ -1,4 +1,4 @@
-.auth-theme-dark {
+.site-theme-dark {
   min-height: 100vh;
   min-height: 100dvh;
   background: var(--brand-page-background);
@@ -167,11 +167,13 @@
   color: var(--brand-text-strong);
 }
 
-:root[data-app-theme="dark"] .auth-provider-link {
+:root[data-app-theme="dark"] .auth-provider-link,
+.app-theme-dark .auth-provider-link {
   border-color: var(--brand-accent);
 }
 
-:root[data-app-theme="dark"] .auth-provider-link:hover {
+:root[data-app-theme="dark"] .auth-provider-link:hover,
+.app-theme-dark .auth-provider-link:hover {
   border-color: var(--brand-accent-hover);
 }
 
