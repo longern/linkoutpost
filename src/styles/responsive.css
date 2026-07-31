@@ -379,6 +379,30 @@
     padding: 8px 4px;
   }
 
+  .avatar-crop-backdrop {
+    place-items: stretch;
+    padding: 0;
+  }
+
+  .avatar-crop-dialog {
+    width: 100%;
+    height: 100dvh;
+    max-height: none;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    border: 0;
+    border-radius: 0;
+  }
+
+  .avatar-crop-stage {
+    height: auto;
+    min-height: 0;
+  }
+
+  .avatar-crop-header {
+    padding: max(10px, env(safe-area-inset-top)) 12px 10px;
+  }
+
   .toolbar-actions > * {
     flex: 0 0 auto;
   }

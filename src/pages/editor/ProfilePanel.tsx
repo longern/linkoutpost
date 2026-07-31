@@ -9,10 +9,11 @@ import {
 } from "../../profile";
 import { getSocialPlatformIcon } from "../../socialIcons";
 import { useTranslation } from "../../i18n";
+import { AvatarCropDialog } from "./AvatarCropDialog";
 
 type ProfilePanelProps = {
   avatarUrl: string | null;
-  onAvatarChange(file: File | null): void;
+  onAvatarChange(file: File | null): Promise<void> | void;
   onCommit(patch: Partial<LinkProfile>): void;
   onSave(): void;
   onUpdate(patch: Partial<LinkProfile>): void;
@@ -28,6 +29,7 @@ export function ProfilePanel({
   profile,
 }: ProfilePanelProps) {
   const { t } = useTranslation();
+  const [avatarCropFile, setAvatarCropFile] = useState<File | null>(null);
   const [socialDialogOpen, setSocialDialogOpen] = useState(false);
 
   function addSocialLink(platform: SocialPlatform): void {
@@ -78,7 +80,12 @@ export function ProfilePanel({
           <input
             accept="image/*"
             onChange={(event) => {
-              onAvatarChange(event.currentTarget.files?.[0] ?? null);
+              const file = event.currentTarget.files?.[0] ?? null;
+              if (file?.type.startsWith("image/")) {
+                setAvatarCropFile(file);
+              } else {
+                void onAvatarChange(file);
+              }
               event.currentTarget.value = "";
             }}
             type="file"
@@ -253,6 +260,17 @@ export function ProfilePanel({
             </div>
           </section>
         </div>
+      )}
+
+      {avatarCropFile && (
+        <AvatarCropDialog
+          file={avatarCropFile}
+          onApply={async (file) => {
+            await onAvatarChange(file);
+            setAvatarCropFile(null);
+          }}
+          onCancel={() => setAvatarCropFile(null)}
+        />
       )}
     </section>
   );

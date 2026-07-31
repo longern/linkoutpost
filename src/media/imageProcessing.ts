@@ -39,6 +39,73 @@ type PrepareImageOptions = {
   outputName?: string;
 };
 
+export type AvatarCrop = {
+  offsetX: number;
+  offsetY: number;
+  scale: number;
+  viewportSize: number;
+};
+
+export async function createCroppedAvatarFile(
+  image: HTMLImageElement,
+  { offsetX, offsetY, scale, viewportSize }: AvatarCrop,
+): Promise<File> {
+  if (
+    !image.naturalWidth ||
+    !image.naturalHeight ||
+    scale <= 0 ||
+    viewportSize <= 0
+  ) {
+    throw new Error("Avatar crop is unavailable");
+  }
+
+  const sourceSize = viewportSize / scale;
+  const sourceX = Math.max(
+    0,
+    Math.min(
+      image.naturalWidth - sourceSize,
+      (image.naturalWidth - sourceSize) / 2 - offsetX / scale,
+    ),
+  );
+  const sourceY = Math.max(
+    0,
+    Math.min(
+      image.naturalHeight - sourceSize,
+      (image.naturalHeight - sourceSize) / 2 - offsetY / scale,
+    ),
+  );
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) throw new Error("Canvas is unavailable");
+
+  canvas.width = avatarMaxDimension;
+  canvas.height = avatarMaxDimension;
+  context.drawImage(
+    image,
+    sourceX,
+    sourceY,
+    sourceSize,
+    sourceSize,
+    0,
+    0,
+    avatarMaxDimension,
+    avatarMaxDimension,
+  );
+
+  const blob =
+    (await canvasToBlob(canvas, "image/webp", 0.9)) ??
+    (await canvasToBlob(canvas, "image/jpeg", 0.92));
+
+  if (!blob) throw new Error("Avatar crop failed");
+
+  return new File(
+    [blob],
+    blob.type === "image/webp" ? "avatar.webp" : "avatar.jpg",
+    { type: blob.type },
+  );
+}
+
 export async function prepareImageFile(
   file: File,
   { maxSize, maxOriginalBytes, outputName }: PrepareImageOptions,

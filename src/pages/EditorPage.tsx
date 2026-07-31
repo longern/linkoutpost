@@ -695,9 +695,7 @@ export function EditorPage({
                 {activeEditorPanel === "profile" && (
                   <ProfilePanel
                     avatarUrl={editorAvatarUrl}
-                    onAvatarChange={(file) => {
-                      void onAvatarChange(file);
-                    }}
+                    onAvatarChange={onAvatarChange}
                     onSave={saveCurrentProfile}
                     onCommit={commitProfile}
                     onUpdate={updateProfile}
