@@ -553,6 +553,20 @@ function ShareDialog({
   shareOverlayRef: RefObject<HTMLDivElement | null>;
   shareUrl: string;
 }) {
+  const [copied, setCopied] = useState(false);
+  const copyResetTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!open) setCopied(false);
+
+    return () => {
+      if (copyResetTimerRef.current !== null) {
+        window.clearTimeout(copyResetTimerRef.current);
+        copyResetTimerRef.current = null;
+      }
+    };
+  }, [open]);
+
   return (
     <div
       aria-hidden={!open}
@@ -591,17 +605,35 @@ function ShareDialog({
         </div>
         <div className="profile-share-actions">
           <button
-            className="profile-share-dialog profile-share-copy-button"
+            aria-label={copied ? "Link copied" : "Copy link"}
+            className={`profile-share-dialog profile-share-copy-button${copied ? " is-copied" : ""}`}
             data-profile-share-copy=""
             disabled={!canCopy}
             onClick={() => {
               if (!canCopy) return;
-              void copyProfileUrl(shareUrl);
+              void copyProfileUrl(shareUrl)
+                .then(() => {
+                  setCopied(true);
+                  if (copyResetTimerRef.current !== null) {
+                    window.clearTimeout(copyResetTimerRef.current);
+                  }
+                  copyResetTimerRef.current = window.setTimeout(() => {
+                    setCopied(false);
+                    copyResetTimerRef.current = null;
+                  }, 1400);
+                })
+                .catch(() => setCopied(false));
             }}
             type="button"
           >
-            <FaCopy aria-hidden="true" size={16} />
-            Copy link
+            {copied ? (
+              <LuCopyCheck aria-hidden="true" size={16} />
+            ) : (
+              <FaCopy aria-hidden="true" size={16} />
+            )}
+            <span aria-live="polite" data-profile-share-copy-label="">
+              {copied ? "Copied!" : "Copy link"}
+            </span>
           </button>
           <button
             className="profile-share-dialog profile-share-system-button"

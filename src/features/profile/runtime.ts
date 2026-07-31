@@ -9,6 +9,8 @@ type QueryRoot = {
   querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E>;
 };
 
+const shareCopyResetTimers = new WeakMap<HTMLButtonElement, number>();
+
 function getCapabilities() {
   const browserNavigator = navigator as ShareNavigator;
   const canUseSecureApi =
@@ -46,6 +48,15 @@ function setShareDialogUrl(root: QueryRoot, url: string): void {
 }
 
 function closeShareDialog(overlay: HTMLElement): void {
+  overlay.querySelectorAll<HTMLButtonElement>("[data-profile-share-copy]").forEach((button) => {
+    const resetTimer = shareCopyResetTimers.get(button);
+    if (resetTimer !== undefined) window.clearTimeout(resetTimer);
+    shareCopyResetTimers.delete(button);
+    button.classList.remove("is-copied");
+    button.setAttribute("aria-label", "Copy link");
+    const label = button.querySelector<HTMLElement>("[data-profile-share-copy-label]");
+    if (label) label.textContent = "Copy link";
+  });
   overlay.classList.remove("is-open");
   overlay.setAttribute("aria-hidden", "true");
 }
@@ -92,7 +103,26 @@ function attachProfileRuntime(root: QueryRoot = document): void {
       const url =
         overlay?.querySelector<HTMLElement>("[data-profile-share-url-text]")?.textContent ??
         window.location.href;
-      void browserNavigator.clipboard.writeText(url);
+      void browserNavigator.clipboard
+        .writeText(url)
+        .then(() => {
+          const resetTimer = shareCopyResetTimers.get(button);
+          if (resetTimer !== undefined) window.clearTimeout(resetTimer);
+          button.classList.add("is-copied");
+          button.setAttribute("aria-label", "Link copied");
+          const label = button.querySelector<HTMLElement>("[data-profile-share-copy-label]");
+          if (label) label.textContent = "Copied!";
+          shareCopyResetTimers.set(
+            button,
+            window.setTimeout(() => {
+              button.classList.remove("is-copied");
+              button.setAttribute("aria-label", "Copy link");
+              if (label) label.textContent = "Copy link";
+              shareCopyResetTimers.delete(button);
+            }, 1400),
+          );
+        })
+        .catch(() => {});
     });
   });
 
