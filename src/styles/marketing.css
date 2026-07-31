@@ -1,24 +1,40 @@
 .site-topbar {
+  min-width: 0;
   height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   border-bottom: 1px solid var(--brand-border);
   background: var(--brand-raised-background);
   padding: 0 32px;
 }
 
 .site-brand {
+  min-width: 0;
+  overflow: hidden;
   color: var(--brand-text);
   font-size: 1rem;
   font-weight: 800;
+  text-overflow: ellipsis;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .site-nav {
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   align-items: center;
   gap: 18px;
+}
+
+.site-nav > * {
+  flex: 0 0 auto;
+}
+
+.site-nav a {
+  white-space: nowrap;
 }
 
 .site-nav a:not(.button-primary, .button-secondary) {
@@ -536,6 +552,7 @@
 }
 
 .app-language-select {
+  width: auto;
   min-height: 30px;
   border: 1px solid var(--brand-border);
   border-radius: 6px;
@@ -543,6 +560,11 @@
   color: var(--brand-text-muted);
   font-size: 0.9rem;
   padding: 3px 28px 3px 10px;
+}
+
+.site-language-select {
+  width: 104px;
+  max-width: 100%;
 }
 
 .home-language-select {

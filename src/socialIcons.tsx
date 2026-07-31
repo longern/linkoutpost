@@ -32,6 +32,7 @@ const socialPlatformColors = {
   bilibili: "#00aeec",
   bluesky: "#0285ff",
   discord: "#5865f2",
+  douyin: "#000000",
   email: "#ea4335",
   facebook: "#1877f2",
   github: "#181717",
@@ -70,6 +71,8 @@ export function getSocialPlatformIcon(platform: SocialPlatform): IconType {
       return SiBluesky;
     case "discord":
       return SiDiscord;
+    case "douyin":
+      return SiTiktok;
     case "email":
       return FaEnvelope;
     case "facebook":

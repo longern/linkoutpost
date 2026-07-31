@@ -1,5 +1,13 @@
+.auth-theme-dark {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--brand-page-background);
+  color: var(--brand-text);
+}
+
 .auth-page {
   min-height: calc(100vh - 60px);
+  min-height: calc(100dvh - 60px);
   display: grid;
   place-items: center;
   padding: 48px 16px;
@@ -116,7 +124,7 @@
 }
 
 .auth-email-input {
-  border: 1px solid rgb(var(--brand-shadow-rgb) / 16%);
+  border: 1px solid var(--brand-border-strong);
   border-radius: 8px;
   background: var(--brand-raised-background);
   color: var(--brand-text);
@@ -157,6 +165,14 @@
   background: var(--brand-surface-muted);
   border-color: rgb(var(--brand-accent-rgb) / 32%);
   color: var(--brand-text-strong);
+}
+
+:root[data-app-theme="dark"] .auth-provider-link {
+  border-color: var(--brand-accent);
+}
+
+:root[data-app-theme="dark"] .auth-provider-link:hover {
+  border-color: var(--brand-accent-hover);
 }
 
 .modal-backdrop {

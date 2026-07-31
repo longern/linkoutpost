@@ -375,6 +375,12 @@ export async function startEmailSignIn(
   });
 
   if (!resendResponse.ok) {
+    const resendError = await resendResponse.text();
+    console.error("Resend email failed", {
+      error: resendError.slice(0, 1_000),
+      status: resendResponse.status,
+      statusText: resendResponse.statusText,
+    });
     throw new Error(`Resend email failed: ${resendResponse.status}`);
   }
 

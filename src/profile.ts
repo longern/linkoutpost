@@ -21,6 +21,7 @@ export type SocialPlatform =
   | "bilibili"
   | "bluesky"
   | "discord"
+  | "douyin"
   | "facebook"
   | "instagram"
   | "github"
@@ -207,6 +208,12 @@ export const socialPlatformDefinitions: SocialPlatformDefinition[] = [
     label: "WeChat",
     placeholder: "WeChat ID",
     urlPrefix: "",
+  },
+  {
+    id: "douyin",
+    label: "抖音",
+    placeholder: "用户 ID",
+    urlPrefix: "https://www.douyin.com/user/",
   },
   {
     id: "xiaohongshu",

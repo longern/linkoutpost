@@ -16,10 +16,6 @@
     display: none;
   }
 
-  .site-nav a {
-    white-space: nowrap;
-  }
-
   .site-nav .site-nav-primary {
     min-height: 34px;
     padding-left: 12px;
@@ -103,10 +99,6 @@
 
   .home-language-select {
     display: block;
-  }
-
-  .auth-page {
-    min-height: 100vh;
   }
 
   .editor-shell {

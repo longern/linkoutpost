@@ -217,10 +217,26 @@ async function renderHandlePage(request: Request, env: Env): Promise<Response> {
   const handle = normalizeHandle(
     url.pathname.split("/").filter(Boolean)[0] ?? "",
   );
+  const session = await getSession(request, env);
+
+  if (
+    session.authenticated &&
+    (url.pathname === "/signin" || url.pathname.startsWith("/signin/"))
+  ) {
+    const redirectUrl = new URL("/admin", url.origin);
+    const requestedHandle = normalizeHandle(
+      url.searchParams.get("create") ?? "",
+    );
+    if (requestedHandle) {
+      redirectUrl.searchParams.set("create", requestedHandle);
+    }
+    return Response.redirect(redirectUrl.toString(), 302);
+  }
+
   const initialState: InitialState = {
     pathname: url.pathname,
     profile: handle ? await readProfileByHandle(env, handle) : null,
-    session: await getSession(request, env),
+    session,
     siteTitle: resolveSiteTitle(env.VITE_SITE_TITLE),
   };
   const stream = await renderToReadableStream(

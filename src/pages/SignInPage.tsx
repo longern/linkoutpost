@@ -73,6 +73,12 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
     };
   }, [initialSession]);
 
+  useEffect(() => {
+    if (session.authenticated) {
+      window.location.replace(redirectToEditor());
+    }
+  }, [requestedHandle, session.authenticated]);
+
   function redirectToEditor(): string {
     return requestedHandle
       ? `/admin?create=${encodeURIComponent(requestedHandle)}`
@@ -103,8 +109,12 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
   );
 
   return (
-    <>
-      <SiteTopbar currentPath="/signin" signedIn={session.authenticated} />
+    <div className="app-theme-dark auth-theme-dark">
+      <SiteTopbar
+        currentPath="/signin"
+        showThemeToggle={false}
+        signedIn={session.authenticated}
+      />
       <main className="auth-page">
         <section className="auth-card">
           <p className="auth-kicker">
@@ -154,6 +164,6 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
           {!hasAuthProvider && <p>{t("signIn.noMethods")}</p>}
         </section>
       </main>
-    </>
+    </div>
   );
 }
