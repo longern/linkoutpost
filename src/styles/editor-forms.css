@@ -11,6 +11,72 @@
   gap: 16px;
 }
 
+.advanced-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.advanced-danger-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  border: 1px solid #f0b4ad;
+  border-radius: 10px;
+  background: #fffafa;
+  padding: 20px;
+}
+
+.advanced-danger-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.advanced-danger-copy h2 {
+  color: #7a271a;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.advanced-danger-copy p,
+.advanced-delete-error {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.advanced-danger-copy p {
+  color: #5f403b;
+}
+
+.advanced-delete-button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #b42318;
+  border-radius: 8px;
+  background: #b42318;
+  color: #ffffff;
+  font-weight: 650;
+  padding: 8px 14px;
+}
+
+.advanced-delete-button:hover {
+  border-color: #912018;
+  background: #912018;
+}
+
+.advanced-delete-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.advanced-delete-error {
+  color: #9b2c2c;
+}
+
 .design-section {
   display: flex;
   flex-direction: column;

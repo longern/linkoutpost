@@ -42,6 +42,22 @@ export async function saveProfile(profile: LinkProfile): Promise<void> {
   }
 }
 
+export async function deleteMyProfile(handle: string): Promise<void> {
+  const response = await fetch(
+    `/api/profile?handle=${encodeURIComponent(handle)}`,
+    { method: "DELETE" },
+  );
+
+  if (!response.ok) {
+    const payload = (await response
+      .json()
+      .catch(() => ({ error: "Profile delete failed" }))) as {
+      error?: string;
+    };
+    throw new Error(payload.error ?? "Profile delete failed");
+  }
+}
+
 export async function uploadAvatar(file: File): Promise<string> {
   return uploadProfileAsset(file, "avatar");
 }

@@ -38,10 +38,21 @@ export const resources = {
     },
     editor: {
       sections: {
+        advanced: "Advanced",
         links: "Links",
         design: "Design",
         layout: "Layout",
         profile: "Profile",
+      },
+      advanced: {
+        ariaLabel: "Advanced settings",
+        confirmDelete: "Delete @{{handle}}? This cannot be undone.",
+        deleteAction: "Delete @{{handle}}",
+        deleteDescription:
+          "Permanently delete @{{handle}} and its profile. This cannot be undone.",
+        deleteFailed: "Handle deletion failed. Please try again.",
+        deleteHandle: "Delete handle",
+        deleting: "Deleting",
       },
       forms: {
         noHandle: "No handle",
@@ -130,6 +141,8 @@ export const resources = {
         handle: "Handle",
         handleDescription: "Each handle has its own public {{siteTitle}} page.",
         importZip: "Import ZIP",
+        exportZip: "Export ZIP",
+        moreActions: "More actions",
         handleExists: "That handle already exists.",
         handleTaken: "That handle is already taken.",
         handleCreateFailed: "Handle create failed",
@@ -187,10 +200,21 @@ export const resources = {
     },
     editor: {
       sections: {
+        advanced: "高级",
         links: "链接",
         design: "设计",
         layout: "布局",
         profile: "个人资料",
+      },
+      advanced: {
+        ariaLabel: "高级设置",
+        confirmDelete: "确定删除 @{{handle}} 吗？此操作无法撤销。",
+        deleteAction: "删除 @{{handle}}",
+        deleteDescription:
+          "永久删除 @{{handle}} 及其个人资料。此操作无法撤销。",
+        deleteFailed: "删除用户名失败，请重试。",
+        deleteHandle: "删除用户名",
+        deleting: "正在删除",
       },
       forms: {
         noHandle: "未设置用户名",
@@ -279,6 +303,8 @@ export const resources = {
         handle: "用户名",
         handleDescription: "每个用户名都有一个独立的公开 {{siteTitle}} 主页。",
         importZip: "导入 ZIP",
+        exportZip: "导出 ZIP",
+        moreActions: "更多操作",
         handleExists: "该用户名已存在。",
         handleTaken: "该用户名已被占用。",
         handleCreateFailed: "用户名创建失败",

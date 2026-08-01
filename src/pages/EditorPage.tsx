@@ -6,8 +6,10 @@ import {
   FaDownload,
   FaEllipsisVertical,
   FaEye,
+  FaFileImport,
 } from "react-icons/fa6";
 import {
+  deleteMyProfile,
   loadMyProfile,
   loadMyProfiles,
   saveProfile,
@@ -31,6 +33,7 @@ import {
 import { siteTitle } from "../siteConfig";
 import type { ImportedStaticProfile } from "../staticImport";
 import type { ProfileSummary, SessionState } from "../types";
+import { AdvancedPanel } from "./editor/AdvancedPanel";
 import { DesignPanel } from "./editor/DesignPanel";
 import { createEditorMediaActions } from "./editor/createEditorMediaActions";
 import { createEditorProfileActions } from "./editor/createEditorProfileActions";
@@ -97,6 +100,10 @@ export function EditorPage({
   const [importHandleDraft, setImportHandleDraft] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
   const [importSaving, setImportSaving] = useState(false);
+  const [profileDeleting, setProfileDeleting] = useState(false);
+  const [profileDeleteError, setProfileDeleteError] = useState<string | null>(
+    null,
+  );
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [toolbarMenuOpen, setToolbarMenuOpen] = useState(false);
   const toolbarMenuAnimation = useAnimatedMenu(toolbarMenuOpen);
@@ -283,47 +290,61 @@ export function EditorPage({
     setHandleSetupOpen(true);
   }
 
-  async function onDeleteLocalProfile(handle: string): Promise<void> {
-    if (mode === "backend") return;
-
+  async function onDeleteProfile(handle: string): Promise<void> {
+    if (mode === "loading" || profileDeleting) return;
     const normalizedHandle = normalizeHandle(handle);
     if (!normalizedHandle) return;
     if (
       typeof window !== "undefined" &&
-      !window.confirm(`Delete @${normalizedHandle}? This cannot be undone.`)
+      !window.confirm(
+        t("editor.advanced.confirmDelete", { handle: normalizedHandle }),
+      )
     ) {
       return;
     }
 
+    setProfileDeleteError(null);
+    setProfileDeleting(true);
     try {
       setStatus("Deleting profile");
-      const nextProfile = await deleteLocalProfile(normalizedHandle);
-      const summaries = await readLocalProfileSummaries();
-      const needsLocalHandle =
+      let nextProfile: LinkProfile;
+      let summaries: ProfileSummary[];
+
+      if (mode === "backend") {
+        await deleteMyProfile(normalizedHandle);
+        summaries = await loadMyProfiles();
+        if (summaries.length > 0) {
+          const loadedProfile = await loadMyProfile(summaries[0].handle);
+          if (!loadedProfile) throw new Error("Next profile not found");
+          nextProfile = loadedProfile;
+        } else {
+          nextProfile = createProfile();
+        }
+      } else {
+        nextProfile = await deleteLocalProfile(normalizedHandle);
+        summaries = await readLocalProfileSummaries();
+      }
+
+      const needsHandle =
         summaries.length === 0 && !normalizeHandle(nextProfile.handle);
       setProfile(nextProfile);
-      if (needsLocalHandle) {
+      setProfileSummaries(summaries);
+      if (needsHandle) {
         setHandleDraft("");
+        setHandleSetupError(null);
         setHandleSetupRequired(true);
         setHandleSetupOpen(true);
       } else {
         setHandleDraft(nextProfile.handle);
+        setHandleSetupRequired(false);
       }
-      setProfileSummaries(
-        summaries.length > 0 || needsLocalHandle
-          ? summaries
-          : [
-              {
-                handle: nextProfile.handle,
-                title: nextProfile.title,
-                updatedAt: nextProfile.updatedAt,
-              },
-            ],
-      );
       setActiveEditorPanel("profile");
       setStatus("Profile deleted");
     } catch {
+      setProfileDeleteError(t("editor.advanced.deleteFailed"));
       setStatus("Profile delete failed");
+    } finally {
+      setProfileDeleting(false);
     }
   }
 
@@ -576,10 +597,6 @@ export function EditorPage({
         onSelectProfile={(handle) => {
           void onSelectProfile(handle);
         }}
-        onDeleteProfile={(handle) => {
-          void onDeleteLocalProfile(handle);
-        }}
-        onImportZip={() => zipInputRef.current?.click()}
         profile={profile}
         profileSummaries={profileSummaries}
       />
@@ -603,7 +620,9 @@ export function EditorPage({
                 ? t("editor.sections.layout")
                 : activeEditorPanel === "profile"
                   ? t("editor.sections.profile")
-                  : t("editor.sections.links")}
+                  : activeEditorPanel === "advanced"
+                    ? t("editor.sections.advanced")
+                    : t("editor.sections.links")}
           </h1>
           <div className="toolbar-actions">
             {mode === "offline" && (
@@ -617,16 +636,6 @@ export function EditorPage({
                 <FaEye aria-hidden="true" size={18} />
               </button>
             )}
-            {mode === "offline" && (
-              <button
-                className="button-secondary"
-                onClick={onExport}
-                type="button"
-              >
-                <FaDownload aria-hidden="true" size={16} />
-                Export ZIP
-              </button>
-            )}
             {mode === "backend" && (
               <a
                 aria-label="View page"
@@ -638,51 +647,65 @@ export function EditorPage({
                 <FaArrowUpRightFromSquare aria-hidden="true" size={18} />
               </a>
             )}
-            {mode === "backend" && (
-              <div className="toolbar-menu-wrap">
-                <button
-                  aria-expanded={toolbarMenuOpen}
-                  aria-haspopup="menu"
-                  aria-label="More actions"
-                  className="circle-icon-button"
-                  onClick={() => setToolbarMenuOpen((open) => !open)}
-                  title="More actions"
-                  type="button"
-                >
-                  <FaEllipsisVertical aria-hidden="true" size={18} />
-                </button>
-                {toolbarMenuAnimation.mounted && (
-                  <>
-                    <button
-                      aria-hidden="true"
-                      className="toolbar-menu-backdrop"
-                      onClick={() => setToolbarMenuOpen(false)}
-                      tabIndex={-1}
-                      type="button"
-                    />
-                    <ul
-                      className={`toolbar-menu animated-menu${toolbarMenuAnimation.visible ? " is-open" : " is-closing"}`}
-                      role="menu"
-                    >
-                      <li role="none">
-                        <button
-                          className="account-menu-item"
-                          onClick={() => {
-                            setToolbarMenuOpen(false);
-                            void onExport();
-                          }}
-                          role="menuitem"
-                          type="button"
-                        >
-                          <FaDownload aria-hidden="true" size={15} />
-                          Export ZIP
-                        </button>
-                      </li>
-                    </ul>
-                  </>
-                )}
-              </div>
-            )}
+            <div className="toolbar-menu-wrap">
+              <button
+                aria-expanded={toolbarMenuOpen}
+                aria-haspopup="menu"
+                aria-label={t("editor.forms.moreActions")}
+                className="circle-icon-button"
+                onClick={() => setToolbarMenuOpen((open) => !open)}
+                title={t("editor.forms.moreActions")}
+                type="button"
+              >
+                <FaEllipsisVertical aria-hidden="true" size={18} />
+              </button>
+              {toolbarMenuAnimation.mounted && (
+                <>
+                  <button
+                    aria-hidden="true"
+                    className="toolbar-menu-backdrop"
+                    onClick={() => setToolbarMenuOpen(false)}
+                    tabIndex={-1}
+                    type="button"
+                  />
+                  <ul
+                    className={`toolbar-menu animated-menu${toolbarMenuAnimation.visible ? " is-open" : " is-closing"}`}
+                    role="menu"
+                  >
+                    <li role="none">
+                      <button
+                        className="account-menu-item"
+                        disabled={mode === "loading"}
+                        onClick={() => {
+                          setToolbarMenuOpen(false);
+                          zipInputRef.current?.click();
+                        }}
+                        role="menuitem"
+                        type="button"
+                      >
+                        <FaFileImport aria-hidden="true" size={15} />
+                        {t("editor.forms.importZip")}
+                      </button>
+                    </li>
+                    <li role="none">
+                      <button
+                        className="account-menu-item"
+                        disabled={mode === "loading"}
+                        onClick={() => {
+                          setToolbarMenuOpen(false);
+                          void onExport();
+                        }}
+                        role="menuitem"
+                        type="button"
+                      >
+                        <FaDownload aria-hidden="true" size={15} />
+                        {t("editor.forms.exportZip")}
+                      </button>
+                    </li>
+                  </ul>
+                </>
+              )}
+            </div>
           </div>
         </section>
 
@@ -756,6 +779,17 @@ export function EditorPage({
                     onCommitTheme={commitTheme}
                     onSave={saveCurrentProfile}
                     onUpdateTheme={updateTheme}
+                    profile={profile}
+                  />
+                )}
+
+                {activeEditorPanel === "advanced" && (
+                  <AdvancedPanel
+                    deleting={profileDeleting}
+                    error={profileDeleteError}
+                    onDeleteHandle={() => {
+                      void onDeleteProfile(profile.handle);
+                    }}
                     profile={profile}
                   />
                 )}

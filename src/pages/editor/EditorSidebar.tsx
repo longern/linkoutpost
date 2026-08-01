@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import {
   FaChevronDown,
   FaCircleUser,
+  FaGear,
   FaLayerGroup,
   FaPalette,
   FaPlus,
@@ -14,7 +15,12 @@ import { AccountHandleMenu } from "./AccountHandleMenu";
 import { useAnimatedMenu } from "./useAnimatedMenu";
 import { useTranslation } from "../../i18n";
 
-export type EditorPanel = "links" | "layout" | "design" | "profile";
+export type EditorPanel =
+  | "advanced"
+  | "links"
+  | "layout"
+  | "design"
+  | "profile";
 
 type EditorSidebarProps = {
   accountMenuOpen: boolean;
@@ -24,8 +30,6 @@ type EditorSidebarProps = {
   mode: "loading" | "offline" | "backend";
   onAccountMenuOpenChange(open: boolean): void;
   onCreateHandle(): void;
-  onDeleteProfile(handle: string): void;
-  onImportZip(): void;
   onMobileOpenChange(open: boolean): void;
   onPanelChange(panel: EditorPanel): void;
   onSelectProfile(handle: string): void;
@@ -41,8 +45,6 @@ export function EditorSidebar({
   mode,
   onAccountMenuOpenChange,
   onCreateHandle,
-  onDeleteProfile,
-  onImportZip,
   onMobileOpenChange,
   onPanelChange,
   onSelectProfile,
@@ -121,8 +123,6 @@ export function EditorSidebar({
                 mode={mode}
                 onClose={() => onAccountMenuOpenChange(false)}
                 onCreateHandle={onCreateHandle}
-                onDeleteProfile={onDeleteProfile}
-                onImportZip={onImportZip}
                 onSelectProfile={onSelectProfile}
                 profile={profile}
                 profileSummaries={profileSummaries}
@@ -209,6 +209,14 @@ export function EditorSidebar({
           >
             <FaPalette aria-hidden="true" size={16} />
             {t("editor.sections.design")}
+          </button>
+          <button
+            className={`sidebar-nav-item${activePanel === "advanced" ? " active" : ""}`}
+            onClick={() => selectPanel("advanced")}
+            type="button"
+          >
+            <FaGear aria-hidden="true" size={16} />
+            {t("editor.sections.advanced")}
           </button>
         </nav>
 

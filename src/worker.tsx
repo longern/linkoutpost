@@ -35,6 +35,7 @@ import type { Env } from "./worker/env";
 import { resolveSiteTitle } from "./siteConfig";
 import { apiHeaders, jsonError, ssrHeaders } from "./worker/http";
 import {
+  deleteProfileByOwner,
   listProfilesByOwner,
   readProfileByHandle,
   readProfileByOwner,
@@ -492,6 +493,23 @@ export default {
             message === "Handle is already taken" ? 409 : 400,
           );
         }
+        return Response.json(
+          { ok: true },
+          {
+            headers: apiHeaders,
+          },
+        );
+      }
+
+      if (request.method === "DELETE") {
+        const handle = url.searchParams.get("handle") ?? "";
+        const deleted = await deleteProfileByOwner(
+          env,
+          sessionPayload.userId,
+          handle,
+        );
+        if (!deleted) return jsonError("Profile not found", 404);
+
         return Response.json(
           { ok: true },
           {

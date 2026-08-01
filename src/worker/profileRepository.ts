@@ -150,3 +150,22 @@ export async function writeProfile(
     )
     .run();
 }
+
+export async function deleteProfileByOwner(
+  env: Env,
+  userId: string,
+  handle: string,
+): Promise<boolean> {
+  if (!env.DB) throw new Error("D1 binding is not configured");
+
+  const normalizedHandle = normalizeHandle(handle);
+  if (!normalizedHandle || isReservedPath(normalizedHandle)) return false;
+
+  const result = await env.DB.prepare(
+    "DELETE FROM linkoutpost_profiles WHERE handle = ? AND owner_user_id = ?",
+  )
+    .bind(normalizedHandle, userId)
+    .run();
+
+  return result.meta.changes > 0;
+}
