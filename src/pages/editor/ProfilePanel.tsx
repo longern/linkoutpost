@@ -142,6 +142,7 @@ export function ProfilePanel({
                 (platform) => platform.id === link.platform,
               );
               const Icon = getSocialPlatformIcon(link.platform);
+              const acceptsShareUrl = definition?.inputKind === "share-url";
 
               return (
                 <div className="social-editor-row" key={link.id}>
@@ -150,12 +151,21 @@ export function ProfilePanel({
                     {definition?.label ?? link.platform}
                   </span>
                   <input
-                    aria-label={`${definition?.label ?? link.platform} ID`}
-                    placeholder={definition?.placeholder ?? "username"}
+                    aria-label={`${definition?.label ?? link.platform} ${acceptsShareUrl ? t("editor.forms.profileShareLink") : "ID"}`}
+                    inputMode={acceptsShareUrl ? "url" : undefined}
+                    placeholder={
+                      acceptsShareUrl
+                        ? t("editor.forms.profileShareLinkPlaceholder")
+                        : (definition?.placeholder ?? "username")
+                    }
+                    type={acceptsShareUrl ? "url" : "text"}
                     value={link.userId}
                     onChange={(event) =>
                       updateSocialLink(link.id, {
-                        userId: normalizeSocialUserId(event.target.value),
+                        userId: normalizeSocialUserId(
+                          event.target.value,
+                          link.platform,
+                        ),
                       })
                     }
                     onBlur={onSave}

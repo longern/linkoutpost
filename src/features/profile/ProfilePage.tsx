@@ -189,11 +189,27 @@ function ProfileSocialLinks({
           );
         }
 
+        const socialUrl = getSocialLinkUrl(link);
+        if (!socialUrl) {
+          return (
+            <span
+              aria-disabled="true"
+              aria-label={platform.label}
+              className={className}
+              key={link.id}
+              style={socialIconStyle}
+              title={platform.label}
+            >
+              {content}
+            </span>
+          );
+        }
+
         return (
           <a
             aria-label={platform.label}
             className={className}
-            href={getSocialLinkUrl(link)}
+            href={socialUrl}
             key={link.id}
             rel="noreferrer noopener"
             target="_blank"

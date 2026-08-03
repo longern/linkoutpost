@@ -55,6 +55,7 @@ export type SocialLink = {
 
 export type SocialPlatformDefinition = {
   id: SocialPlatform;
+  inputKind?: "share-url";
   label: string;
   placeholder: string;
   urlPrefix: string;
@@ -121,8 +122,7 @@ export function getProfileDocumentDescription(
   if (!profile) return defaultDocumentDescription;
 
   return (
-    profile.bio.trim() ||
-    `View @${profile.handle} on ${resolvedSiteTitle}.`
+    profile.bio.trim() || `View @${profile.handle} on ${resolvedSiteTitle}.`
   );
 }
 
@@ -211,15 +211,17 @@ export const socialPlatformDefinitions: SocialPlatformDefinition[] = [
   },
   {
     id: "douyin",
+    inputKind: "share-url",
     label: "抖音",
-    placeholder: "用户 ID",
-    urlPrefix: "https://www.douyin.com/user/",
+    placeholder: "https://v.douyin.com/...",
+    urlPrefix: "",
   },
   {
     id: "xiaohongshu",
+    inputKind: "share-url",
     label: "Xiaohongshu",
-    placeholder: "user ID",
-    urlPrefix: "https://www.xiaohongshu.com/user/profile/",
+    placeholder: "https://www.xiaohongshu.com/user/profile/...",
+    urlPrefix: "",
   },
   {
     id: "bilibili",
@@ -341,7 +343,22 @@ export function getSocialPlatformDefinition(
   );
 }
 
-export function normalizeSocialUserId(value: string): string {
+function extractSocialShareUrl(value: string): string {
+  const url = value.match(/https?:\/\/[^\s]+/i)?.[0] ?? "";
+  return url.replace(/[),.;!?，。；！？）】]+$/u, "");
+}
+
+export function normalizeSocialUserId(
+  value: string,
+  platform?: SocialPlatform,
+): string {
+  if (
+    platform &&
+    getSocialPlatformDefinition(platform).inputKind === "share-url"
+  ) {
+    return extractSocialShareUrl(value) || value;
+  }
+
   return value
     .trim()
     .replace(/^https?:\/\//i, "")
@@ -350,6 +367,20 @@ export function normalizeSocialUserId(value: string): string {
 
 export function getSocialLinkUrl(socialLink: SocialLink): string {
   const definition = getSocialPlatformDefinition(socialLink.platform);
+  if (definition.inputKind === "share-url") {
+    const shareUrl = extractSocialShareUrl(socialLink.userId.trim());
+    if (!shareUrl) return "";
+
+    try {
+      const parsedUrl = new URL(shareUrl);
+      return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:"
+        ? parsedUrl.href
+        : "";
+    } catch {
+      return "";
+    }
+  }
+
   const userId = normalizeSocialUserId(socialLink.userId);
   if (!userId) return definition.urlPrefix;
   if (socialLink.platform === "email")
