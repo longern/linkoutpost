@@ -36,7 +36,14 @@ export function ProfileNeonLayout({
       >
         {shareButton}
         <div className="neon-profile-content">
-          <div className="neon-archive-label">CERBERUS ARCHIVE</div>
+          <img
+            alt="CERBERUS ARCHIVE"
+            className="neon-archive-label"
+            draggable={false}
+            height={45}
+            src="/assets/canine-neon-archive-title.png"
+            width={243}
+          />
           <div className="neon-avatar-frame">{avatar}</div>
           <div className="neon-profile-intro">{profileIntro}</div>
           {profileActions}

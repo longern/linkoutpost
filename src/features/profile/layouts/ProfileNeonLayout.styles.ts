@@ -84,16 +84,11 @@ export const profileNeonLayoutStyleRules: PublicProfileStyleRule[] = [
   {
     selector: ".neon-archive-label",
     rule: {
-      color: "#e87174",
-      fontFamily: "ui-monospace, SFMono-Regular, Consolas, monospace",
-      fontSize: "1.5rem",
-      fontSynthesis: "weight",
-      fontWeight: "bold",
-      lineHeight: 1,
+      display: "block",
+      height: "auto",
       marginBottom: 18,
-      textAlign: "center",
-      textShadow: "0 0 10px rgb(232 113 116 / 52%)",
-      width: "100%",
+      maxWidth: "100%",
+      objectFit: "contain",
     },
   },
   {

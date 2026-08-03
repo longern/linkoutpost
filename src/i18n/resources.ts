@@ -39,7 +39,8 @@ export const resources = {
         backendUnavailable:
           "The online editor is currently unavailable. Please try again later.",
         emailExpired: "This email sign-in link is invalid or has expired.",
-        emailFailed: "The email sign-in link could not be sent. Please try again.",
+        emailFailed:
+          "The email sign-in link could not be sent. Please try again.",
         emailInvalid: "Enter a valid email address.",
         oauthCallback:
           "The sign-in callback was incomplete. Please start again.",
