@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FaCamera, FaCircleUser, FaPlus, FaTrash, FaXmark } from "react-icons/fa6";
 import {
+  isValidSocialShareUrl,
   normalizeSocialUserId,
   socialPlatformDefinitions,
   type LinkProfile,
@@ -143,6 +144,10 @@ export function ProfilePanel({
               );
               const Icon = getSocialPlatformIcon(link.platform);
               const acceptsShareUrl = definition?.inputKind === "share-url";
+              const invalidShareUrl =
+                acceptsShareUrl &&
+                Boolean(link.userId.trim()) &&
+                !isValidSocialShareUrl(link.userId);
 
               return (
                 <div className="social-editor-row" key={link.id}>
@@ -151,8 +156,10 @@ export function ProfilePanel({
                     {definition?.label ?? link.platform}
                   </span>
                   <input
+                    aria-invalid={invalidShareUrl || undefined}
                     aria-label={`${definition?.label ?? link.platform} ${acceptsShareUrl ? t("editor.forms.profileShareLink") : "ID"}`}
                     inputMode={acceptsShareUrl ? "url" : undefined}
+                    pattern={acceptsShareUrl ? "https://.+" : undefined}
                     placeholder={
                       acceptsShareUrl
                         ? t("editor.forms.profileShareLinkPlaceholder")
@@ -160,15 +167,38 @@ export function ProfilePanel({
                     }
                     type={acceptsShareUrl ? "url" : "text"}
                     value={link.userId}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      event.currentTarget.setCustomValidity("");
                       updateSocialLink(link.id, {
                         userId: normalizeSocialUserId(
                           event.target.value,
                           link.platform,
                         ),
-                      })
-                    }
-                    onBlur={onSave}
+                      });
+                    }}
+                    onBlur={(event) => {
+                      if (
+                        acceptsShareUrl &&
+                        event.currentTarget.value.trim() &&
+                        !isValidSocialShareUrl(event.currentTarget.value)
+                      ) {
+                        event.currentTarget.setCustomValidity(
+                          t("editor.forms.profileShareLinkHttpsError"),
+                        );
+                        event.currentTarget.reportValidity();
+                        return;
+                      }
+
+                      event.currentTarget.setCustomValidity("");
+                      onSave();
+                    }}
+                    onInvalid={(event) => {
+                      if (acceptsShareUrl) {
+                        event.currentTarget.setCustomValidity(
+                          t("editor.forms.profileShareLinkHttpsError"),
+                        );
+                      }
+                    }}
                   />
                   <button
                     aria-label={t("editor.forms.removeSocialIcon")}

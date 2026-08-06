@@ -237,9 +237,10 @@ export const socialPlatformDefinitions: SocialPlatformDefinition[] = [
   },
   {
     id: "qq",
+    inputKind: "share-url",
     label: "QQ",
-    placeholder: "QQ number",
-    urlPrefix: "https://qm.qq.com/q/",
+    placeholder: "https://qm.qq.com/q/...",
+    urlPrefix: "",
   },
   {
     id: "reddit",
@@ -344,8 +345,20 @@ export function getSocialPlatformDefinition(
 }
 
 function extractSocialShareUrl(value: string): string {
-  const url = value.match(/https?:\/\/[^\s]+/i)?.[0] ?? "";
+  const url = value.match(/https:\/\/[^\s]+/i)?.[0] ?? "";
   return url.replace(/[),.;!?，。；！？）】]+$/u, "");
+}
+
+export function isValidSocialShareUrl(value: string): boolean {
+  const shareUrl = value.trim();
+  if (!shareUrl.startsWith("https://")) return false;
+
+  try {
+    const parsedUrl = new URL(shareUrl);
+    return parsedUrl.protocol === "https:" && Boolean(parsedUrl.hostname);
+  } catch {
+    return false;
+  }
 }
 
 export function normalizeSocialUserId(
@@ -369,16 +382,9 @@ export function getSocialLinkUrl(socialLink: SocialLink): string {
   const definition = getSocialPlatformDefinition(socialLink.platform);
   if (definition.inputKind === "share-url") {
     const shareUrl = extractSocialShareUrl(socialLink.userId.trim());
-    if (!shareUrl) return "";
+    if (!isValidSocialShareUrl(shareUrl)) return "";
 
-    try {
-      const parsedUrl = new URL(shareUrl);
-      return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:"
-        ? parsedUrl.href
-        : "";
-    } catch {
-      return "";
-    }
+    return new URL(shareUrl).href;
   }
 
   const userId = normalizeSocialUserId(socialLink.userId);
