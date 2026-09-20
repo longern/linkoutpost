@@ -14,6 +14,7 @@ export const resources = {
       continueWithGoogle: "Continue with Google",
       continueWithLocalEditor: "Continue with local editor",
       continueWithShopify: "Continue with Shopify",
+      continueWithSso: "Continue with SSO",
       continueWithTwitter: "Continue with Twitter",
       description:
         "Manage multiple handles, keep your pages synced, and publish them from one account.",
@@ -178,6 +179,7 @@ export const resources = {
       continueWithGoogle: "使用 Google 继续",
       continueWithLocalEditor: "继续使用本地编辑器",
       continueWithShopify: "使用 Shopify 继续",
+      continueWithSso: "使用 SSO 继续",
       continueWithTwitter: "使用 Twitter 继续",
       description: "集中管理多个用户名、同步页面，并通过一个账户完成发布。",
       emailAddress: "邮箱地址",

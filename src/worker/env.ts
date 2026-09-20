@@ -2,6 +2,8 @@ export interface Env {
   ASSETS: Fetcher;
   BUCKET?: R2Bucket;
   DB?: D1Database;
+  AUTH_AUDIENCE?: string;
+  AUTH_ISSUER?: string;
   AUTH_SECRET?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;

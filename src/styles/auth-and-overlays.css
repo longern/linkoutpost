@@ -1,5 +1,6 @@
 .auth-page {
   min-height: calc(100vh - 60px);
+  min-height: calc(100svh - 60px);
   display: grid;
   place-items: center;
   padding: 48px 16px;

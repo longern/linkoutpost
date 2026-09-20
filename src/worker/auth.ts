@@ -2,6 +2,13 @@ import { normalizeHandle } from "../profile";
 import { resolveSiteTitle } from "../siteConfig";
 import type { AuthProvider, SessionState } from "../types";
 import type { Env } from "./env";
+import type { IssuerIdentity } from "./sso";
+import {
+  getAuthIssuer,
+  getIssuerLoginOrigin,
+  hasIssuerSessionHint,
+  readIssuerIdentity,
+} from "./sso";
 
 function safeLocalRedirect(value: string | null): string | undefined {
   if (!value || !value.startsWith("/") || value.startsWith("//"))
@@ -15,7 +22,7 @@ function safeLocalRedirect(value: string | null): string | undefined {
   }
 }
 
-export type Provider = Exclude<AuthProvider, "email">;
+export type Provider = Exclude<AuthProvider, "email" | "sso">;
 type SignInErrorCode =
   | "email_expired"
   | "email_failed"
@@ -126,6 +133,15 @@ function getOptionalAuthSecret(env: Env, request: Request): string | null {
 }
 
 function getAuthProviders(env: Env): SessionState["authProviders"] {
+  if (getAuthIssuer(env)) {
+    return {
+      email: false,
+      google: false,
+      shopify: false,
+      twitter: false,
+    };
+  }
+
   return {
     email: Boolean(
       env.RESEND_API_KEY &&
@@ -140,6 +156,17 @@ function getAuthProviders(env: Env): SessionState["authProviders"] {
         env.SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET,
     ),
     twitter: Boolean(env.TWITTER_CLIENT_ID && env.TWITTER_CLIENT_SECRET),
+  };
+}
+
+function sessionState(
+  env: Env,
+  session: Omit<SessionState, "authIssuer" | "authProviders">,
+): SessionState {
+  return {
+    ...session,
+    authIssuer: getAuthIssuer(env) || null,
+    authProviders: getAuthProviders(env),
   };
 }
 
@@ -243,13 +270,12 @@ export function signInErrorRedirect(
 export async function getSession(request: Request, env: Env): Promise<SessionState> {
   const secret = getOptionalAuthSecret(env, request);
   if (!secret) {
-    return {
-      authProviders: getAuthProviders(env),
+    return sessionState(env, {
       authenticated: false,
       name: null,
       provider: null,
       storage: "offline",
-    };
+    });
   }
 
   const payload = await verifyCookieValue<SessionPayload>(
@@ -258,22 +284,20 @@ export async function getSession(request: Request, env: Env): Promise<SessionSta
   );
 
   if (!payload || payload.exp < Math.floor(Date.now() / 1000)) {
-    return {
-      authProviders: getAuthProviders(env),
+    return sessionState(env, {
       authenticated: false,
       name: null,
       provider: null,
       storage: "offline",
-    };
+    });
   }
 
-  return {
-    authProviders: getAuthProviders(env),
+  return sessionState(env, {
     authenticated: true,
     name: payload.name,
     provider: payload.provider,
     storage: "backend",
-  };
+  });
 }
 
 export async function getSessionPayload(
@@ -919,3 +943,278 @@ export async function completeOAuth(
     status: 302,
   });
 }
+
+
+async function findUserIdBySso(env: Env, ssoUserId: string): Promise<string | null> {
+  if (!env.DB) return null;
+  try {
+    const row = await env.DB.prepare(
+      "SELECT id FROM linkoutpost_users WHERE sso_user_id = ? LIMIT 1",
+    )
+      .bind(ssoUserId)
+      .first<{ id: string }>();
+    return row?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function findUserIdByAccount(
+  env: Env,
+  provider: string,
+  providerUserId: string,
+): Promise<string | null> {
+  if (!env.DB) return null;
+  const row = await env.DB.prepare(
+    "SELECT user_id FROM linkoutpost_oauth_accounts WHERE provider = ? AND provider_user_id = ? LIMIT 1",
+  )
+    .bind(provider, providerUserId)
+    .first<{ user_id: string }>();
+  return row?.user_id ?? null;
+}
+
+async function rememberSsoUserId(
+  env: Env,
+  userId: string,
+  ssoUserId: string,
+): Promise<void> {
+  if (!env.DB) return;
+  const now = new Date().toISOString();
+  try {
+    await env.DB.prepare(
+      "UPDATE linkoutpost_users SET sso_user_id = ?, updated_at = ? WHERE id = ?",
+    )
+      .bind(ssoUserId, now, userId)
+      .run();
+  } catch {
+    await env.DB.prepare(
+      "UPDATE linkoutpost_users SET updated_at = ? WHERE id = ?",
+    )
+      .bind(now, userId)
+      .run();
+  }
+}
+
+async function ensureOAuthAccount(
+  env: Env,
+  userId: string,
+  identity: AuthIdentity,
+): Promise<void> {
+  if (!env.DB) return;
+  const existing = await findUserIdByAccount(
+    env,
+    identity.provider,
+    identity.providerUserId,
+  );
+  if (existing) return;
+
+  const now = new Date().toISOString();
+  await env.DB.prepare(
+    "INSERT INTO linkoutpost_oauth_accounts (provider, provider_user_id, user_id, email, username, display_name, avatar_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  )
+    .bind(
+      identity.provider,
+      identity.providerUserId,
+      userId,
+      identity.email,
+      identity.username,
+      identity.displayName,
+      identity.avatarUrl,
+      now,
+      now,
+    )
+    .run();
+}
+
+async function resolveIssuerLocalUser(
+  env: Env,
+  identity: IssuerIdentity,
+): Promise<{ created: boolean; userId: string }> {
+  let userId = await findUserIdByAccount(env, "sso", identity.id);
+  if (!userId) userId = await findUserIdBySso(env, identity.id);
+  if (!userId) {
+    for (const account of identity.accounts) {
+      userId = await findUserIdByAccount(
+        env,
+        account.providerId,
+        account.accountId,
+      );
+      if (userId) break;
+    }
+  }
+
+  let created = false;
+  if (!userId) {
+    const inserted = await upsertAuthUser(env, {
+      avatarUrl: identity.image,
+      displayName: identity.name,
+      email: identity.email,
+      provider: "sso",
+      providerUserId: identity.id,
+      username: identity.email ? identity.email.split("@")[0] : identity.name,
+    });
+    userId = inserted.userId;
+    created = inserted.created;
+  }
+
+  await rememberSsoUserId(env, userId, identity.id);
+  await ensureOAuthAccount(env, userId, {
+    avatarUrl: identity.image,
+    displayName: identity.name,
+    email: identity.email,
+    provider: "sso",
+    providerUserId: identity.id,
+    username: identity.email ? identity.email.split("@")[0] : identity.name,
+  });
+  for (const account of identity.accounts) {
+    await ensureOAuthAccount(env, userId, {
+      avatarUrl: identity.image,
+      displayName: identity.name,
+      email: identity.email,
+      provider: account.providerId as AuthProvider,
+      providerUserId: account.accountId,
+      username: identity.name,
+    });
+  }
+
+  return { created, userId };
+}
+
+async function createSignedSession(
+  request: Request,
+  env: Env,
+  userId: string,
+  name: string,
+): Promise<string> {
+  const session: SessionPayload = {
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30,
+    name,
+    provider: "sso",
+    userId,
+  };
+  return signCookieValue(getAuthSecret(env, request), session);
+}
+
+export async function establishIssuerSession(
+  request: Request,
+  env: Env,
+): Promise<{ setCookie: string; userId: string; name: string } | null> {
+  if (!getAuthIssuer(env) || !env.DB) return null;
+  const identity = await readIssuerIdentity(env, request);
+  if (!identity) return null;
+  const user = await resolveIssuerLocalUser(env, identity);
+  const signedSession = await createSignedSession(
+    request,
+    env,
+    user.userId,
+    identity.name,
+  );
+  return {
+    name: identity.name,
+    setCookie: cookie(
+      request,
+      "linkoutpost_session",
+      signedSession,
+      60 * 60 * 24 * 30,
+    ),
+    userId: user.userId,
+  };
+}
+
+export async function startSsoSignIn(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const issuer = getAuthIssuer(env);
+  if (!issuer) return signInErrorRedirect(request, "oauth_unavailable", false);
+
+  const redirectTo =
+    safeLocalRedirect(new URL(request.url).searchParams.get("redirect_to")) ??
+    "/admin";
+  const callbackUrl = new URL("/api/auth/sso/callback", request.url);
+  callbackUrl.searchParams.set("redirect_to", redirectTo);
+  const loginUrl = new URL("/", getIssuerLoginOrigin(issuer));
+  loginUrl.searchParams.set("callbackURL", callbackUrl.toString());
+  return new Response(null, {
+    headers: { Location: loginUrl.toString() },
+    status: 302,
+  });
+}
+
+export async function completeSsoSignIn(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const issuer = getAuthIssuer(env);
+  const redirectTo =
+    safeLocalRedirect(new URL(request.url).searchParams.get("redirect_to")) ??
+    "/admin";
+  if (!issuer) return signInErrorRedirect(request, "oauth_unavailable", false);
+
+  try {
+    const established = await establishIssuerSession(request, env);
+    if (!established) return signInErrorRedirect(request, "oauth_callback", false);
+    return new Response(null, {
+      headers: {
+        Location: redirectTo,
+        "Set-Cookie": established.setCookie,
+      },
+      status: 302,
+    });
+  } catch {
+    return signInErrorRedirect(request, "oauth_failed", false);
+  }
+}
+
+export async function logoutResponse(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const headers = new Headers();
+  headers.append("Set-Cookie", clearCookie(request, "linkoutpost_session"));
+  const issuer = getAuthIssuer(env);
+  if (!issuer) {
+    headers.set("Location", "/");
+    return new Response(null, { headers, status: 302 });
+  }
+
+  const signOutUrl = issuer + "/sign-out";
+  headers.set("content-type", "text/html; charset=utf-8");
+  return new Response(
+    '<!doctype html><meta charset="utf-8"><title>Signing out</title><script>fetch(' +
+      JSON.stringify(signOutUrl) +
+      ',{method:"POST",credentials:"include",headers:{"content-type":"application/json"},body:"{}"}).finally(function(){location.replace("/")});</script>',
+    { headers },
+  );
+}
+
+export async function hydrateSession(
+  request: Request,
+  env: Env,
+): Promise<{ session: SessionState; setCookie?: string }> {
+  const session = await getSession(request, env);
+  if (
+    session.authenticated ||
+    !getAuthIssuer(env) ||
+    !hasIssuerSessionHint(request)
+  ) {
+    return { session };
+  }
+
+  try {
+    const established = await establishIssuerSession(request, env);
+    if (!established) return { session };
+    return {
+      session: sessionState(env, {
+        authenticated: true,
+        name: established.name,
+        provider: "sso",
+        storage: "backend",
+      }),
+      setCookie: established.setCookie,
+    };
+  } catch {
+    return { session };
+  }
+}
+

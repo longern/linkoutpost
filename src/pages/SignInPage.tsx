@@ -75,13 +75,13 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
       : "/admin";
   }
 
-  function authStartHref(provider: Exclude<AuthProvider, "email">): string {
+  function authStartHref(provider: Exclude<AuthProvider, "email" | "sso">): string {
     const redirectTo = redirectToEditor();
     return `/api/auth/${provider}/start?redirect_to=${encodeURIComponent(redirectTo)}`;
   }
 
   function authProviderAction(
-    provider: Exclude<AuthProvider, "email">,
+    provider: Exclude<AuthProvider, "email" | "sso">,
     label: string,
   ) {
     const enabled = session.authProviders?.[provider] ?? false;
@@ -123,6 +123,18 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
               {t("signIn.emailSent")}
             </p>
           ) : null}
+          {session.authIssuer ? (
+            <div className="auth-actions">
+              <a
+                className="button-secondary auth-provider-link"
+                href={"/api/auth/sso/start?redirect_to=" + encodeURIComponent(redirectToEditor())}
+              >
+                <FaRightToBracket aria-hidden="true" size={16} />
+                {t("signIn.continueWithSso")}
+              </a>
+            </div>
+          ) : (
+            <>
           {session.authProviders?.email ? (
             <form
               action={`/api/auth/email/start?redirect_to=${encodeURIComponent(redirectToEditor())}`}
@@ -152,6 +164,8 @@ export function SignInPage({ initialSession }: { initialSession: SessionState })
             {authProviderAction("twitter", t("signIn.continueWithTwitter"))}
             {authProviderAction("shopify", t("signIn.continueWithShopify"))}
           </div>
+            </>
+          )}
           <a className="auth-secondary-link" href="/admin">
             {t("signIn.continueWithLocalEditor")}
           </a>

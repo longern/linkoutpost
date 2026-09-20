@@ -22,14 +22,17 @@ import {
 } from "./profile";
 import { readUserFile, writeProfileAssetUpload } from "./worker/assetStorage";
 import {
-  clearCookie,
   completeEmailSignIn,
   completeOAuth,
+  completeSsoSignIn,
   getSession,
   getSessionPayload,
+  hydrateSession,
+  logoutResponse,
   signInErrorRedirect,
   startEmailSignIn,
   startOAuth,
+  startSsoSignIn,
 } from "./worker/auth";
 import type { Env } from "./worker/env";
 import { resolveSiteTitle } from "./siteConfig";
@@ -197,10 +200,11 @@ async function renderHandlePage(request: Request, env: Env): Promise<Response> {
   const handle = normalizeHandle(
     url.pathname.split("/").filter(Boolean)[0] ?? "",
   );
+  const hydrated = await hydrateSession(request, env);
   const initialState: InitialState = {
     pathname: url.pathname,
     profile: handle ? await readProfileByHandle(env, handle) : null,
-    session: await getSession(request, env),
+    session: hydrated.session,
     siteTitle: resolveSiteTitle(env.VITE_SITE_TITLE),
   };
   const stream = await renderToReadableStream(
@@ -240,8 +244,11 @@ async function renderHandlePage(request: Request, env: Env): Promise<Response> {
       isPublicProfileRoute ? `${profileRuntimeScript}</body>` : "</body>",
     );
 
+  const headers = new Headers(ssrHeaders);
+  if (hydrated.setCookie) headers.append("Set-Cookie", hydrated.setCookie);
+
   return new Response(renderedHtml, {
-    headers: ssrHeaders,
+    headers,
     status: initialState.profile ? 200 : 404,
   });
 }
@@ -267,6 +274,22 @@ export default {
         return await completeEmailSignIn(request, env);
       } catch {
         return signInErrorRedirect(request, "email_failed", false);
+      }
+    }
+
+    if (url.pathname === "/api/auth/sso/start") {
+      try {
+        return await startSsoSignIn(request, env);
+      } catch {
+        return signInErrorRedirect(request, "oauth_unavailable", false);
+      }
+    }
+
+    if (url.pathname === "/api/auth/sso/callback") {
+      try {
+        return await completeSsoSignIn(request, env);
+      } catch {
+        return signInErrorRedirect(request, "oauth_failed", false);
       }
     }
 
@@ -319,13 +342,7 @@ export default {
     }
 
     if (url.pathname === "/api/logout") {
-      return new Response(null, {
-        headers: {
-          Location: "/",
-          "Set-Cookie": clearCookie(request, "linkoutpost_session"),
-        },
-        status: 302,
-      });
+      return await logoutResponse(request, env);
     }
 
     if (url.pathname === "/api/health") {
@@ -342,9 +359,10 @@ export default {
     }
 
     if (url.pathname === "/api/session") {
-      return Response.json(await getSession(request, env), {
-        headers: apiHeaders,
-      });
+      const hydrated = await hydrateSession(request, env);
+      const headers = new Headers(apiHeaders);
+      if (hydrated.setCookie) headers.append("Set-Cookie", hydrated.setCookie);
+      return Response.json(hydrated.session, { headers });
     }
 
     if (url.pathname === "/api/oembed") {

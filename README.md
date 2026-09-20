@@ -32,7 +32,13 @@ The `/admin` editor uses the same UI in both modes:
 - Offline mode: used when the backend is unavailable or the user is not logged in. Data is saved in IndexedDB, and the editor can export a static ZIP containing `index.html`, `styles.css`, `profile.json`, and local image assets.
 - Backend mode: used when a backend session is present and a D1 binding exists. Data is saved to D1 and can be rendered at `/:handle`.
 
-Backend sessions are created through email links or Google, Twitter/X, and Shopify Customer Account OAuth. The Worker stores a signed `linkoutpost_session` cookie after authentication completes.
+Backend sessions are created through email links or Google, Twitter/X, and Shopify Customer Account OAuth. If AUTH_ISSUER is set, those local providers are hidden and sign-in is delegated to that OIDC issuer instead. The Worker stores a signed `linkoutpost_session` cookie after authentication completes.
+
+## SSO setup
+
+Set AUTH_ISSUER to an OIDC issuer such as https://auth.example.men/api/auth. AUTH_AUDIENCE is optional and defaults to AUTH_ISSUER. Do not put AUTH_ISSUER in wrangler.jsonc vars if you manage it from the Cloudflare dashboard.
+
+When AUTH_ISSUER is unset, the original email and OAuth providers remain in use.
 
 ## Email sign-in setup
 
