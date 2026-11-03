@@ -1034,16 +1034,6 @@ async function resolveIssuerLocalUser(
 ): Promise<{ created: boolean; userId: string }> {
   let userId = await findUserIdByAccount(env, "sso", identity.id);
   if (!userId) userId = await findUserIdBySso(env, identity.id);
-  if (!userId) {
-    for (const account of identity.accounts) {
-      userId = await findUserIdByAccount(
-        env,
-        account.providerId,
-        account.accountId,
-      );
-      if (userId) break;
-    }
-  }
 
   let created = false;
   if (!userId) {
@@ -1068,16 +1058,6 @@ async function resolveIssuerLocalUser(
     providerUserId: identity.id,
     username: identity.email ? identity.email.split("@")[0] : identity.name,
   });
-  for (const account of identity.accounts) {
-    await ensureOAuthAccount(env, userId, {
-      avatarUrl: identity.image,
-      displayName: identity.name,
-      email: identity.email,
-      provider: account.providerId as AuthProvider,
-      providerUserId: account.accountId,
-      username: identity.name,
-    });
-  }
 
   return { created, userId };
 }

@@ -25,7 +25,6 @@ type DiscoveryDocument = {
 };
 
 export type IssuerIdentity = {
-  accounts: { accountId: string; providerId: string }[];
   email: string | null;
   id: string;
   image: string | null;
@@ -227,7 +226,6 @@ export async function verifyIssuerJwt(
 function identityFromClaims(claims: JWTPayload): IssuerIdentity {
   const email = typeof claims.email === "string" ? claims.email.trim() : "";
   return {
-    accounts: [],
     id: claims.sub!,
     email:
       email.includes("@") &&
