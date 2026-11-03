@@ -32,13 +32,44 @@ The `/admin` editor uses the same UI in both modes:
 - Offline mode: used when the backend is unavailable or the user is not logged in. Data is saved in IndexedDB, and the editor can export a static ZIP containing `index.html`, `styles.css`, `profile.json`, and local image assets.
 - Backend mode: used when a backend session is present and a D1 binding exists. Data is saved to D1 and can be rendered at `/:handle`.
 
-Backend sessions are created through email links or Google, Twitter/X, and Shopify Customer Account OAuth. If AUTH_ISSUER is set, those local providers are hidden and sign-in is delegated to that OIDC issuer instead. The Worker stores a signed `linkoutpost_session` cookie after authentication completes.
+Backend sessions are created through email links or Google, Twitter/X, and Shopify Customer Account OAuth. If OIDC_ISSUER_URL is set, those local providers are hidden and sign-in is delegated to that OIDC issuer instead. The Worker stores a signed `linkoutpost_session` cookie after authentication completes.
 
 ## SSO setup
 
-Set AUTH_ISSUER to an OIDC issuer such as https://auth.example.men/api/auth. AUTH_AUDIENCE is optional and defaults to AUTH_ISSUER. Do not put AUTH_ISSUER in wrangler.jsonc vars if you manage it from the Cloudflare dashboard.
+Set `OIDC_ISSUER_URL` to the workers-sso root issuer, such as `https://auth.example.men`
+(without `/api/auth`), and configure `AUTH_SECRET` for this application's signed
+cookies. Do not put `OIDC_ISSUER_URL` in `wrangler.jsonc` vars if you manage it from
+the Cloudflare dashboard.
 
-When AUTH_ISSUER is unset, the original email and OAuth providers remain in use.
+SSO uses OIDC Authorization Code with PKCE (S256) and CIMD. The app publishes
+`https://<your-domain>/api/auth/sso/client.json` and uses that URL as its client ID.
+The issuer discovers the client and its fixed `/api/auth/sso/callback` URL from
+this document; no manual registration or client secret is needed. The issuer
+must advertise CIMD support, and the app must be reachable over public HTTPS,
+including for development with a tunnel. Users may be asked to consent by SSO.
+
+The callback verifies the signed, ten-minute login state, PKCE, nonce, ID-token
+signature, issuer, expiry and client audience before creating a local session.
+It reuses existing `sso_user_id` or `provider = 'sso'` account mappings, preserving
+local user IDs and profile ownership. Apply the existing D1 migrations before
+first-time SSO setup; this change adds no database migration. Previously linked
+accounts do not need to relink when the issuer continues using the same public
+subject IDs. Accounts without an SSO mapping are not merged by email.
+
+Browser login no longer forwards shared Better Auth cookies or calls
+`/get-session` and `/list-accounts`. Logout clears this app's session and pending
+login; the central SSO session remains active. Existing local sessions remain
+valid until their normal expiry.
+
+Bearer JWT authentication remains supported separately. `AUTH_AUDIENCE` is
+optional and defaults to `OIDC_ISSUER_URL` for these API tokens; OIDC ID tokens always
+use the CIMD client URL as their audience.
+
+Run `npm test` for mocked OIDC and account-mapping regression tests, and
+`npm run build` for TypeScript and production asset validation. These tests do
+not contact production databases or social providers.
+
+When OIDC_ISSUER_URL is unset, the original email and OAuth providers remain in use.
 
 ## Email sign-in setup
 

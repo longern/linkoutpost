@@ -2,10 +2,12 @@ import { normalizeHandle } from "../profile";
 import { resolveSiteTitle } from "../siteConfig";
 import type { AuthProvider, SessionState } from "../types";
 import type { Env } from "./env";
-import type { IssuerIdentity } from "./sso";
+import type { IssuerIdentity, SsoLoginState } from "./sso";
 import {
   getAuthIssuer,
-  getIssuerLoginOrigin,
+  exchangeSsoCode,
+  ssoAuthorizationUrl,
+  ssoClientConfiguration,
   hasIssuerSessionHint,
   readIssuerIdentity,
 } from "./sso";
@@ -1125,18 +1127,23 @@ export async function startSsoSignIn(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  const issuer = getAuthIssuer(env);
-  if (!issuer) return signInErrorRedirect(request, "oauth_unavailable", false);
-
-  const redirectTo =
-    safeLocalRedirect(new URL(request.url).searchParams.get("redirect_to")) ??
-    "/admin";
-  const callbackUrl = new URL("/api/auth/sso/callback", request.url);
-  callbackUrl.searchParams.set("redirect_to", redirectTo);
-  const loginUrl = new URL("/", getIssuerLoginOrigin(issuer));
-  loginUrl.searchParams.set("callbackURL", callbackUrl.toString());
+  const config = ssoClientConfiguration(request, env);
+  const state: SsoLoginState = {
+    ...config,
+    state: randomToken(),
+    nonce: randomToken(),
+    codeVerifier: randomToken(),
+    redirectTo: safeLocalRedirect(new URL(request.url).searchParams.get("redirect_to")) ?? "/admin",
+    exp: Math.floor(Date.now() / 1000) + 600,
+  };
+  const signed = await signCookieValue(getAuthSecret(env, request), state);
+  const location = await ssoAuthorizationUrl(state, await sha256(state.codeVerifier));
   return new Response(null, {
-    headers: { Location: loginUrl.toString() },
+    headers: {
+      Location: location,
+      "Cache-Control": "no-store",
+      "Set-Cookie": cookie(request, "linkoutpost_sso", signed, 600),
+    },
     status: 302,
   });
 }
@@ -1145,47 +1152,52 @@ export async function completeSsoSignIn(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  const issuer = getAuthIssuer(env);
-  const redirectTo =
-    safeLocalRedirect(new URL(request.url).searchParams.get("redirect_to")) ??
-    "/admin";
-  if (!issuer) return signInErrorRedirect(request, "oauth_unavailable", false);
-
+  let response: Response;
   try {
-    const established = await establishIssuerSession(request, env);
-    if (!established) return signInErrorRedirect(request, "oauth_callback", false);
-    return new Response(null, {
-      headers: {
-        Location: redirectTo,
-        "Set-Cookie": established.setCookie,
-      },
-      status: 302,
-    });
+    const config = ssoClientConfiguration(request, env);
+    const params = new URL(request.url).searchParams;
+    const state = await verifyCookieValue<SsoLoginState>(
+      getAuthSecret(env, request), readCookie(request, "linkoutpost_sso"),
+    );
+    if (!state || !state.state || params.getAll("state").length !== 1 ||
+        params.get("state") !== state.state || typeof state.exp !== "number" ||
+        state.exp <= Math.floor(Date.now() / 1000) ||
+        state.issuer !== config.issuer || state.clientId !== config.clientId ||
+        state.redirectUri !== config.redirectUri ||
+        (params.has("iss") && (params.getAll("iss").length !== 1 || params.get("iss") !== config.issuer))) {
+      response = signInErrorRedirect(request, "oauth_state", false);
+    } else if (params.has("error")) {
+      response = signInErrorRedirect(request, "oauth_provider", false);
+    } else if (params.getAll("code").length !== 1 || !params.get("code")) {
+      response = signInErrorRedirect(request, "oauth_callback", false);
+    } else {
+      const identity = await exchangeSsoCode(state, params.get("code")!);
+      const user = await resolveIssuerLocalUser(env, identity);
+      const signed = await createSignedSession(request, env, user.userId, identity.name);
+      response = new Response(null, {
+        headers: {
+          Location: safeLocalRedirect(state.redirectTo) ?? "/admin",
+          "Set-Cookie": cookie(request, "linkoutpost_session", signed, 60 * 60 * 24 * 30),
+        },
+        status: 302,
+      });
+    }
   } catch {
-    return signInErrorRedirect(request, "oauth_failed", false);
+    response = signInErrorRedirect(request, "oauth_failed", false);
   }
+  response.headers.set("Cache-Control", "no-store");
+  response.headers.append("Set-Cookie", clearCookie(request, "linkoutpost_sso"));
+  return response;
 }
 
 export async function logoutResponse(
   request: Request,
-  env: Env,
+  _env: Env,
 ): Promise<Response> {
-  const headers = new Headers();
+  const headers = new Headers({ Location: "/", "Cache-Control": "no-store" });
   headers.append("Set-Cookie", clearCookie(request, "linkoutpost_session"));
-  const issuer = getAuthIssuer(env);
-  if (!issuer) {
-    headers.set("Location", "/");
-    return new Response(null, { headers, status: 302 });
-  }
-
-  const signOutUrl = issuer + "/sign-out";
-  headers.set("content-type", "text/html; charset=utf-8");
-  return new Response(
-    '<!doctype html><meta charset="utf-8"><title>Signing out</title><script>fetch(' +
-      JSON.stringify(signOutUrl) +
-      ',{method:"POST",credentials:"include",headers:{"content-type":"application/json"},body:"{}"}).finally(function(){location.replace("/")});</script>',
-    { headers },
-  );
+  headers.append("Set-Cookie", clearCookie(request, "linkoutpost_sso"));
+  return new Response(null, { headers, status: 302 });
 }
 
 export async function hydrateSession(

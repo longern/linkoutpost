@@ -35,6 +35,7 @@ import {
   startSsoSignIn,
 } from "./worker/auth";
 import type { Env } from "./worker/env";
+import { getAuthIssuer, ssoClientMetadata } from "./worker/sso";
 import { resolveSiteTitle } from "./siteConfig";
 import { apiHeaders, jsonError, ssrHeaders } from "./worker/http";
 import {
@@ -277,7 +278,19 @@ export default {
       }
     }
 
+    if (url.pathname === "/api/auth/sso/client.json") {
+      if (request.method !== "GET" && request.method !== "HEAD") return jsonError("Method not allowed", 405);
+      if (!getAuthIssuer(env)) return jsonError("SSO is not configured", 404);
+      try {
+        const metadata = ssoClientMetadata(request, env);
+        return request.method === "HEAD" ? new Response(null, { headers: metadata.headers }) : metadata;
+      } catch {
+        return jsonError("SSO metadata is unavailable", 503);
+      }
+    }
+
     if (url.pathname === "/api/auth/sso/start") {
+      if (request.method !== "GET") return jsonError("Method not allowed", 405);
       try {
         return await startSsoSignIn(request, env);
       } catch {
@@ -286,6 +299,7 @@ export default {
     }
 
     if (url.pathname === "/api/auth/sso/callback") {
+      if (request.method !== "GET") return jsonError("Method not allowed", 405);
       try {
         return await completeSsoSignIn(request, env);
       } catch {

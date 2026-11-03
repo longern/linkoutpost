@@ -3,7 +3,7 @@ export interface Env {
   BUCKET?: R2Bucket;
   DB?: D1Database;
   AUTH_AUDIENCE?: string;
-  AUTH_ISSUER?: string;
+  OIDC_ISSUER_URL?: string;
   AUTH_SECRET?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;
